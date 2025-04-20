@@ -8,11 +8,72 @@ export async function initDemoData() {
     
     // Check if we already have categories
     const existingCategories = await storage.getCategories();
-    if (existingCategories.length > 0) {
+    log(`Found ${existingCategories.length} existing categories`, 'mongodb');
+    
+    // Check if we have products in the database
+    const products = await storage.getProducts();
+    log(`Found ${products.length} existing products`, 'mongodb');
+    
+    // If we have both categories and products, skip initialization
+    if (existingCategories.length > 0 && products.length > 0) {
       log('Demo data already exists. Skipping initialization.', 'mongodb');
       return;
     }
+    
+    // If we have categories but no products
+    if (existingCategories.length > 0 && products.length === 0) {
+      await createProductsWithExistingCategories(existingCategories);
+      return;
+    }
+    
+    // If we don't have categories or products, create everything
+    log('Creating complete demo data...', 'mongodb');
+    await createCompleteData();
+    
+    log('Demo data initialization completed successfully', 'mongodb');
+  } catch (error) {
+    log(`Error initializing demo data: ${error}`, 'mongodb');
+  }
+}
 
+// Create products using existing categories
+async function createProductsWithExistingCategories(categories) {
+  try {
+    log('Categories exist but no products. Creating products only...', 'mongodb');
+    
+    // Use existing categories
+    const skinCare = categories.find(cat => cat.slug === 'skincare');
+    const hairCare = categories.find(cat => cat.slug === 'haircare');
+    
+    if (!skinCare || !hairCare) {
+      log('Required categories not found. Cannot create products.', 'mongodb');
+      return;
+    }
+    
+    // Get existing collections
+    const collections = await storage.getCollections();
+    const kumkumadi = collections.find(col => col.slug === 'kumkumadi');
+    const amrrepa = collections.find(col => col.slug === 'amrrepa');
+    const ujjasara = collections.find(col => col.slug === 'ujjasara');
+    const bestsellers = collections.find(col => col.slug === 'bestsellers');
+    
+    if (!kumkumadi || !amrrepa || !ujjasara || !bestsellers) {
+      log('Required collections not found.', 'mongodb');
+      return;
+    }
+    
+    // Create products
+    await createProducts(skinCare, hairCare, kumkumadi, amrrepa, ujjasara, bestsellers);
+    
+    log('Products created successfully using existing categories and collections', 'mongodb');
+  } catch (error) {
+    log(`Error creating products with existing categories: ${error}`, 'mongodb');
+  }
+}
+
+// Create complete data set from scratch
+async function createCompleteData() {
+  try {
     // Add demo categories
     const skinCare = await storage.createCategory({
       name: "Skincare",
@@ -79,6 +140,27 @@ export async function initDemoData() {
       featured: true
     });
 
+    // Create products
+    await createProducts(skinCare, hairCare, kumkumadi, amrrepa, ujjasara, bestsellers);
+    
+    // Add testimonials
+    await createTestimonials();
+    
+    // Add banner
+    await createBanner();
+    
+    // Add admin user
+    await createAdminUser();
+    
+    log('Complete demo data created successfully', 'mongodb');
+  } catch (error) {
+    log(`Error creating complete data: ${error}`, 'mongodb');
+  }
+}
+
+// Common function to create products
+async function createProducts(skinCare, hairCare, kumkumadi, amrrepa, ujjasara, bestsellers) {
+  try {
     // Add demo products
     const product1 = await storage.createProduct({
       name: "Kumkumadi Youth-Clarifying Mask-Scrub",
@@ -247,8 +329,16 @@ export async function initDemoData() {
       productId: product7.id,
       collectionId: bestsellers.id
     });
+    
+    log('Products created successfully', 'mongodb');
+  } catch (error) {
+    log(`Error creating products: ${error}`, 'mongodb');
+  }
+}
 
-    // Add testimonials
+// Create testimonials
+async function createTestimonials() {
+  try {
     await storage.createTestimonial({
       name: "Priya S.",
       location: "Mumbai",
@@ -272,8 +362,16 @@ export async function initDemoData() {
       testimonial: "The Rose Jasmine face cleanser is gentle yet effective. It removes all my makeup without drying out my skin. The scent is heavenly and leaves my face feeling fresh and clean.",
       featured: true
     });
+    
+    log('Testimonials created successfully', 'mongodb');
+  } catch (error) {
+    log(`Error creating testimonials: ${error}`, 'mongodb');
+  }
+}
 
-    // Add banner
+// Create banner
+async function createBanner() {
+  try {
     await storage.createBanner({
       title: "DISCOVER NEXT GENERATION AYURVEDIC SKINCARE",
       subtitle: "CHOOSE ANY COMPLIMENTARY PRODUCTS OF YOUR CHOICE WORTH UPTO ₹3990",
@@ -283,17 +381,34 @@ export async function initDemoData() {
       active: true,
       order: 1
     });
+    
+    log('Banner created successfully', 'mongodb');
+  } catch (error) {
+    log(`Error creating banner: ${error}`, 'mongodb');
+  }
+}
 
-    // Add admin user
-    await storage.createUser({
+// Create admin user
+async function createAdminUser() {
+  try {
+    const user = await storage.createUser({
       name: "Admin User",
       email: "admin@kamaayurveda.com",
-      password: "admin123", // In a real app, this would be hashed
-      isAdmin: true
+      password: "admin123" // In a real app, this would be hashed
     });
-
-    log('Demo data initialization completed successfully', 'mongodb');
+    
+    // Update the user to make them an admin (handled separately in our storage implementation)
+    if (user) {
+      try {
+        // Direct database update since our API doesn't expose isAdmin updates
+        const UserModel = (await import('./models/User')).default;
+        await UserModel.updateOne({ id: user.id }, { $set: { isAdmin: true } });
+        log('Admin user created successfully', 'mongodb');
+      } catch (error) {
+        log(`Failed to set admin privileges: ${error}`, 'mongodb');
+      }
+    }
   } catch (error) {
-    log(`Error initializing demo data: ${error}`, 'mongodb');
+    log(`Error creating admin user: ${error}`, 'mongodb');
   }
 }
