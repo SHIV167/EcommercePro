@@ -53,59 +53,51 @@ export default function HeroCarousel() {
   const currentBanner = slides[currentSlide];
 
   return (
-    <div className="relative border border-neutral-sand overflow-hidden">
+    <div className="relative border border-neutral-sand overflow-hidden bg-[#f8f4ea]">
       <div className="relative">
         <div 
-          className="bg-neutral-cream transition-opacity duration-500"
+          className="transition-opacity duration-500"
           style={{ opacity: isTransitioning ? 0 : 1 }}
         >
           <div className="container mx-auto px-4 py-8 md:py-16">
             <div className="flex flex-col md:flex-row items-center">
               <div className="w-full md:w-1/2 mb-8 md:mb-0">
                 <img 
-                  src={currentBanner.imageUrl} 
+                  src={currentBanner.imageUrl || "https://images.unsplash.com/photo-1617500603321-cae6be1442f1"} 
                   alt="Kumkumadi Ayurvedic skincare product with purple flowers" 
                   className="mx-auto h-auto max-h-[400px] object-contain"
                 />
               </div>
               <div className="w-full md:w-1/2 text-center md:text-left md:pl-12">
-                <h2 className="font-heading text-2xl md:text-4xl text-primary mb-4">{currentBanner.title}</h2>
-                <div className="flex justify-center md:justify-start mb-6">
-                  <div className="h-10 w-10 flex items-center justify-center">
-                    <svg width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="60" cy="60" r="50" fill="#D4B78F"/>
-                      <text x="60" y="70" textAnchor="middle" fontFamily="Georgia, serif" fontSize="40" fontWeight="bold" fill="#5C3834">K</text>
+                <h2 className="font-heading text-2xl md:text-4xl text-primary mb-4">
+                  {currentBanner.title}
+                </h2>
+                <div className="flex justify-center md:justify-start mb-4">
+                  <div className="h-6 w-8">
+                    <svg width="32" height="24" viewBox="0 0 48 36" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M24 0C26.4 7.2 32.4 12 40.8 12V24C32.4 24 26.4 28.8 24 36C21.6 28.8 15.6 24 7.2 24V12C15.6 12 21.6 7.2 24 0Z" fill="#A72B1D"/>
                     </svg>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  {currentBanner.subtitle.split(' WORTH UPTO').map((part, index) => {
-                    if (index === 0) {
-                      return (
-                        <div key={index}>
-                          {part.split(' OF YOUR CHOICE').map((subpart, subindex) => (
-                            <p key={subindex} className="text-neutral-gray uppercase tracking-wider text-sm md:text-base">
-                              {subpart}{subindex === 0 ? " OF YOUR CHOICE" : ""}
-                            </p>
-                          ))}
-                        </div>
-                      );
-                    } else {
-                      return (
-                        <div key={index}>
-                          <p className="font-heading text-xl md:text-3xl text-primary">WORTH UPTO{part.split(' on orders above')[0]}</p>
-                          <p className="text-neutral-gray uppercase tracking-wider text-sm">on orders above{part.split(' on orders above')[1]}</p>
-                        </div>
-                      );
-                    }
-                  })}
+                
+                <div className="space-y-2">
+                  <p className="uppercase tracking-wider text-sm md:text-base text-neutral-gray">
+                    CHOOSE ANY<br/>COMPLIMENTARY PRODUCTS OF YOUR CHOICE
+                  </p>
+                  <p className="font-heading text-xl md:text-3xl text-primary mt-4">
+                    WORTH UPTO ₹3990
+                  </p>
+                  <p className="text-neutral-gray uppercase tracking-wider text-xs">
+                    on orders above ₹4000
+                  </p>
                 </div>
+                
                 <Button
                   asChild
-                  className="inline-block bg-accent hover:bg-accent-light text-white uppercase tracking-wider py-3 px-10 mt-6 font-medium text-sm"
+                  className="mt-6 bg-[#A72B1D] hover:bg-[#8a2318] text-white uppercase tracking-wider py-3 px-6 rounded-none font-medium text-sm"
                 >
                   <Link href={currentBanner.buttonLink || "/collections/all"}>
-                    {currentBanner.buttonText || "Shop Now"}
+                    {currentBanner.buttonText || "SHOP NOW"}
                   </Link>
                 </Button>
               </div>
@@ -121,8 +113,8 @@ export default function HeroCarousel() {
             <button 
               key={index}
               className={cn(
-                "carousel-dot h-2 rounded-full bg-neutral-darkGray/30",
-                currentSlide === index ? "w-6 bg-primary" : "w-2"
+                "h-2 rounded-full",
+                currentSlide === index ? "w-6 bg-primary" : "w-2 bg-neutral-darkGray/30"
               )}
               aria-label={`Go to slide ${index + 1}`}
               onClick={() => setCurrentSlide(index)}
