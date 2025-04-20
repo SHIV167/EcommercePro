@@ -63,7 +63,20 @@ async function createProductsWithExistingCategories(categories) {
     }
     
     // Create products
-    await createProducts(skinCare, hairCare, kumkumadi, amrrepa, ujjasara, bestsellers);
+    // First, let's log the categories to see what's available
+    log(`Debug - skinCare: ${JSON.stringify(skinCare)}`, 'mongodb');
+    log(`Debug - hairCare: ${JSON.stringify(hairCare)}`, 'mongodb');
+    
+    // For MongoDB, we need to extract the ID as a number
+    // Use a numeric ID or generate one
+    await createProducts(
+      { id: 1, ...skinCare },  // Use simple numeric IDs
+      { id: 2, ...hairCare },
+      { id: 3, ...kumkumadi },
+      { id: 4, ...amrrepa },
+      { id: 5, ...ujjasara },
+      { id: 6, ...bestsellers }
+    );
     
     log('Products created successfully using existing categories and collections', 'mongodb');
   } catch (error) {
@@ -141,7 +154,19 @@ async function createCompleteData() {
     });
 
     // Create products
-    await createProducts(skinCare, hairCare, kumkumadi, amrrepa, ujjasara, bestsellers);
+    // First, let's log the categories to see what's available
+    log(`Debug - skinCare: ${JSON.stringify(skinCare)}`, 'mongodb');
+    log(`Debug - hairCare: ${JSON.stringify(hairCare)}`, 'mongodb');
+    
+    // Use simple numeric IDs for consistency with the other function
+    await createProducts(
+      { id: 1, ...skinCare },
+      { id: 2, ...hairCare },
+      { id: 3, ...kumkumadi },
+      { id: 4, ...amrrepa },
+      { id: 5, ...ujjasara },
+      { id: 6, ...bestsellers }
+    );
     
     // Add testimonials
     await createTestimonials();
