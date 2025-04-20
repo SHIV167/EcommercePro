@@ -25,6 +25,7 @@ export default function BestsellerSection() {
       rating: 4.7,
       totalReviews: 42,
       featured: true,
+      bestseller: true,
       isNew: false,
       categoryId: 1,
       createdAt: new Date()
@@ -42,6 +43,7 @@ export default function BestsellerSection() {
       rating: 4.9,
       totalReviews: 28,
       featured: true,
+      bestseller: true,
       isNew: false,
       categoryId: 2,
       createdAt: new Date()
@@ -59,6 +61,7 @@ export default function BestsellerSection() {
       rating: 4.8,
       totalReviews: 36,
       featured: true,
+      bestseller: true,
       isNew: false,
       categoryId: 3,
       createdAt: new Date()
@@ -76,6 +79,7 @@ export default function BestsellerSection() {
       rating: 5.0,
       totalReviews: 54,
       featured: true,
+      bestseller: true,
       isNew: true,
       categoryId: 1,
       createdAt: new Date()

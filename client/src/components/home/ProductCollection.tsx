@@ -36,6 +36,7 @@ export default function ProductCollection({ collectionSlug, title }: ProductColl
       rating: 4.8,
       totalReviews: 18,
       featured: true,
+      bestseller: true,
       isNew: false,
       categoryId: 1,
       createdAt: new Date()
@@ -53,6 +54,7 @@ export default function ProductCollection({ collectionSlug, title }: ProductColl
       rating: 5.0,
       totalReviews: 7,
       featured: true,
+      bestseller: true,
       isNew: true,
       categoryId: 1,
       createdAt: new Date()
@@ -70,6 +72,7 @@ export default function ProductCollection({ collectionSlug, title }: ProductColl
       rating: 4.9,
       totalReviews: 12,
       featured: true,
+      bestseller: true,
       isNew: false,
       categoryId: 1,
       createdAt: new Date()

@@ -1,11 +1,12 @@
 interface RatingStarsProps {
-  rating: number;
-  reviews?: number;
+  rating: number | null | undefined;
+  reviews?: number | null;
   size?: "sm" | "md" | "lg";
 }
 
-export default function RatingStars({ rating, reviews, size = "sm" }: RatingStarsProps) {
-  const roundedRating = Math.round(rating * 2) / 2; // Round to nearest 0.5
+export default function RatingStars({ rating = 5, reviews, size = "sm" }: RatingStarsProps) {
+  const ratingValue = rating || 5;
+  const roundedRating = Math.round(ratingValue * 2) / 2; // Round to nearest 0.5
   const fullStars = Math.floor(roundedRating);
   const halfStar = roundedRating % 1 !== 0;
   const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
