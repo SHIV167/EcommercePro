@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { connectToDatabase, closeDatabaseConnection } from "./db";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +38,16 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Connect to MongoDB
+  try {
+    await connectToDatabase();
+    log('MongoDB connected successfully', 'mongodb');
+  } catch (error) {
+    log(`MongoDB connection error: ${error}`, 'mongodb');
+    process.exit(1);
+  }
+
+  // Register API routes
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -68,3 +79,14 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
   });
 })();
+
+// Graceful shutdown handlers
+process.on('SIGINT', async () => {
+  await closeDatabaseConnection();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await closeDatabaseConnection();
+  process.exit(0);
+});
