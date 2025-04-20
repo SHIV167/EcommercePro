@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import MobileNav from "./MobileNav";
 import CartDrawer from "./CartDrawer";
 import { useQuery } from "@tanstack/react-query";
+import { Collection } from "@shared/schema";
 
 export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -13,7 +14,7 @@ export default function Header() {
   const { isAuthenticated } = useAuth();
   
   // Get collections for navigation
-  const { data: collections } = useQuery({
+  const { data: collections = [] } = useQuery<Collection[]>({
     queryKey: ['/api/collections'],
   });
 
