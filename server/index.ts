@@ -42,6 +42,10 @@ app.use((req, res, next) => {
   try {
     await connectToDatabase();
     log('MongoDB connected successfully', 'mongodb');
+    
+    // Initialize demo data
+    const { initDemoData } = await import('./initData');
+    await initDemoData();
   } catch (error) {
     log(`MongoDB connection error: ${error}`, 'mongodb');
     process.exit(1);
