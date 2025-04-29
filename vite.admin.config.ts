@@ -4,7 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   root: path.resolve(__dirname, 'admin'),
-  base: '/admin/',
+  base: '/',
   server: {
     port: 5174,
     open: '/admin/',
