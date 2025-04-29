@@ -1,0 +1,54 @@
+# Render deployment manifest for EcommercePro
+
+services:
+  # Web Service for Node backend
+  - type: web_service
+    name: EcommercePro-Server
+    env: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: MONGODB_URI
+        fromEnv: MONGODB_URI
+      - key: SMTP_HOST
+        fromEnv: SMTP_HOST
+      - key: SMTP_PORT
+        fromEnv: SMTP_PORT
+      - key: SMTP_SECURE
+        fromEnv: SMTP_SECURE
+      - key: SMTP_USER
+        fromEnv: SMTP_USER
+      - key: SMTP_PASS
+        fromEnv: SMTP_PASS
+      - key: SMTP_FROM
+        fromEnv: SMTP_FROM
+      - key: JWT_SECRET
+        fromEnv: JWT_SECRET
+      - key: JWT_EXPIRES_IN
+        fromEnv: JWT_EXPIRES_IN
+      - key: COOKIE_MAX_AGE
+        fromEnv: COOKIE_MAX_AGE
+
+  # Static Site for Client
+  - type: static_site
+    name: EcommercePro-Client
+    plan: free
+    rootDir: client
+    buildCommand: npm install && vite build --config vite.config.ts
+    publishPath: dist/public
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromEnv: CLIENT_BASE_URL
+
+  # Static Site for Admin
+  - type: static_site
+    name: EcommercePro-Admin
+    plan: free
+    rootDir: admin
+    buildCommand: npm install && vite build --config vite.admin.config.ts
+    publishPath: dist/public/admin
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromEnv: ADMIN_BASE_URL

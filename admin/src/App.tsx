@@ -1,66 +1,85 @@
-import { Switch, Route } from "wouter";
+import React from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { Redirect, Switch, Route } from "wouter";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
-import { AdminAuthProvider } from "./hooks/useAdminAuth";
+import { AdminAuthProvider, useAdminAuth } from "./hooks/useAdminAuth";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 import Dashboard from "./pages/Dashboard";
 import ProductsManagement from "./pages/ProductsManagement";
 import OrdersManagement from "./pages/OrdersManagement";
 import UsersManagement from "./pages/UsersManagement";
+import BannersManagement from "./pages/BannersManagement";
+import CategoriesManagement from "./pages/CategoriesManagement";
+import CollectionsManagement from "./pages/CollectionsManagement";
+import SettingsManagement from "./pages/SettingsManagement";
+import ContactsManagement from "./pages/ContactsManagement";
+import BlogsManagement from "./pages/BlogsManagement";
 import AdminLogin from "./pages/AdminLogin";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
+import Popup from "./pages/Popup";
+import StoreManagePage from "./pages/StoreManage";
+import PromoTimerPage from "./pages/promotimer";
 
-function App() {
+function AdminContainer() {
+  const { isAuthenticated, isLoading } = useAdminAuth();
+  if (isLoading) return <div>Loading...</div>;
+  if (!isAuthenticated) return <Redirect to="/admin/login" />;
   return (
-    <AdminAuthProvider>
-      <TooltipProvider>
-        <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Header />
+        <main className="flex-1 p-6 overflow-auto">
           <Switch>
-            <Route path="/login">
-              <AdminLogin />
+            <Route path="/admin/dashboard" component={Dashboard} />
+            <Route path="/admin/products" component={ProductsManagement} />
+            <Route path="/admin/categories" component={CategoriesManagement} />
+            <Route path="/admin/collections" component={CollectionsManagement} />
+            <Route path="/admin/orders" component={OrdersManagement} />
+            <Route path="/admin/users" component={UsersManagement} />
+            <Route path="/admin/banners" component={BannersManagement} />
+            <Route path="/admin/popup" component={Popup} />
+            <Route path="/admin/promotimer">
+              <PromoTimerPage />
             </Route>
-            
-            <Route path="*">
-              <ProtectedRoute>
-                <div className="flex min-h-screen">
-                  <Sidebar />
-                  <div className="flex-1 flex flex-col">
-                    <Header />
-                    <main className="flex-1 p-6 overflow-auto">
-                      <Switch>
-                        <Route path="/" component={Dashboard} />
-                        <Route path="/products" component={ProductsManagement} />
-                        <Route path="/orders" component={OrdersManagement} />
-                        <Route path="/users" component={UsersManagement} />
-                        <Route>
-                          <div className="flex items-center justify-center h-full">
-                            <div className="text-center">
-                              <h1 className="text-2xl font-heading text-primary mb-4">Page Not Found</h1>
-                              <p className="text-neutral-gray">The page you are looking for does not exist.</p>
-                            </div>
-                          </div>
-                        </Route>
-                      </Switch>
-                    </main>
-                  </div>
+            <Route path="/admin/storemanage" component={StoreManagePage} />
+            <Route path="/admin/settings" component={SettingsManagement} />
+            <Route path="/admin/contacts" component={ContactsManagement} />
+            <Route path="/admin/blogs" component={BlogsManagement} />
+            <Route path="/admin" component={Dashboard} />
+            <Route>
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <h1 className="text-2xl font-heading text-primary mb-4">Page Not Found</h1>
+                  <p className="text-neutral-gray">The page you are looking for does not exist.</p>
                 </div>
-              </ProtectedRoute>
+              </div>
             </Route>
           </Switch>
-        </div>
-        <Toaster />
-      </TooltipProvider>
-    </AdminAuthProvider>
+        </main>
+      </div>
+    </div>
   );
 }
 
-// ProtectedRoute component to check authentication
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function App() {
   return (
-    <div>
-      {children}
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <AdminAuthProvider>
+        <TooltipProvider>
+          <Switch>
+            <Route path="/admin/login" component={AdminLogin} />
+            <Route path="/admin/:rest*" component={AdminContainer} />
+            <Route>
+              <Redirect to="/admin/login" />
+            </Route>
+          </Switch>
+          <Toaster />
+        </TooltipProvider>
+      </AdminAuthProvider>
+    </QueryClientProvider>
   );
 }
 

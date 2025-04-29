@@ -5,22 +5,56 @@ import { useCart } from "@/hooks/useCart";
 import { Product } from "@shared/schema";
 import { formatCurrency } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { useState } from "react";
 
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const recommendedProducts = [
+  {
+    _id: 'r1',
+    name: 'Rose And Jasmine Body Cleanser',
+    slug: 'rose-jasmine-body-cleanser',
+    imageUrl: 'https://images.unsplash.com/photo-1611080541599-8c6c79cdf95f',
+    price: 495,
+  },
+  {
+    _id: 'r2',
+    name: 'Rose & Jasmine Hair Cleanser',
+    slug: 'rose-jasmine-hair-cleanser',
+    imageUrl: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b',
+    price: 445,
+  },
+  {
+    _id: 'r3',
+    name: 'Pure Rose Water Toner',
+    slug: 'pure-rose-water-toner',
+    imageUrl: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b',
+    price: 350,
+  },
+];
+
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { cartItems, subtotal, removeItem, updateQuantity, isEmpty } = useCart();
+  const [recIndex, setRecIndex] = useState(0);
+
+  const showRecommendations = isEmpty;
+  const visibleRecs = recommendedProducts.slice(recIndex, recIndex + 2);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md p-0 h-[100svh] top-0 right-0 translate-x-0 border-l rounded-none" side="right">
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <p className="font-medium">Your Cart ({cartItems.length})</p>
+      <DialogContent
+        className="fixed inset-y-0 right-0 w-full max-w-sm sm:max-w-md p-0 bg-white border-l shadow-xl overflow-auto h-full \
+          data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right"
+      >
+        {/* Header with View Bag */}
+        <div className="pt-6 pb-4 px-6 flex items-center justify-between border-b border-gray-100">
+          <div className="flex-1 text-center font-medium text-[15px]">Items in your bag</div>
+          <Link href="/cart" className="text-[15px] text-[#c05a36] font-medium hover:underline ml-auto">View Bag</Link>
           <button 
-            className="text-foreground" 
+            className="ml-2 text-foreground" 
             onClick={onClose}
             aria-label="Close cart"
           >
@@ -29,23 +63,59 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </svg>
           </button>
         </div>
-        
         <div className="flex flex-col h-[calc(100%-160px)] overflow-auto">
           {isEmpty ? (
-            <div className="text-center py-12 h-full flex flex-col items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-muted-foreground mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              <p className="text-muted-foreground">Your cart is empty</p>
-              <Button 
-                variant="outline" 
-                className="mt-4 border-primary text-primary hover:bg-primary hover:text-white uppercase tracking-wider py-2 px-6 font-medium text-sm transition-colors duration-300"
-                onClick={onClose}
-                asChild
-              >
-                <Link href="/collections/all">Continue Shopping</Link>
-              </Button>
-            </div>
+            <>
+              <div className="flex flex-col items-center justify-center py-12">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 text-neutral-400 mb-8" fill="none" viewBox="0 0 64 64" stroke="currentColor">
+                  <rect x="12" y="20" width="40" height="32" rx="6" strokeWidth="2.5" fill="none"/>
+                  <path d="M20 20V16a12 12 0 0 1 24 0v4" strokeWidth="2.5" fill="none"/>
+                </svg>
+                <div className="text-lg font-bold text-neutral-700 mb-4">Your Shopping Bag Is Empty</div>
+                <Button 
+                  className="w-full max-w-xs bg-neutral-800 hover:bg-neutral-700 text-white rounded-none text-base font-semibold py-4 mb-8"
+                  onClick={onClose}
+                  asChild
+                >
+                  <Link href="/collections/all">Continue Shopping</Link>
+                </Button>
+              </div>
+              {/* Recommendations Slider */}
+              <div className="px-6 pb-6">
+                <div className="font-serif font-medium text-[16px] text-neutral-700 mb-3">Recommendations</div>
+                <div className="relative">
+                  <button
+                    className="absolute left-0 top-1/2 -translate-y-1/2 bg-white border border-neutral-200 rounded-full p-1 shadow z-10"
+                    onClick={() => setRecIndex((i) => Math.max(i - 1, 0))}
+                    disabled={recIndex === 0}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <div className="flex gap-4 justify-center ml-8 mr-8">
+                    {visibleRecs.map((rec) => (
+                      <div key={rec._id} className="w-28 flex-shrink-0 flex flex-col items-center">
+                        <Link href={`/products/${rec.slug}`} className="block mb-2">
+                          <img src={rec.imageUrl} alt={rec.name} className="w-24 h-24 object-contain rounded bg-neutral-100" />
+                        </Link>
+                        <div className="text-xs text-center font-medium mb-1 line-clamp-2" style={{minHeight: '2.5em'}}>{rec.name}</div>
+                        <div className="text-xs text-neutral-700 font-semibold">₹{rec.price}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    className="absolute right-0 top-1/2 -translate-y-1/2 bg-white border border-neutral-200 rounded-full p-1 shadow z-10"
+                    onClick={() => setRecIndex((i) => Math.min(i + 1, recommendedProducts.length - 2))}
+                    disabled={recIndex >= recommendedProducts.length - 2}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </>
           ) : (
             <div className="divide-y divide-border">
               {cartItems.map((item) => (
@@ -114,33 +184,34 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </div>
           )}
         </div>
-        
-        <div className="border-t border-border mt-auto p-4 space-y-4">
-          <div className="flex justify-between items-center font-medium">
-            <span>Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
+        {!isEmpty && (
+          <div className="border-t border-border mt-auto p-4 space-y-4">
+            <div className="flex justify-between items-center font-medium">
+              <span>Subtotal</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Shipping, taxes, and discounts calculated at checkout
+            </p>
+            <Separator />
+            <Button
+              className="w-full bg-primary hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium"
+              disabled={isEmpty}
+              onClick={onClose}
+              asChild
+            >
+              <Link href="/checkout">Checkout</Link>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full border-primary text-primary hover:bg-primary hover:text-white uppercase tracking-wider py-2 font-medium text-sm"
+              onClick={onClose}
+              asChild
+            >
+              <Link href="/collections/all">Continue Shopping</Link>
+            </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Shipping, taxes, and discounts calculated at checkout
-          </p>
-          <Separator />
-          <Button
-            className="w-full bg-primary hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium"
-            disabled={isEmpty}
-            onClick={onClose}
-            asChild
-          >
-            <Link href="/checkout">Checkout</Link>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="w-full border-primary text-primary hover:bg-primary hover:text-white uppercase tracking-wider py-2 font-medium text-sm"
-            onClick={onClose}
-            asChild
-          >
-            <Link href="/collections/all">Continue Shopping</Link>
-          </Button>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -6,6 +6,8 @@ export interface ICategory extends Document {
   slug: string;
   imageUrl?: string;
   featured: boolean;
+  desktopImageUrl?: string;
+  mobileImageUrl?: string;
 }
 
 const CategorySchema: Schema = new Schema({
@@ -13,7 +15,9 @@ const CategorySchema: Schema = new Schema({
   description: { type: String },
   slug: { type: String, required: true, unique: true },
   imageUrl: { type: String },
-  featured: { type: Boolean, default: false }
+  featured: { type: Boolean, default: false },
+  desktopImageUrl: { type: String },
+  mobileImageUrl: { type: String },
 });
 
 export default mongoose.model<ICategory>('Category', CategorySchema);

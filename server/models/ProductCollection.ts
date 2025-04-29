@@ -1,13 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IProductCollection extends Document {
-  productId: number;
-  collectionId: number;
+  productId: string;
+  collectionId: string;
 }
 
 const ProductCollectionSchema: Schema = new Schema({
-  productId: { type: Number, required: true },
-  collectionId: { type: Number, required: true }
+  productId: { type: String, required: true },
+  collectionId: { type: String, required: true }
 });
 
 // Compound index to ensure uniqueness of product-collection pairs

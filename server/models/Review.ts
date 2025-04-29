@@ -1,16 +1,16 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IReview extends Document {
-  userId: number;
-  productId: number;
+  userId: string;
+  productId: string;
   rating: number;
   comment: string;
   createdAt: Date;
 }
 
 const ReviewSchema: Schema = new Schema({
-  userId: { type: Number, required: true },
-  productId: { type: Number, required: true },
+  userId: { type: String, required: true },
+  productId: { type: String, required: true },
   rating: { type: Number, required: true, min: 1, max: 5 },
   comment: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }

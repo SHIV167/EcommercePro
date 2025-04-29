@@ -1,15 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrderItem extends Document {
-  orderId: number;
-  productId: number;
+  orderId: string;
+  productId: string;
   quantity: number;
   price: number;
 }
 
 const OrderItemSchema: Schema = new Schema({
-  orderId: { type: Number, required: true },
-  productId: { type: Number, required: true },
+  orderId: { type: String, required: true },
+  productId: { type: String, required: true },
   quantity: { type: Number, required: true },
   price: { type: Number, required: true }
 });

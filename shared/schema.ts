@@ -1,207 +1,161 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, json } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Products schema
-export const products = pgTable("products", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-  shortDescription: text("short_description"),
-  price: doublePrecision("price").notNull(),
-  discountedPrice: doublePrecision("discounted_price"),
-  imageUrl: text("image_url").notNull(),
-  stock: integer("stock").notNull().default(0),
-  rating: doublePrecision("rating").default(0),
-  totalReviews: integer("total_reviews").default(0),
-  slug: text("slug").notNull().unique(),
-  categoryId: integer("category_id").notNull(),
-  featured: boolean("featured").default(false),
-  bestseller: boolean("bestseller").default(false),
-  isNew: boolean("is_new").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+// Product Zod schema and TypeScript type
+export const productSchema = z.object({
+  _id: z.string().optional(), // MongoDB ObjectId as string
+  name: z.string(),
+  description: z.string(),
+  shortDescription: z.string().optional(),
+  price: z.number(),
+  discountedPrice: z.number().optional().nullable(),
+  imageUrl: z.string(),
+  stock: z.number(),
+  rating: z.number().optional(),
+  totalReviews: z.number().optional(),
+  slug: z.string(),
+  categoryId: z.string(), // MongoDB ObjectId as string
+  featured: z.boolean().optional(),
+  bestseller: z.boolean().optional(),
+  isNew: z.boolean().optional(),
+  createdAt: z.date().optional(),
+  images: z.array(z.string()).optional().default([]),
+  videoUrl: z.string().optional(),
 });
+export type Product = z.infer<typeof productSchema>;
 
-export const productInsertSchema = createInsertSchema(products)
-  .omit({ id: true, createdAt: true });
+// InsertProduct type omits id, _id, and createdAt for creation
+export type InsertProduct = Omit<Product, 'id' | '_id' | 'createdAt'>;
 
-// Categories schema
-export const categories = pgTable("categories", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
-  slug: text("slug").notNull().unique(),
-  imageUrl: text("image_url"),
-  featured: boolean("featured").default(false),
+// User types
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  phone?: string;
+  isAdmin: boolean;
+  createdAt: Date;
+};
+export type InsertUser = Omit<User, 'id' | '_id' | 'createdAt' | 'isAdmin'>;
+
+// Order types
+export type Order = {
+  id?: string;
+  userId: string;
+  status: string;
+  totalAmount: number;
+  shippingAddress: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  createdAt: Date;
+};
+export type InsertOrder = Omit<Order, 'id' | '_id' | 'createdAt'>;
+
+// OrderItem types
+export type OrderItem = {
+  id?: string;
+  orderId: string;
+  productId: string;
+  quantity: number;
+  price: number;
+};
+export type InsertOrderItem = Omit<OrderItem, 'id' | '_id'>;
+
+// Review types
+export type Review = {
+  id?: string;
+  userId: string;
+  productId: string;
+  rating: number;
+  comment: string;
+  createdAt: Date;
+};
+export type InsertReview = Omit<Review, 'id' | '_id' | 'createdAt'>;
+
+// Testimonial types
+export type Testimonial = {
+  id?: string;
+  name: string;
+  content: string;
+  rating: number;
+  featured: boolean;
+  createdAt: Date;
+};
+export type InsertTestimonial = Omit<Testimonial, 'id' | '_id' | 'createdAt'>;
+
+// Cart types
+export type Cart = {
+  id?: string;
+  userId?: string;
+  sessionId?: string;
+  createdAt: Date;
+};
+export type InsertCart = Omit<Cart, 'id' | '_id' | 'createdAt'>;
+
+// CartItem types
+export type CartItem = {
+  id?: string;
+  cartId: string;
+  productId: string;
+  quantity: number;
+};
+export type InsertCartItem = Omit<CartItem, 'id' | '_id'>;
+
+// Banner types
+export type Banner = {
+  id?: string;
+  title: string;
+  subtitle?: string;
+  desktopImageUrl: string;
+  mobileImageUrl: string;
+  alt: string;
+  linkUrl?: string;
+  enabled: boolean;
+  position: number;
+};
+export type InsertBanner = Omit<Banner, 'id' | '_id'>;
+
+// Category Zod schema and TypeScript type
+export const categorySchema = z.object({
+  _id: z.string().optional(),
+  name: z.string(),
+  description: z.string().optional(),
+  slug: z.string(),
+  imageUrl: z.string().optional(),
+  desktopImageUrl: z.string().url().optional(),
+  mobileImageUrl: z.string().url().optional(),
+  featured: z.boolean().optional(),
 });
+export type Category = z.infer<typeof categorySchema>;
 
-export const categoryInsertSchema = createInsertSchema(categories)
-  .omit({ id: true });
+// InsertCategory type for creating categories
+export type InsertCategory = Omit<Category, 'id' | '_id'>;
 
-// Collections schema
-export const collections = pgTable("collections", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
-  slug: text("slug").notNull().unique(),
-  imageUrl: text("image_url"),
-  featured: boolean("featured").default(false),
+// Collection Zod schema and TypeScript type
+export const collectionSchema = z.object({
+  _id: z.string().optional(),
+  name: z.string(),
+  description: z.string().optional(),
+  slug: z.string(),
+  imageUrl: z.string().optional(),
+  desktopImageUrl: z.string().optional(),
+  mobileImageUrl: z.string().optional(),
+  featured: z.boolean().optional(),
 });
+export type Collection = z.infer<typeof collectionSchema>;
+export type InsertCollection = Omit<Collection, 'id' | '_id'>;
 
-export const collectionInsertSchema = createInsertSchema(collections)
-  .omit({ id: true });
-
-// Product-Collection join table
-export const productCollections = pgTable("product_collections", {
-  id: serial("id").primaryKey(),
-  productId: integer("product_id").notNull(),
-  collectionId: integer("collection_id").notNull(),
+// ProductCollection join Zod schema and TypeScript type
+export const productCollectionSchema = z.object({
+  _id: z.string().optional(),
+  productId: z.string(),
+  collectionId: z.string(),
 });
+export type ProductCollection = z.infer<typeof productCollectionSchema>;
 
-export const productCollectionInsertSchema = createInsertSchema(productCollections)
-  .omit({ id: true });
-
-// Users schema
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  address: text("address"),
-  city: text("city"),
-  state: text("state"),
-  zipCode: text("zip_code"),
-  phone: text("phone"),
-  isAdmin: boolean("is_admin").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const userInsertSchema = createInsertSchema(users)
-  .omit({ id: true, isAdmin: true, createdAt: true });
-
-// Orders schema
-export const orders = pgTable("orders", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  status: text("status").notNull().default("pending"),
-  total: doublePrecision("total").notNull(),
-  shippingAddress: text("shipping_address").notNull(),
-  billingAddress: text("billing_address").notNull(),
-  paymentMethod: text("payment_method").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const orderInsertSchema = createInsertSchema(orders)
-  .omit({ id: true, createdAt: true });
-
-// Order items schema
-export const orderItems = pgTable("order_items", {
-  id: serial("id").primaryKey(),
-  orderId: integer("order_id").notNull(),
-  productId: integer("product_id").notNull(),
-  quantity: integer("quantity").notNull(),
-  price: doublePrecision("price").notNull(),
-});
-
-export const orderItemInsertSchema = createInsertSchema(orderItems)
-  .omit({ id: true });
-
-// Reviews schema
-export const reviews = pgTable("reviews", {
-  id: serial("id").primaryKey(),
-  productId: integer("product_id").notNull(),
-  userId: integer("user_id").notNull(),
-  rating: integer("rating").notNull(),
-  review: text("review"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const reviewInsertSchema = createInsertSchema(reviews)
-  .omit({ id: true, createdAt: true });
-
-// Testimonials schema
-export const testimonials = pgTable("testimonials", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  location: text("location"),
-  rating: integer("rating").notNull(),
-  testimonial: text("testimonial").notNull(),
-  featured: boolean("featured").default(false),
-});
-
-export const testimonialInsertSchema = createInsertSchema(testimonials)
-  .omit({ id: true });
-
-// Cart schema
-export const carts = pgTable("carts", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id"),
-  sessionId: text("session_id"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const cartInsertSchema = createInsertSchema(carts)
-  .omit({ id: true, createdAt: true });
-
-// Cart items schema
-export const cartItems = pgTable("cart_items", {
-  id: serial("id").primaryKey(),
-  cartId: integer("cart_id").notNull(),
-  productId: integer("product_id").notNull(),
-  quantity: integer("quantity").notNull(),
-});
-
-export const cartItemInsertSchema = createInsertSchema(cartItems)
-  .omit({ id: true });
-
-// Banner schema
-export const banners = pgTable("banners", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  subtitle: text("subtitle"),
-  imageUrl: text("image_url").notNull(),
-  buttonText: text("button_text"),
-  buttonLink: text("button_link"),
-  active: boolean("active").default(true),
-  order: integer("order").default(0),
-});
-
-export const bannerInsertSchema = createInsertSchema(banners)
-  .omit({ id: true });
-
-// Type exports
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof productInsertSchema>;
-
-export type Category = typeof categories.$inferSelect;
-export type InsertCategory = z.infer<typeof categoryInsertSchema>;
-
-export type Collection = typeof collections.$inferSelect;
-export type InsertCollection = z.infer<typeof collectionInsertSchema>;
-
-export type ProductCollection = typeof productCollections.$inferSelect;
-export type InsertProductCollection = z.infer<typeof productCollectionInsertSchema>;
-
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof userInsertSchema>;
-
-export type Order = typeof orders.$inferSelect;
-export type InsertOrder = z.infer<typeof orderInsertSchema>;
-
-export type OrderItem = typeof orderItems.$inferSelect;
-export type InsertOrderItem = z.infer<typeof orderItemInsertSchema>;
-
-export type Review = typeof reviews.$inferSelect;
-export type InsertReview = z.infer<typeof reviewInsertSchema>;
-
-export type Testimonial = typeof testimonials.$inferSelect;
-export type InsertTestimonial = z.infer<typeof testimonialInsertSchema>;
-
-export type Cart = typeof carts.$inferSelect;
-export type InsertCart = z.infer<typeof cartInsertSchema>;
-
-export type CartItem = typeof cartItems.$inferSelect;
-export type InsertCartItem = z.infer<typeof cartItemInsertSchema>;
-
-export type Banner = typeof banners.$inferSelect;
-export type InsertBanner = z.infer<typeof bannerInsertSchema>;
+// InsertProductCollection type for creating product-collection mappings
+export type InsertProductCollection = Omit<ProductCollection, 'id' | '_id'>;

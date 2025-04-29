@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrder extends Document {
-  userId: number;
+  userId: string;
   status: string;
   totalAmount: number;
   shippingAddress: string;
@@ -11,7 +11,7 @@ export interface IOrder extends Document {
 }
 
 const OrderSchema: Schema = new Schema({
-  userId: { type: Number, required: true },
+  userId: { type: String, required: true },
   status: { type: String, required: true, default: 'pending' },
   totalAmount: { type: Number, required: true },
   shippingAddress: { type: String, required: true },

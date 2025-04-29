@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Order } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,32 +35,49 @@ import {
 export default function OrdersManagement() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState<string>("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
-  
+  const [statusToUpdate, setStatusToUpdate] = useState<string>("");
+
   const limit = 10;
-  
+
   // Fetch orders
-  const { data: ordersData, isLoading } = useQuery({
+  const { data: ordersData, isLoading, isError } = useQuery({
     queryKey: ['/api/orders', { page, limit, search, statusFilter, dateFilter }],
+    queryFn: async () => {
+      let url = `/api/orders?page=${page}&limit=${limit}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (statusFilter && statusFilter !== "all") url += `&status=${statusFilter}`;
+      if (dateFilter && dateFilter !== "all") url += `&date=${dateFilter}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch orders');
+      return res.json();
+    },
   });
-  
-  // Extract orders and pagination info
-  const orders = ordersData?.data || [];
-  const totalPages = ordersData?.totalPages || 1;
-  
+
+  // Defensive extraction of orders and pagination info
+  const orders = Array.isArray(ordersData?.orders) ? ordersData.orders : [];
+  const total = typeof ordersData?.total === 'number' ? ordersData.total : 0;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  // --- Map backend _id to id for all orders to ensure consistent usage in frontend ---
+  const normalizedOrders = orders.map((order: any) => ({
+    ...order,
+    id: order.id || order._id || '',
+  }));
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1); // Reset page when searching
   };
-  
+
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setIsOrderDetailsOpen(true);
   };
-  
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'completed':
@@ -77,7 +94,7 @@ export default function OrdersManagement() {
         return 'bg-neutral-100 text-neutral-800';
     }
   };
-  
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -85,14 +102,60 @@ export default function OrdersManagement() {
       day: 'numeric',
     });
   };
-  
+
+  const updateOrderMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error("Failed to update order");
+      return res.json();
+    },
+    onSuccess: () => {
+      setIsOrderDetailsOpen(false);
+      window.location.reload(); // Or refetch orders if you want a better UX
+    },
+  });
+
+  const handleUpdateOrder = () => {
+    if (selectedOrder && statusToUpdate) {
+      updateOrderMutation.mutate({ id: String(selectedOrder.id), status: statusToUpdate });
+    }
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusToUpdate(value);
+  };
+
+  const handleExportCSV = () => {
+    if (!orders.length) return;
+    const header = ["Order ID", "Customer", "Date", "Status", "Total"];
+    const rows = orders.map((order: Order) => [
+      order.id,
+      order.userId,
+      formatDate(String(order.createdAt)),
+      order.status,
+      typeof order.totalAmount === 'number' ? order.totalAmount.toFixed(2) : '0.00',
+    ]);
+    const csvContent = [header, ...rows].map(r => r.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `orders_export_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-heading text-primary mb-1">Orders</h1>
         <p className="text-muted-foreground">Manage customer orders</p>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="py-4">
@@ -104,7 +167,7 @@ export default function OrdersManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="py-4">
             <CardTitle className="text-lg">Pending</CardTitle>
@@ -115,7 +178,7 @@ export default function OrdersManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="py-4">
             <CardTitle className="text-lg">Processing</CardTitle>
@@ -126,7 +189,7 @@ export default function OrdersManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="py-4">
             <CardTitle className="text-lg">Delivered</CardTitle>
@@ -138,7 +201,7 @@ export default function OrdersManagement() {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="flex flex-col md:flex-row gap-4 md:items-end">
         <div className="flex-1">
           <form onSubmit={handleSearch} className="flex gap-2">
@@ -168,14 +231,14 @@ export default function OrdersManagement() {
             </Button>
           </form>
         </div>
-        
+
         <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="processing">Processing</SelectItem>
               <SelectItem value="shipped">Shipped</SelectItem>
@@ -183,8 +246,8 @@ export default function OrdersManagement() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Select value={dateFilter} onValueChange={setDateFilter}>
+
+          <Select value={dateFilter} onValueChange={(value) => setDateFilter(typeof value === 'string' ? value : '')}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Date Range" />
             </SelectTrigger>
@@ -197,8 +260,8 @@ export default function OrdersManagement() {
               <SelectItem value="custom">Custom Range</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Button variant="outline">
+
+          <Button variant="outline" onClick={handleExportCSV}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
@@ -219,7 +282,7 @@ export default function OrdersManagement() {
           </Button>
         </div>
       </div>
-      
+
       <div className="border rounded-md">
         <div className="overflow-x-auto">
           <table className="w-full data-table">
@@ -257,18 +320,18 @@ export default function OrdersManagement() {
                     </td>
                   </tr>
                 ))
-              ) : orders.length > 0 ? (
-                orders.map((order) => (
+              ) : normalizedOrders.length > 0 ? (
+                normalizedOrders.map((order: Order) => (
                   <tr key={order.id}>
-                    <td>#{order.id}</td>
+                    <td>{order.id ? `#${order.id}` : ''}</td>
                     <td>{order.userId}</td>
-                    <td>{formatDate(order.createdAt)}</td>
+                    <td>{formatDate(String(order.createdAt))}</td>
                     <td>
                       <span className={`inline-block px-2 py-1 text-xs rounded-full ${getStatusBadgeClass(order.status)}`}>
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </span>
                     </td>
-                    <td>₹{order.total.toFixed(2)}</td>
+                    <td>₹{typeof order.totalAmount === 'number' ? order.totalAmount.toFixed(2) : '0.00'}</td>
                     <td>
                       <div className="flex space-x-2">
                         <Button
@@ -281,6 +344,7 @@ export default function OrdersManagement() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => handleViewOrder(order)}
                         >
                           Update
                         </Button>
@@ -299,7 +363,7 @@ export default function OrdersManagement() {
           </table>
         </div>
       </div>
-      
+
       <Pagination>
         <PaginationContent>
           <PaginationItem>
@@ -312,7 +376,7 @@ export default function OrdersManagement() {
               className={page === 1 ? "pointer-events-none opacity-50" : ""}
             />
           </PaginationItem>
-          
+
           {Array.from({ length: totalPages }).map((_, i) => (
             <PaginationItem key={i}>
               <PaginationLink
@@ -327,7 +391,7 @@ export default function OrdersManagement() {
               </PaginationLink>
             </PaginationItem>
           ))}
-          
+
           <PaginationItem>
             <PaginationNext 
               href="#" 
@@ -340,17 +404,17 @@ export default function OrdersManagement() {
           </PaginationItem>
         </PaginationContent>
       </Pagination>
-      
+
       {/* Order Details Dialog */}
       <Dialog open={isOrderDetailsOpen} onOpenChange={setIsOrderDetailsOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-8">
           <DialogHeader>
             <DialogTitle>Order Details - #{selectedOrder?.id}</DialogTitle>
             <DialogDescription>
-              Placed on {selectedOrder && formatDate(selectedOrder.createdAt)}
+              Placed on {selectedOrder && formatDate(String(selectedOrder.createdAt))}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedOrder && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -362,7 +426,7 @@ export default function OrdersManagement() {
                     <p>Phone: Customer Phone</p>
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="font-heading text-sm text-muted-foreground mb-2">Payment Information</h3>
                   <div className="border rounded-md p-4">
@@ -371,22 +435,22 @@ export default function OrdersManagement() {
                     <p>Transaction ID: TXNID123456</p>
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="font-heading text-sm text-muted-foreground mb-2">Shipping Address</h3>
                   <div className="border rounded-md p-4">
                     <p>{selectedOrder.shippingAddress}</p>
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="font-heading text-sm text-muted-foreground mb-2">Billing Address</h3>
                   <div className="border rounded-md p-4">
-                    <p>{selectedOrder.billingAddress}</p>
+                    <p>{selectedOrder.shippingAddress}</p>
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="font-heading text-sm text-muted-foreground mb-2">Order Items</h3>
                 <div className="border rounded-md p-4">
@@ -395,7 +459,7 @@ export default function OrdersManagement() {
                       <span className="font-medium">Product</span>
                       <span className="font-medium">Total</span>
                     </div>
-                    
+
                     <div className="space-y-2">
                       {/* Sample order items */}
                       <div className="flex justify-between items-center">
@@ -408,7 +472,7 @@ export default function OrdersManagement() {
                         </div>
                         <span>₹1,995.00</span>
                       </div>
-                      
+
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <div className="h-10 w-10 bg-muted rounded"></div>
@@ -420,7 +484,7 @@ export default function OrdersManagement() {
                         <span>₹1,250.00</span>
                       </div>
                     </div>
-                    
+
                     <div className="border-t pt-2 space-y-1">
                       <div className="flex justify-between">
                         <span>Subtotal</span>
@@ -436,15 +500,15 @@ export default function OrdersManagement() {
                       </div>
                       <div className="flex justify-between font-bold">
                         <span>Total</span>
-                        <span>₹{selectedOrder.total.toFixed(2)}</span>
+                        <span>₹{typeof selectedOrder.totalAmount === 'number' ? selectedOrder.totalAmount.toFixed(2) : '0.00'}</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-between items-center border-t pt-4">
-                <Select defaultValue={selectedOrder.status}>
+                <Select value={statusToUpdate || selectedOrder?.status} onValueChange={handleStatusChange}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Change Status" />
                   </SelectTrigger>
@@ -456,10 +520,12 @@ export default function OrdersManagement() {
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
-                
+
                 <div className="space-x-2">
                   <Button variant="outline">Print Invoice</Button>
-                  <Button className="bg-primary hover:bg-primary-light text-white">Update Order</Button>
+                  <Button className="bg-primary hover:bg-primary-light text-white" onClick={handleUpdateOrder} disabled={updateOrderMutation.isPending}>
+                    {updateOrderMutation.isPending ? "Updating..." : "Update Order"}
+                  </Button>
                 </div>
               </div>
             </div>

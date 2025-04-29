@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Product, Collection } from "@shared/schema";
@@ -12,18 +12,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Helmet } from 'react-helmet';
+import CollectionBanner from '@/components/layout/CollectionBanner';
+import GreenBoxSlider from '@/components/home/GreenBoxSlider';
 
 export default function CollectionPage() {
   const { slug } = useParams();
+  
+  if (!slug) return null;
+
   const [sortBy, setSortBy] = useState("featured");
   
-  const { data: collection, isLoading: collectionLoading } = useQuery<Collection>({
-    queryKey: [`/api/collections/${slug}`],
-  });
+  const specialSlugs = ["featured", "bestsellers", "new"];
+  const isSpecial = specialSlugs.includes(slug);
   
-  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: [`/api/collections/${slug}/products`],
-  });
+  const { data: collection, isLoading: collectionLoading } = !isSpecial
+    ? useQuery<Collection>({
+        queryKey: [`/api/collections/${slug}`],
+        enabled: !!slug,
+      })
+    : { data: undefined, isLoading: false as boolean };
+  
+  const productsQuery = isSpecial
+    ? useQuery<Product[]>({
+        queryKey: [`/api/products/${slug}`],
+        queryFn: async () => {
+          const res = await fetch(`/api/products/${slug}`);
+          const json = await res.json();
+          return (json.data ?? json) as Product[];
+        },
+        enabled: !!slug,
+        staleTime: 0,
+        refetchOnMount: true,
+      })
+    : useQuery<Product[]>({
+        queryKey: [`/api/collections/${slug}/products`],
+        queryFn: async () => {
+          const res = await fetch(`/api/collections/${slug}/products`);
+          const json = await res.json();
+          return (json.data ?? json) as Product[];
+        },
+        enabled: !!slug,
+        staleTime: 0,
+        refetchOnMount: true,
+      });
+  const products = Array.isArray(productsQuery.data) ? productsQuery.data : [];
+  const productsLoading = productsQuery.isLoading;
   
   // Sort products based on selected option
   const sortedProducts = [...products].sort((a, b) => {
@@ -37,7 +70,7 @@ export default function CollectionPage() {
       case "name-desc":
         return b.name.localeCompare(a.name);
       case "rating":
-        return b.rating - a.rating;
+        return (b.rating ?? 0) - (a.rating ?? 0);
       default:
         // featured - show featured products first, then bestsellers, then new
         if (a.featured && !b.featured) return -1;
@@ -52,6 +85,15 @@ export default function CollectionPage() {
   
   const isLoading = collectionLoading || productsLoading;
   
+  useEffect(() => {
+    async function fetchPromoTimers() {
+      const res = await fetch("/api/promotimers");
+      const timers = await res.json();
+      (window as any).PROMO_TIMERS = timers;
+    }
+    fetchPromoTimers();
+  }, []);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -78,7 +120,7 @@ export default function CollectionPage() {
     );
   }
   
-  if (!collection) {
+  if (!collection && !isSpecial) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-heading text-primary mb-4">Collection Not Found</h1>
@@ -93,14 +135,31 @@ export default function CollectionPage() {
   return (
     <>
       <Helmet>
-        <title>{collection.name} | Kama Ayurveda</title>
-        <meta name="description" content={collection.description || `Explore our ${collection.name} collection of premium Ayurvedic beauty products.`} />
+        <title>
+          {isSpecial
+            ? slug.charAt(0).toUpperCase() + slug.slice(1)
+            : collection?.name} {"|"} Kama Ayurveda
+        </title>
+        <meta
+          name="description"
+          content={
+            isSpecial
+              ? `Explore our ${slug} products.`
+              : collection?.description ||
+                `Explore our ${collection?.name} collection of premium Ayurvedic beauty products.`
+          }
+        />
       </Helmet>
+      <CollectionBanner slug={slug!} />
       
       <div className="bg-neutral-cream py-10">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="font-heading text-3xl md:text-4xl text-primary mb-4">{collection.name}</h1>
-          {collection.description && (
+          <h1 className="font-heading text-3xl md:text-4xl text-primary mb-4">
+            {isSpecial
+              ? slug.charAt(0).toUpperCase() + slug.slice(1)
+              : collection?.name}
+          </h1>
+          {collection?.description && (
             <p className="text-neutral-gray max-w-2xl mx-auto">{collection.description}</p>
           )}
         </div>
@@ -128,7 +187,7 @@ export default function CollectionPage() {
         {sortedProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {sortedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} showAddToCart />
+              <ProductCard key={product._id!} product={product} showAddToCart />
             ))}
           </div>
         ) : (
@@ -140,6 +199,7 @@ export default function CollectionPage() {
           </div>
         )}
       </div>
+      <GreenBoxSlider />
     </>
   );
 }

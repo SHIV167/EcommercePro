@@ -1,4 +1,5 @@
-import { Link } from "wouter";
+import { useState } from 'react';
+import { Link } from 'wouter';
 import { Button } from "@/components/ui/button";
 
 export default function AyurvedicBanner() {

@@ -10,23 +10,36 @@ import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Helmet } from 'react-helmet';
+import { useEffect } from "react";
+import StickyAddToCart from "@/components/products/StickyAddToCart";
 
 export default function ProductPage() {
   const { slug } = useParams();
   const [, navigate] = useLocation();
   const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { addItem } = useCart();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   
   const { data: product, isLoading: productLoading, error } = useQuery<Product>({
     queryKey: [`/api/products/${slug}`],
+    enabled: !!slug,
   });
   
   const { data: reviews = [], isLoading: reviewsLoading } = useQuery<Review[]>({
-    queryKey: [`/api/products/${product?.id}/reviews`],
-    enabled: !!product?.id,
+    queryKey: [`/api/products/${product?._id}/reviews`],
+    enabled: !!product?._id,
   });
+  
+  useEffect(() => {
+    async function fetchPromoTimers() {
+      const res = await fetch("/api/promotimers");
+      const timers = await res.json();
+      (window as any).PROMO_TIMERS = timers;
+    }
+    fetchPromoTimers();
+  }, []);
   
   if (productLoading) {
     return (
@@ -89,11 +102,24 @@ export default function ProductPage() {
           {/* Product Image */}
           <div className="w-full md:w-1/2">
             <div className="border border-neutral-sand p-8 rounded-md">
-              <img 
-                src={product.imageUrl} 
+              <img
+                src={product.images?.[selectedImageIndex] || product.imageUrl}
                 alt={product.name}
                 className="w-full h-auto max-h-[500px] object-contain mx-auto"
               />
+              {product.images && product.images.length > 1 && (
+                <div className="flex mt-4 space-x-2 justify-center">
+                  {product.images.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img}
+                      alt={`${product.name} ${idx + 1}`}
+                      onClick={() => setSelectedImageIndex(idx)}
+                      className={`w-16 h-16 object-cover cursor-pointer rounded ${idx === selectedImageIndex ? 'ring-2 ring-primary' : 'ring-1 ring-neutral-sand'}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           
@@ -107,10 +133,10 @@ export default function ProductPage() {
             
             <div className="mb-6">
               <p className="font-heading text-xl text-primary">
-                ₹{product.price.toFixed(2)}
+                ₹{product.price?.toFixed(2) ?? '0.00'}
                 {product.discountedPrice && (
                   <span className="ml-3 text-base text-neutral-gray line-through">
-                    ₹{product.discountedPrice.toFixed(2)}
+                    ₹{product.discountedPrice?.toFixed(2) ?? '0.00'}
                   </span>
                 )}
               </p>
@@ -202,13 +228,13 @@ export default function ProductPage() {
                 </div>
               ) : reviews.length > 0 ? (
                 <div className="space-y-6">
-                  {reviews.map((review) => (
-                    <div key={review.id} className="border-b border-neutral-sand pb-6">
+                  {reviews.map((review, idx) => (
+                    <div key={review.id ?? idx} className="border-b border-neutral-sand pb-6">
                       <RatingStars rating={review.rating} size="md" />
                       <p className="text-sm text-muted-foreground mt-1 mb-2">
-                        By Anonymous Customer • {new Date(review.createdAt).toLocaleDateString()}
+                        By Anonymous Customer • {review.createdAt?.toLocaleDateString() ?? ''}
                       </p>
-                      <p className="text-neutral-gray">{review.review}</p>
+                      <p className="text-neutral-gray">{review.comment}</p>
                     </div>
                   ))}
                 </div>
@@ -269,9 +295,15 @@ export default function ProductPage() {
         {/* Related Products */}
         <div className="mt-16">
           <h2 className="font-heading text-2xl text-primary mb-8">You May Also Like</h2>
-          <ProductCollection collectionSlug="bestsellers" title="" />
+          <ProductCollection collectionSlug="bestsellers" title="" slider />
         </div>
       </div>
+      <StickyAddToCart
+        product={product}
+        quantity={quantity}
+        setQuantity={setQuantity}
+        onAddToCart={handleAddToCart}
+      />
     </>
   );
 }

@@ -43,10 +43,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // In a real app, this would verify the user's session with the server
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          const raw = JSON.parse(stored);
+          const localUser = normalizeUser(raw);
+          // Refresh from server to get real ObjectId
+          try {
+            const resp = await apiRequest("GET", `/api/users/${localUser.id}`);
+            const freshRaw = await resp.json();
+            const freshUser = normalizeUser(freshRaw);
+            setUser(freshUser);
+            localStorage.setItem("user", JSON.stringify(freshUser));
+          } catch (e) {
+            console.error("Failed to refresh profile:", e);
+            setUser(localUser);
+          }
         }
       } catch (error) {
         console.error("Authentication check failed:", error);
@@ -58,15 +69,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     checkAuth();
   }, []);
 
+  // Normalize server user object to match User type
+  const normalizeUser = (u: any): User => {
+    return {
+      ...u,
+      id: u.id || u._id,
+    };
+  };
+
   // Login function
   const login = async (email: string, password: string): Promise<User> => {
     try {
-      const response = await apiRequest("POST", "/api/auth/login", {
+      const response = await apiRequest("POST", `${import.meta.env.VITE_API_URL}/api/auth/login`, {
         email,
         password,
       });
       
-      const userData = await response.json();
+      const rawUser = await response.json();
+      const userData = normalizeUser(rawUser);
       
       // Store user data
       localStorage.setItem("user", JSON.stringify(userData));
@@ -95,7 +115,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         password,
       });
       
-      const userData = await response.json();
+      const rawUser = await response.json();
+      const userData = normalizeUser(rawUser);
       
       // Store user data
       localStorage.setItem("user", JSON.stringify(userData));
@@ -111,10 +132,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Logout function
   const logout = async (): Promise<void> => {
     try {
-      // In a real app, we would invalidate the session with the server
+      // Invalidate session on server
+      await apiRequest("POST", "/api/auth/logout");
+      // Clear client-side auth
       localStorage.removeItem("user");
       setUser(null);
-      
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
     } catch (error) {
@@ -129,9 +151,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (!user) {
         throw new Error("Not authenticated");
       }
+      // Debug: log endpoint and data
+      const endpoint = `/api/users/${user.id}`;
+      console.log("updateProfile endpoint:", endpoint, data);
       
-      const response = await apiRequest("PUT", `/api/users/${user.id}`, data);
-      const updatedUser = await response.json();
+      const response = await apiRequest("PUT", endpoint, data);
+      const rawUpdated = await response.json();
+      const updatedUser = normalizeUser(rawUpdated);
       
       // Update stored user data
       localStorage.setItem("user", JSON.stringify(updatedUser));

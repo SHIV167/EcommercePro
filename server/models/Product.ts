@@ -11,11 +11,13 @@ export interface IProduct extends Document {
   rating?: number;
   totalReviews?: number;
   slug: string;
-  categoryId: number;
+  categoryId: string;
   featured: boolean;
   bestseller: boolean;
   isNew: boolean;
   createdAt: Date;
+  images: string[];
+  videoUrl: string;
 }
 
 const ProductSchema: Schema = new Schema({
@@ -29,11 +31,13 @@ const ProductSchema: Schema = new Schema({
   rating: { type: Number, default: 0 },
   totalReviews: { type: Number, default: 0 },
   slug: { type: String, required: true, unique: true },
-  categoryId: { type: Number, required: true },
+  categoryId: { type: String, required: true },
   featured: { type: Boolean, default: false },
   bestseller: { type: Boolean, default: false },
   isNew: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  images: { type: [String], default: [] },
+  videoUrl: { type: String, default: '' },
 });
 
 export default mongoose.model<IProduct>('Product', ProductSchema);

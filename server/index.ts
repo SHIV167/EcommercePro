@@ -1,27 +1,55 @@
-import express, { type Request, Response, NextFunction } from "express";
+import dotenv from 'dotenv';
+dotenv.config();
+import express from "express";
+import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import promoTimerRoutes from './routes/promoTimerRoutes';
+import storeRoutes from './routes/storeRoutes';
 import { setupVite, serveStatic, log } from "./vite";
 import { connectToDatabase, closeDatabaseConnection } from "./db";
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+// CORS middleware: allow all origins and all methods for development
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
+
+// Handle preflight requests globally
+app.options('*', cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
+  const reqPath = req.url;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
+  // @ts-ignore - We need to override the json method
+  res.json = function(bodyJson: any, ...args: any[]) {
     capturedJsonResponse = bodyJson;
+    // @ts-ignore - Apply with arguments
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
+  // @ts-ignore - Express types are incomplete
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+    if (reqPath.startsWith("/api")) {
+      // @ts-ignore - Express types are incomplete
+      let logLine = `${req.method} ${reqPath} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -38,18 +66,41 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Connect to MongoDB
+  let dbConnected = false;
+  
+  // Connect to MongoDB but continue even if it fails
   try {
-    await connectToDatabase();
-    log('MongoDB connected successfully', 'mongodb');
-    
-    // Initialize demo data
+    const connection = await connectToDatabase();
+    if (connection) {
+      log('MongoDB connected successfully', 'mongodb');
+      dbConnected = true;
+    } else {
+      log('MongoDB connection failed but continuing with limited functionality', 'mongodb');
+    }
+  } catch (error) {
+    log(`MongoDB connection error: ${error}`, 'mongodb');
+    // Continue even without MongoDB
+  }
+  // Initialize demo data regardless of database connection
+  try {
     const { initDemoData } = await import('./initData');
     await initDemoData();
   } catch (error) {
-    log(`MongoDB connection error: ${error}`, 'mongodb');
-    process.exit(1);
+    log(`Error initializing demo data: ${error}`, 'initData');
   }
+  
+  // Add a health check route
+  app.get('/api/health', (req, res) => {
+    // @ts-ignore - Express types are incomplete
+    res.status(200).json({ 
+      status: 'ok', 
+      time: new Date().toISOString(),
+      database: dbConnected ? 'connected' : 'disconnected'
+    });
+  });
+
+  app.use('/api/promotimers', promoTimerRoutes);
+  app.use('/api/stores', storeRoutes);
 
   // Register API routes
   const server = await registerRoutes(app);
@@ -58,15 +109,23 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    // @ts-ignore - Express types are incomplete
     res.status(status).json({ message });
-    throw err;
+    console.error(err);
   });
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
+  console.log('NODE_ENV=', process.env.NODE_ENV, 'express env=', app.get('env'));
+
   if (app.get("env") === "development") {
-    await setupVite(app, server);
+    try {
+      await setupVite(app, server);
+      log('Vite dev server initialized successfully', 'vite');
+    } catch (error) {
+      console.error('Failed to initialize Vite dev server:', error);
+    }
   } else {
     serveStatic(app);
   }
@@ -80,7 +139,9 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`Server running at http://localhost:${port}`, 'express');
+    log('Frontend available at http://localhost:5000', 'express');
+    log('Admin panel available at http://localhost:5000/admin', 'express');
   });
 })();
 
@@ -93,4 +154,15 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
   await closeDatabaseConnection();
   process.exit(0);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Keep the process running but log the error
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Keep the process running but log the error
 });

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAdminAuth } from "../../hooks/useAdminAuth";
 
 interface SidebarLinkProps {
   href: string;
@@ -13,20 +13,16 @@ interface SidebarLinkProps {
 const SidebarLink = ({ href, icon, label, isCollapsed }: SidebarLinkProps) => {
   const [location] = useLocation();
   const isActive = location === href || 
-    (href !== "/" && location.startsWith(href));
+    (href !== "/admin/dashboard" && location.startsWith(href));
   
   return (
-    <Link href={href}>
-      <a
-        className={cn(
-          "sidebar-link",
-          isActive ? "active" : "",
-          isCollapsed ? "justify-center" : ""
-        )}
-      >
-        {icon}
-        {!isCollapsed && <span>{label}</span>}
-      </a>
+    <Link href={href} className={cn(
+      "sidebar-link",
+      isActive ? "active" : "",
+      isCollapsed ? "justify-center" : ""
+    )}>
+      {icon}
+      {!isCollapsed && <span>{label}</span>}
     </Link>
   );
 };
@@ -79,7 +75,7 @@ export default function Sidebar() {
         <ul className="space-y-1 px-2">
           <li>
             <SidebarLink
-              href="/"
+              href="/admin/dashboard"
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="7" height="9"></rect>
@@ -94,7 +90,21 @@ export default function Sidebar() {
           </li>
           <li>
             <SidebarLink
-              href="/products"
+              href="/admin/storemanage"
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="7" width="18" height="13" rx="2" />
+                  <path d="M16 3v4M8 3v4" />
+                  <path d="M5 10h14" />
+                </svg>
+              }
+              label="StoreManage"
+              isCollapsed={isCollapsed}
+            />
+          </li>
+          <li>
+            <SidebarLink
+              href="/admin/products"
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
@@ -108,7 +118,7 @@ export default function Sidebar() {
           </li>
           <li>
             <SidebarLink
-              href="/orders"
+              href="/admin/orders"
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -124,7 +134,7 @@ export default function Sidebar() {
           </li>
           <li>
             <SidebarLink
-              href="/users"
+              href="/admin/users"
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -139,7 +149,7 @@ export default function Sidebar() {
           </li>
           <li>
             <SidebarLink
-              href="/categories"
+              href="/admin/categories"
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="8" y1="6" x2="21" y2="6"></line>
@@ -156,7 +166,7 @@ export default function Sidebar() {
           </li>
           <li>
             <SidebarLink
-              href="/collections"
+              href="/admin/collections"
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -168,7 +178,7 @@ export default function Sidebar() {
           </li>
           <li>
             <SidebarLink
-              href="/banners"
+              href="/admin/banners"
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -182,7 +192,7 @@ export default function Sidebar() {
           </li>
           <li>
             <SidebarLink
-              href="/settings"
+              href="/admin/settings"
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="3"></circle>
@@ -193,6 +203,57 @@ export default function Sidebar() {
               isCollapsed={isCollapsed}
             />
           </li>
+          <li>
+            <SidebarLink
+              href="/admin/popup"
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                </svg>
+              }
+              label="Popup"
+              isCollapsed={isCollapsed}
+            />
+          </li>
+          <li>
+            <SidebarLink
+              href="/admin/contacts"
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-4.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9 8.5 8.5 0 0 1 8.5 8.5 8.38 8.38 0 0 1-.9 3.8z" />
+                </svg>
+              }
+              label="Contact Us"
+              isCollapsed={isCollapsed}
+            />
+          </li>
+          <li>
+            <SidebarLink
+              href="/admin/blogs"
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19H20V5H4v14zm0-16h16c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2z" />
+                  <path d="M22 7H2" />
+                </svg>
+              }
+              label="Blogs"
+              isCollapsed={isCollapsed}
+            />
+          </li>
+          <li>
+            <SidebarLink
+              href="/admin/promotimer"
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2"/>
+                  <polyline points="16 3 12 7 8 3"/>
+                  <text x="12" y="16" textAnchor="middle" fontSize="8" fill="#22c55e">⏰</text>
+                </svg>
+              }
+              label="PromoTimer"
+              isCollapsed={isCollapsed}
+            />
+          </li>
         </ul>
       </nav>
       
@@ -200,23 +261,20 @@ export default function Sidebar() {
         "p-4 border-t border-border",
         isCollapsed ? "text-center" : ""
       )}>
-        {!isCollapsed ? (
-          <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-              <span className="text-primary font-medium">
-                {admin?.name?.substring(0, 1).toUpperCase() || 'A'}
-              </span>
+        {!isCollapsed && admin && (
+          <div className="flex items-center space-x-3">
+            <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center uppercase font-medium text-sm">
+              {admin.name ? admin.name.charAt(0) : "A"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{admin?.name || 'Admin User'}</p>
-              <p className="text-xs text-muted-foreground truncate">{admin?.email || 'admin@example.com'}</p>
+              <p className="text-sm font-medium truncate">{admin.name || "Admin"}</p>
+              <p className="text-xs text-muted-foreground truncate">{admin.email}</p>
             </div>
           </div>
-        ) : (
-          <div className="w-8 h-8 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
-            <span className="text-primary font-medium">
-              {admin?.name?.substring(0, 1).toUpperCase() || 'A'}
-            </span>
+        )}
+        {isCollapsed && admin && (
+          <div className="h-8 w-8 mx-auto rounded-full bg-primary text-white flex items-center justify-center uppercase font-medium text-sm">
+            {admin.name ? admin.name.charAt(0) : "A"}
           </div>
         )}
       </div>

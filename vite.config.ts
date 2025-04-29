@@ -5,6 +5,10 @@ import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
+  // Serve static assets from root public directory
+  publicDir: path.resolve(import.meta.dirname, "public"),
+  root: path.resolve(import.meta.dirname, "client"),
+  base: '/',
   plugins: [
     react(),
     runtimeErrorOverlay(),
@@ -25,7 +29,21 @@ export default defineConfig({
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
-  root: path.resolve(import.meta.dirname, "client"),
+  server: {
+    port: 5173,
+    open: '/',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/admin/api': {
+        target: 'http://localhost:5000',
+        rewrite: (path) => path.replace(/^\/admin\/api/, '/api')
+      }
+    }
+  },
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,

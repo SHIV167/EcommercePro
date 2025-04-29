@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,6 +32,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Helmet } from 'react-helmet';
+import RazorpayCheckout from '../components/RazorpayCheckout';
+import { Label } from "@/components/ui/label";
+import { Switch as UiSwitch } from "@/components/ui/switch";
+import AuthModal from '@/components/common/AuthModal';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -53,11 +57,18 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [razorpayOrder, setRazorpayOrder] = useState<{orderId:string;amount:number;currency:string} | null>(null);
+  const [pendingOrderPayload, setPendingOrderPayload] = useState<any>(null);
+  const [shippingCheck, setShippingCheck] = useState<{serviceable: boolean; details: any} | null>(null);
+  const [checkingShipping, setCheckingShipping] = useState(false);
+  const [shippingWeight, setShippingWeight] = useState(1);
+  const [shippingCodFlag, setShippingCodFlag] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const { cartItems, subtotal, clearCart, isEmpty } = useCart();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  
+
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
@@ -78,42 +89,56 @@ export default function CheckoutPage() {
   });
   
   const sameAsBilling = form.watch("sameAsBilling");
+  const paymentMethod = form.watch("paymentMethod");
   
-  const onSubmit = async (values: CheckoutFormValues) => {
-    if (isEmpty) {
-      toast({
-        title: "Cart is empty",
-        description: "Please add some products to your cart before checking out.",
-        variant: "destructive",
+  // Automatically refresh form values when user logs in/registers
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        address: user.address || "",
+        city: user.city || "",
+        state: user.state || "",
+        zipCode: user.zipCode || "",
+        paymentMethod: "card",
+        sameAsBilling: true,
+        shippingAddress: "",
+        shippingCity: "",
+        shippingState: "",
+        shippingZipCode: "",
       });
+    }
+  }, [user]);
+
+  const onSubmit = async (values: CheckoutFormValues) => {
+    setIsSubmitting(true);
+    const totalAmount = subtotal + (subtotal > 500 ? 0 : 50) + subtotal * 0.18;
+    const payload = { order: { userId: user?.id||'', status:'pending', totalAmount, shippingAddress: values.address, paymentMethod: values.paymentMethod, paymentStatus: values.paymentMethod==='cod'?'unpaid':'pending' }, items: cartItems.map(i=>({ productId: i.product._id!, quantity: i.quantity, price: i.product.price })) };
+    if (values.paymentMethod === 'cod') {
+      try {
+        // Dev: skip serviceability; place COD order directly
+        const res = await apiRequest('POST', '/api/orders', payload);
+        const created = await res.json() as { id: string };
+        toast({ title: 'Order placed!' });
+        clearCart();
+        navigate(`/thank-you/${created.id}`);
+      } catch (error) {
+        console.error('Checkout error:', error);
+        toast({ title: 'Order failed', variant: 'destructive' });
+      } finally {
+        setIsSubmitting(false);
+      }
       return;
     }
-    
-    setIsSubmitting(true);
-    
     try {
-      // In a real implementation, we would process the order through an API
-      // For now, we'll just simulate a successful order
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Show success message
-      toast({
-        title: "Order placed successfully!",
-        description: "Your order has been placed and will be processed shortly.",
-      });
-      
-      // Clear cart and redirect to success page
-      clearCart();
-      navigate("/");
-      
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast({
-        title: "Checkout failed",
-        description: "There was an error processing your order. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
+      const { orderId, amount: amt, currency: curr } = await apiRequest('POST','/api/razorpay/order',{ amount: Math.round(totalAmount*100), currency: 'INR' }).then(r=>r.json());
+      setPendingOrderPayload(payload);
+      setRazorpayOrder({ orderId, amount: amt, currency: curr });
+    } catch (err) {
+      console.error('Payment init error:', err);
+      toast({ title: 'Payment init failed', variant: 'destructive' });
       setIsSubmitting(false);
     }
   };
@@ -133,12 +158,50 @@ export default function CheckoutPage() {
     );
   }
 
+  if (razorpayOrder && pendingOrderPayload) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <RazorpayCheckout
+          amount={razorpayOrder.amount}
+          currency={razorpayOrder.currency}
+          onSuccess={async res => {
+            setIsSubmitting(true);
+            try {
+              const valid = await apiRequest('POST','/api/razorpay/verify',res).then(r=>r.json());
+              if (!valid.valid) throw new Error('Invalid');
+              pendingOrderPayload.order.paymentStatus = 'paid';
+              pendingOrderPayload.order.paymentId = res.razorpay_payment_id;
+              const created = await apiRequest('POST','/api/orders',pendingOrderPayload).then(r=>r.json());
+              toast({ title: 'Payment successful!' });
+              clearCart(); navigate(`/thank-you/${created.id}`);
+            } catch {
+              toast({ title: 'Payment failed', variant: 'destructive' });
+            } finally { setIsSubmitting(false); }
+          }}
+          onError={err => toast({ title: 'Payment error', description: err.error?.description||err.message, variant: 'destructive' })}
+        />
+      </div>
+    );
+  }
+
   return (
     <>
       <Helmet>
         <title>Checkout | Kama Ayurveda</title>
         <meta name="description" content="Complete your purchase securely." />
       </Helmet>
+      <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      {/* Custom Header */}
+      <div className="bg-white py-4 border-b">
+        <div className="container mx-auto flex justify-center">
+          <Link href="/" className="block">
+            <div className="flex flex-col items-center">
+              <h1 className="text-primary font-heading text-2xl md:text-3xl font-bold">KAMA</h1>
+              <p className="text-primary font-accent text-sm tracking-widest">AYURVEDA</p>
+            </div>
+          </Link>
+        </div>
+      </div>
       
       <div className="bg-neutral-cream py-8">
         <div className="container mx-auto px-4">
@@ -149,6 +212,19 @@ export default function CheckoutPage() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
+            {!isAuthenticated && (
+              <div className="bg-yellow-100 border border-yellow-300 rounded px-4 py-3 mb-8 text-center text-yellow-900">
+                Please{' '}
+                <button
+                  className="text-primary hover:underline font-semibold"
+                  onClick={() => setAuthModalOpen(true)}
+                  type="button"
+                >
+                  login
+                </button>{' '}
+                to place your order.
+              </div>
+            )}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="border border-neutral-sand rounded-md overflow-hidden">
@@ -248,9 +324,9 @@ export default function CheckoutPage() {
                         name="zipCode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Zip Code</FormLabel>
+                            <FormLabel>Zip code</FormLabel>
                             <FormControl>
-                              <Input placeholder="400001" {...field} />
+                              <Input placeholder="Zip code" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -486,6 +562,14 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+      {/* Custom Footer */}
+      <footer className="bg-white py-6 border-t mt-12">
+        <div className="container mx-auto flex justify-center items-center space-x-6">
+          <img src="/icons/visa.svg" alt="Visa" className="h-6" />
+          <img src="/icons/mastercard.svg" alt="Mastercard" className="h-6" />
+          <img src="/icons/paypal.svg" alt="PayPal" className="h-6" />
+        </div>
+      </footer>
     </>
   );
 }

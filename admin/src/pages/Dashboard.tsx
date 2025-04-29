@@ -18,6 +18,8 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 export default function Dashboard() {
   // Fetch summary data
@@ -63,10 +65,121 @@ export default function Dashboard() {
   
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-heading text-primary mb-1">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your store's performance</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-heading text-primary mb-1">Dashboard</h1>
+          <p className="text-muted-foreground">Overview of your store's performance</p>
+        </div>
+        
+        <Link href="/admin/products">
+          <Button className="bg-primary hover:bg-primary/90 text-white">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mr-2"
+            >
+              <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"></path>
+            </svg>
+            Manage Products
+          </Button>
+        </Link>
       </div>
+      
+      {/* Quick Actions Card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Getting Started</CardTitle>
+          <CardDescription>Complete these steps to set up your store</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border rounded-lg p-4 bg-primary/5 hover:bg-primary/10 transition-colors">
+              <div className="flex items-center mb-3">
+                <div className="bg-primary text-white p-2 rounded-full mr-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"></path>
+                  </svg>
+                </div>
+                <h3 className="font-semibold">Manage Products</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">Add, edit, and organize your product catalog</p>
+              <Link href="/admin/products">
+                <Button variant="outline" className="w-full">Go to Products</Button>
+              </Link>
+            </div>
+            
+            <div className="border rounded-lg p-4 hover:bg-muted/10 transition-colors">
+              <div className="flex items-center mb-3">
+                <div className="bg-muted text-primary p-2 rounded-full mr-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                  </svg>
+                </div>
+                <h3 className="font-semibold">Process Orders</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">View and manage customer orders</p>
+              <Link href="/admin/orders">
+                <Button variant="outline" className="w-full">Go to Orders</Button>
+              </Link>
+            </div>
+            
+            <div className="border rounded-lg p-4 hover:bg-muted/10 transition-colors">
+              <div className="flex items-center mb-3">
+                <div className="bg-muted text-primary p-2 rounded-full mr-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <h3 className="font-semibold">Manage Customers</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">View customer information and purchase history</p>
+              <Link href="/admin/users">
+                <Button variant="outline" className="w-full">Go to Customers</Button>
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -248,7 +361,7 @@ export default function Dashboard() {
                           {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                         </span>
                       </td>
-                      <td className="py-3 text-right">₹{order.total.toFixed(2)}</td>
+                      <td className="py-3 text-right">₹{order.totalAmount?.toFixed(2) ?? '0.00'}</td>
                     </tr>
                   ))}
                 </tbody>

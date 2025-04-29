@@ -1,26 +1,106 @@
-import type { Express } from "express";
 import { createServer, type Server } from "http";
+import express, { Application, Request, Response } from "express";
 import { storage } from "./storage";
+import UserModel from "./models/User";
+import SettingModel from "./models/Setting";
+import ContactModel from "./models/Contact";
+import BlogModel from "./models/Blog";
+import OrderModel from "./models/Order"; // Import OrderModel directly
 import { z } from "zod";
-import { 
-  userInsertSchema, 
-  categoryInsertSchema, 
-  collectionInsertSchema,
-  productInsertSchema,
-  reviewInsertSchema,
-  testimonialInsertSchema,
-  orderInsertSchema,
-  orderItemInsertSchema,
-  cartInsertSchema,
-  cartItemInsertSchema,
-  bannerInsertSchema
-} from "@shared/schema";
+import { productSchema, categorySchema, collectionSchema, productCollectionSchema, Banner, InsertBanner } from "@shared/schema";
+import { sendMail } from "./utils/mailer";
+import upload from "./utils/upload";
+import razorpay from "./utils/razorpay";
+import crypto from "crypto";
+import { getServiceability } from "./utils/shiprocket";
+import bcrypt from "bcrypt";
+import jwt, { Secret, SignOptions } from "jsonwebtoken";
+import { getPopupSetting, updatePopupSetting } from "./controllers/popupSettingController";
+import { subscribeNewsletter, getNewsletterSubscribers } from "./controllers/newsletterController";
+import fs from "fs";
+import path, { dirname } from "path";
+import multer from "multer";
+import { fileURLToPath } from "url";
+// Define __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-export async function registerRoutes(app: Express): Promise<Server> {
+const cartItemInsertSchema = z.object({
+  cartId: z.string(),
+  productId: z.string(),
+  quantity: z.number().min(1)
+});
+
+// Order input validation
+const orderInsertSchema = z.object({
+  userId: z.string(),
+  status: z.string(),
+  totalAmount: z.number(),
+  shippingAddress: z.string(),
+  paymentMethod: z.string(),
+  paymentStatus: z.string(),
+});
+const orderItemInsertSchema = z.object({
+  productId: z.string(),
+  quantity: z.number().min(1),
+  price: z.number(),
+});
+
+// Payload schema: nested order and items
+const orderPayloadSchema = z.object({
+  order: orderInsertSchema,
+  items: z.array(orderItemInsertSchema),
+});
+
+// Banner input validation schema
+const bannerObjectSchema = z.object({
+  title: z.string(),
+  subtitle: z.string().optional(),
+  alt: z.string(),
+  linkUrl: z.string().optional(),
+  enabled: z.boolean(),
+  position: z.number(),
+  desktopImageUrl: z.string().url().optional(),
+  mobileImageUrl: z.string().url().optional(),
+  imageUrl: z.string().url().optional()
+});
+const bannerSchema = bannerObjectSchema
+  .refine(data => !!(data.desktopImageUrl || data.imageUrl), {
+    message: 'desktopImageUrl or imageUrl is required', path: ['desktopImageUrl']
+  })
+  .refine(data => !!(data.mobileImageUrl || data.imageUrl), {
+    message: 'mobileImageUrl or imageUrl is required', path: ['mobileImageUrl']
+  });
+const bannerUpdateSchema = bannerObjectSchema.partial();
+
+export async function registerRoutes(app: Application): Promise<Server> {
+  // ensure upload directory exists in public/uploads
+  const uploadDir = path.join(__dirname, '../public/uploads');
+  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+  // serve uploaded images
+  app.use('/uploads', express.static(uploadDir));
+  app.use('/admin/uploads', express.static(uploadDir));
+  // local storage for product image uploads
+  const localStorage = multer.diskStorage({ destination: uploadDir, filename: (req, file, cb) => {
+      console.log('[UPLOAD] Saving file:', file.originalname);
+      cb(null, `${Date.now()}-${file.originalname}`);
+    }
+  });
+  const uploadLocal = multer({ storage: localStorage });
+
+  // Seed sample blogs if none exist
+  const blogCount = await BlogModel.estimatedDocumentCount();
+  if (blogCount === 0) {
+    await BlogModel.create([
+      { title: 'Welcome to Our Blog', slug: 'welcome', author: 'Admin', summary: 'Start reading our latest news.', content: 'This is the first post content.', imageUrl: '', publishedAt: new Date() },
+      { title: 'Getting Started', slug: 'getting-started', author: 'Admin', summary: 'How to get started.', content: 'Getting started content.', imageUrl: '', publishedAt: new Date() }
+    ]);
+  }
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const validatedData = userInsertSchema.parse(req.body);
+      const validatedData = req.body; // TODO: add validation with Zod schema if available
       
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(validatedData.email);
@@ -28,11 +108,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User with this email already exists" });
       }
       
-      const user = await storage.createUser(validatedData);
+      const hashed = await bcrypt.hash(validatedData.password, 10);
+      const user = await storage.createUser({ ...validatedData, password: hashed });
       
       // Don't return password
       const { password, ...userWithoutPassword } = user;
       
+      // Send welcome email (async)
+      sendMail({
+        to: userWithoutPassword.email,
+        subject: "Welcome to EcommercePro!",
+        html: `<p>Hi ${userWithoutPassword.name || ''}, welcome to EcommercePro!</p>`
+      }).catch(err => console.error("Email send error:", err));
+      
+      const token = jwt.sign(
+        { id: userWithoutPassword.id, isAdmin: userWithoutPassword.isAdmin },
+        process.env.JWT_SECRET as Secret,
+        { expiresIn: process.env.JWT_EXPIRES_IN as any }
+      );
+      const maxAge = Number(process.env.COOKIE_MAX_AGE) || 86400000;
+      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax', maxAge });
       return res.status(201).json(userWithoutPassword);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -46,29 +141,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = req.body;
       
+      console.log(`Login attempt with email: ${email}`);
+      
       if (!email || !password) {
+        console.log("Login error: Email and password are required");
         return res.status(400).json({ message: "Email and password are required" });
       }
       
       const user = await storage.getUserByEmail(email);
+      console.log(`User found: ${user ? 'Yes' : 'No'}`);
       
-      if (!user || user.password !== password) {
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        console.log("Login error: Invalid credentials");
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
       // In a real app, we would use JWT tokens
       const { password: _, ...userWithoutPassword } = user;
       
+      console.log("Login successful");
+      const token = jwt.sign(
+        { id: userWithoutPassword.id, isAdmin: userWithoutPassword.isAdmin },
+        process.env.JWT_SECRET as Secret,
+        { expiresIn: process.env.JWT_EXPIRES_IN as any }
+      );
+      const maxAge = Number(process.env.COOKIE_MAX_AGE) || 86400000;
+      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax', maxAge });
       return res.status(200).json(userWithoutPassword);
     } catch (error) {
+      console.error("Login error:", error);
       return res.status(500).json({ message: "Server error" });
     }
   });
-  
+
+  // Auth: logout (clear token)
+  app.post("/api/auth/logout", (req, res) => {
+    res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax' });
+    return res.status(200).json({ message: 'Logged out' });
+  });
+
+  // Popup settings routes
+  app.get('/api/popup-settings', getPopupSetting);
+  app.put('/api/popup-settings', updatePopupSetting);
+
+  // Newsletter subscription routes
+  app.post('/api/newsletter/subscribe', subscribeNewsletter);
+  app.get('/api/newsletter/subscribers', getNewsletterSubscribers);
+
+  // Collection routes
+  app.get('/api/collections', async (req, res) => {
+    try {
+      const collections = await storage.getCollections();
+      return res.status(200).json(collections);
+    } catch (err) {
+      console.error('Fetch collections error:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  app.get('/api/collections/:slug', async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      const col = await storage.getCollectionBySlug(slug);
+      if (!col) return res.status(404).json({ message: 'Collection not found' });
+      return res.status(200).json(col);
+    } catch (err) {
+      console.error('Fetch collection error:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  // Admin: create collection
+  app.post('/api/collections', async (req, res) => {
+    try {
+      const newCol = collectionSchema.parse(req.body);
+      const created = await storage.createCollection(newCol);
+      return res.status(201).json(created);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid input', errors: err.errors });
+      }
+      console.error('Create collection error:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  // Admin: update collection
+  app.put('/api/collections/:id', async (req, res) => {
+    try {
+      const id = req.params.id;
+      const update = collectionSchema.partial().parse(req.body);
+      const updated = await storage.updateCollection(id, update);
+      if (!updated) return res.status(404).json({ message: 'Collection not found' });
+      return res.status(200).json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid input', errors: err.errors });
+      }
+      console.error('Update collection error:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  // Admin: delete collection
+  app.delete('/api/collections/:id', async (req, res) => {
+    try {
+      const id = req.params.id;
+      const success = await storage.deleteCollection(id);
+      if (!success) return res.status(404).json({ message: 'Collection not found' });
+      return res.status(204).end();
+    } catch (err) {
+      console.error('Delete collection error:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Fetch products in a collection
+  app.get('/api/collections/:slug/products', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const col = await storage.getCollectionBySlug(slug);
+      if (!col) return res.status(404).json({ message: 'Collection not found' });
+      // use getProducts with collectionId to fetch from Mongo
+      const products = await storage.getProducts({ collectionId: col._id! });
+      return res.status(200).json(products);
+    } catch (err) {
+      console.error('Fetch collection products error:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  // Add product to collection
+  app.post('/api/collections/:slug/products', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { productId } = req.body;
+      const col = await storage.getCollectionBySlug(slug);
+      if (!col) return res.status(404).json({ message: 'Collection not found' });
+      const mapping = await storage.addProductToCollection({ productId, collectionId: col._id! });
+      return res.status(201).json(mapping);
+    } catch (err) {
+      console.error('Add product to collection error:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  // Remove product from collection
+  app.delete('/api/collections/:slug/products/:productId', async (req, res) => {
+    try {
+      const { slug, productId } = req.params;
+      const col = await storage.getCollectionBySlug(slug);
+      if (!col) return res.status(404).json({ message: 'Collection not found' });
+      const removed = await storage.removeProductFromCollection(productId, col._id!);
+      if (!removed) return res.status(404).json({ message: 'Mapping not found' });
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      console.error('Remove product from collection error:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   // User routes
   app.get("/api/users/:id", async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
+      const userId = req.params.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -85,9 +315,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.put("/api/users/:id", async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
+      const userId = req.params.id;
       const userData = req.body;
       
+      // Debug: log incoming update profile call
+      console.log(`[PUT] /api/users/${userId}`, userData);
+       
       // In a real app, verify the user is authorized
       
       const updatedUser = await storage.updateUser(userId, userData);
@@ -110,20 +343,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product routes
   app.get("/api/products", async (req, res) => {
     try {
-      const { limit, offset, categoryId, collectionId } = req.query;
-      
-      const options: any = {};
-      
-      if (limit) options.limit = parseInt(limit as string);
-      if (offset) options.offset = parseInt(offset as string);
-      if (categoryId) options.categoryId = parseInt(categoryId as string);
-      if (collectionId) options.collectionId = parseInt(collectionId as string);
-      
-      const products = await storage.getProducts(options);
-      
-      return res.status(200).json(products);
+      const page = parseInt(req.query.page as string || "1");
+      const limit = parseInt(req.query.limit as string || "10");
+      const offset = (page - 1) * limit;
+      const search = (req.query.search as string) || "";
+      const categoryId = req.query.categoryId as string | undefined;
+      const collectionId = req.query.collectionId as string | undefined;
+
+      // Fetch all matching products for accurate count and search
+      const allProducts = await storage.getProducts({ categoryId, collectionId });
+      let filteredProducts = allProducts;
+      if (search) {
+        filteredProducts = allProducts.filter(p =>
+          p.name.toLowerCase().includes(search.toLowerCase()) ||
+          (p.description && p.description.toLowerCase().includes(search.toLowerCase()))
+        );
+      }
+
+      const totalProducts = filteredProducts.length;
+      const totalPages = Math.ceil(totalProducts / limit);
+      // Paginate results
+      const pageProducts = filteredProducts.slice(offset, offset + limit);
+
+      return res.status(200).json({
+        products: pageProducts,
+        total: totalProducts,
+        page,
+        totalPages,
+        totalItems: totalProducts
+      });
     } catch (error) {
-      return res.status(500).json({ message: "Server error" });
+      console.error("Error fetching products:", error);
+      return res.status(500).json({ error: "Failed to fetch products" });
     }
   });
   
@@ -169,79 +420,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products/:idOrSlug", async (req, res) => {
     try {
       const idOrSlug = req.params.idOrSlug;
-      let product;
-      
-      // Try to parse as ID first
-      if (/^\d+$/.test(idOrSlug)) {
-        product = await storage.getProductById(parseInt(idOrSlug));
-      }
-      
-      // If not found, try as slug
-      if (!product) {
-        product = await storage.getProductBySlug(idOrSlug);
-      }
-      
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-      
-      return res.status(200).json(product);
+    let product;
+
+    // Try as MongoDB ObjectId first
+    if (/^[0-9a-fA-F]{24}$/.test(idOrSlug)) {
+      product = await storage.getProductById(idOrSlug);
+    }
+
+    // If not found, try as slug
+    if (!product) {
+      product = await storage.getProductBySlug(idOrSlug);
+    }
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    return res.status(200).json(product);
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
     }
   });
   
-  app.post("/api/products", async (req, res) => {
+  // Create product with multiple images (robust handling for images and type conversion)
+  app.post("/api/products", uploadLocal.array('images', 5), async (req, res) => {
+    console.log('[PRODUCT CREATE] Incoming request:', {
+      body: req.body,
+      files: req.files,
+      headers: req.headers
+    });
     try {
-      const validatedData = productInsertSchema.parse(req.body);
-      
-      const product = await storage.createProduct(validatedData);
-      
-      return res.status(201).json(product);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.put("/api/products/:id", async (req, res) => {
-    try {
-      const productId = parseInt(req.params.id);
       const productData = req.body;
-      
-      const updatedProduct = await storage.updateProduct(productId, productData);
-      
-      if (!updatedProduct) {
-        return res.status(404).json({ message: "Product not found" });
+      const files = req.files as Express.Multer.File[];
+      // New uploaded images
+      const newImages = files && files.length > 0 ? files.map(f => `/uploads/${f.filename}`) : [];
+      // Parse existingImages from form (can be string or array)
+      let existingImages: string[] = [];
+      if (productData.existingImages) {
+        if (Array.isArray(productData.existingImages)) {
+          existingImages = productData.existingImages;
+        } else if (typeof productData.existingImages === 'string') {
+          existingImages = productData.existingImages.split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
       }
-      
+      // Final images array: merge existing + new
+      const images = [...existingImages, ...newImages];
+      // Always set imageUrl to first image (if any)
+      const imageUrl = images.length > 0 ? images[0] : undefined;
+      // Convert types as needed
+      const price = productData.price ? Number(productData.price) : undefined;
+      const stock = productData.stock ? Number(productData.stock) : undefined;
+      const discountedPrice = productData.discountedPrice ? Number(productData.discountedPrice) : undefined;
+      if (!productData.name || price === undefined || !productData.slug) {
+        console.error('[PRODUCT CREATE ERROR] Missing required fields:', { name: productData.name, price, slug: productData.slug });
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      const existingProduct = await storage.getProductBySlug(productData.slug);
+      if (existingProduct) {
+        console.error('[PRODUCT CREATE ERROR] Duplicate slug:', productData.slug);
+        return res.status(400).json({ error: "Product with this slug already exists" });
+      }
+      const newProduct = await storage.createProduct({
+        ...productData,
+        price,
+        stock,
+        discountedPrice,
+        images,
+        imageUrl
+      });
+      console.log('[PRODUCT CREATE] Success:', newProduct);
+      return res.status(201).json(newProduct);
+    } catch (error) {
+      console.error('[PRODUCT CREATE ERROR]:', error);
+      return res.status(500).json({ error: "Failed to create product", details: error instanceof Error ? error.message : error });
+    }
+  });
+
+  // Update product with multiple images (MERGE EXISTING/NEW IMAGES)
+  app.put("/api/products/:id", uploadLocal.array('images', 5), async (req, res) => {
+    console.log('[PRODUCT UPDATE] Incoming request:', {
+      params: req.params,
+      body: req.body,
+      files: req.files,
+      headers: req.headers
+    });
+    try {
+      const productId = req.params.id;
+      const productData = req.body;
+      const files = req.files as Express.Multer.File[];
+      // Parse existingImages from form (can be string or array)
+      let existingImages: string[] = [];
+      if (productData.existingImages) {
+        if (Array.isArray(productData.existingImages)) {
+          existingImages = productData.existingImages;
+        } else if (typeof productData.existingImages === 'string') {
+          existingImages = productData.existingImages.split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+      }
+      // New uploaded images
+      const newImages = files && files.length > 0 ? files.map(f => `/uploads/${f.filename}`) : [];
+      // Final images array: merge existing + new
+      const images = [...existingImages, ...newImages];
+      // Always set imageUrl to first image (if any)
+      const imageUrl = images.length > 0 ? images[0] : undefined;
+      const existingProduct = await storage.getProductById(productId);
+      if (!existingProduct) {
+        console.error('[PRODUCT UPDATE ERROR] Product not found:', productId);
+        return res.status(404).json({ error: "Product not found" });
+      }
+      const updateData = { ...productData, images, imageUrl };
+      const updatedProduct = await storage.updateProduct(productId, updateData);
+      console.log('[PRODUCT UPDATE] Success:', updatedProduct);
       return res.status(200).json(updatedProduct);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Server error" });
+      console.error('[PRODUCT UPDATE ERROR]:', error);
+      return res.status(500).json({ error: "Failed to update product", details: error instanceof Error ? error.message : error });
     }
   });
   
   app.delete("/api/products/:id", async (req, res) => {
     try {
-      const productId = parseInt(req.params.id);
-      
-      const success = await storage.deleteProduct(productId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-      
-      return res.status(204).end();
+      // Admin authentication is handled through cookies
+      const productId = req.params.id;
+
+    // Check if product exists
+    const existingProduct = await storage.getProductById(productId);
+    if (!existingProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    await storage.deleteProduct(productId);
+    return res.status(200).json({ message: "Product deleted successfully" });
     } catch (error) {
-      return res.status(500).json({ message: "Server error" });
+      console.error("Error deleting product:", error);
+      return res.status(500).json({ error: "Failed to delete product" });
     }
   });
-  
+
+  // Admin: delete product
+  app.delete('/api/products/:id', async (req, res) => {
+    try {
+      const id = req.params.id;
+      const deleted = await storage.deleteProduct(id);
+      if (!deleted) return res.status(404).json({ message: 'Product not found' });
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('Failed to delete product:', err);
+      return res.status(500).json({ message: 'Failed to delete product' });
+    }
+  });
+
+  // endpoint: upload multiple images for a product
+  app.post('/api/products/:id/images', uploadLocal.array('images'), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const files = Array.isArray(req.files) ? req.files as Express.Multer.File[] : [];
+      console.log(`[routes] /api/products/${id}/images - received files:`, files.map(f => f.originalname));
+      const urls = files.map(f => `/uploads/${f.filename}`);
+      // update product images array
+      const ProductModel = (await import('./models/Product')).default;
+      const updated = await ProductModel.findByIdAndUpdate(id, { $push: { images: { $each: urls } } }, { new: true });
+      return res.json({ images: updated?.images || [] });
+    } catch (err) {
+      console.error('Image upload error:', err);
+      return res.status(500).json({ message: 'Upload failed' });
+    }
+  });
+
   // Category routes
   app.get("/api/categories", async (req, res) => {
     try {
@@ -268,23 +613,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories/:idOrSlug", async (req, res) => {
     try {
       const idOrSlug = req.params.idOrSlug;
-      let category;
-      
-      // Try to parse as ID first
-      if (/^\d+$/.test(idOrSlug)) {
-        category = await storage.getCategoryById(parseInt(idOrSlug));
-      }
-      
-      // If not found, try as slug
-      if (!category) {
-        category = await storage.getCategoryBySlug(idOrSlug);
-      }
-      
-      if (!category) {
-        return res.status(404).json({ message: "Category not found" });
-      }
-      
-      return res.status(200).json(category);
+    let category;
+
+    // Try as MongoDB ObjectId first
+    if (/^[0-9a-fA-F]{24}$/.test(idOrSlug)) {
+      category = await storage.getCategoryById(idOrSlug);
+    }
+
+    // If not found, try as slug
+    if (!category) {
+      category = await storage.getCategoryBySlug(idOrSlug);
+    }
+
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    return res.status(200).json(category);
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
     }
@@ -292,7 +637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/categories", async (req, res) => {
     try {
-      const validatedData = categoryInsertSchema.parse(req.body);
+      const validatedData = categorySchema.parse(req.body);
       
       const category = await storage.createCategory(validatedData);
       
@@ -307,7 +652,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.put("/api/categories/:id", async (req, res) => {
     try {
-      const categoryId = parseInt(req.params.id);
+      const categoryId = req.params.id;
       const categoryData = req.body;
       
       const updatedCategory = await storage.updateCategory(categoryId, categoryData);
@@ -327,138 +672,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.delete("/api/categories/:id", async (req, res) => {
     try {
-      const categoryId = parseInt(req.params.id);
+      const categoryId = req.params.id;
       
       const success = await storage.deleteCategory(categoryId);
       
       if (!success) {
         return res.status(404).json({ message: "Category not found" });
-      }
-      
-      return res.status(204).end();
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  // Collection routes
-  app.get("/api/collections", async (req, res) => {
-    try {
-      const collections = await storage.getCollections();
-      return res.status(200).json(collections);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.get("/api/collections/featured", async (req, res) => {
-    try {
-      const { limit } = req.query;
-      const limitNum = limit ? parseInt(limit as string) : undefined;
-      
-      const collections = await storage.getFeaturedCollections(limitNum);
-      
-      return res.status(200).json(collections);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.get("/api/collections/:idOrSlug", async (req, res) => {
-    try {
-      const idOrSlug = req.params.idOrSlug;
-      let collection;
-      
-      // Try to parse as ID first
-      if (/^\d+$/.test(idOrSlug)) {
-        collection = await storage.getCollectionById(parseInt(idOrSlug));
-      }
-      
-      // If not found, try as slug
-      if (!collection) {
-        collection = await storage.getCollectionBySlug(idOrSlug);
-      }
-      
-      if (!collection) {
-        return res.status(404).json({ message: "Collection not found" });
-      }
-      
-      return res.status(200).json(collection);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.get("/api/collections/:idOrSlug/products", async (req, res) => {
-    try {
-      const idOrSlug = req.params.idOrSlug;
-      let collection;
-      
-      // Try to parse as ID first
-      if (/^\d+$/.test(idOrSlug)) {
-        collection = await storage.getCollectionById(parseInt(idOrSlug));
-      }
-      
-      // If not found, try as slug
-      if (!collection) {
-        collection = await storage.getCollectionBySlug(idOrSlug);
-      }
-      
-      if (!collection) {
-        return res.status(404).json({ message: "Collection not found" });
-      }
-      
-      const products = await storage.getCollectionProducts(collection.id);
-      
-      return res.status(200).json(products);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.post("/api/collections", async (req, res) => {
-    try {
-      const validatedData = collectionInsertSchema.parse(req.body);
-      
-      const collection = await storage.createCollection(validatedData);
-      
-      return res.status(201).json(collection);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.put("/api/collections/:id", async (req, res) => {
-    try {
-      const collectionId = parseInt(req.params.id);
-      const collectionData = req.body;
-      
-      const updatedCollection = await storage.updateCollection(collectionId, collectionData);
-      
-      if (!updatedCollection) {
-        return res.status(404).json({ message: "Collection not found" });
-      }
-      
-      return res.status(200).json(updatedCollection);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.delete("/api/collections/:id", async (req, res) => {
-    try {
-      const collectionId = parseInt(req.params.id);
-      
-      const success = await storage.deleteCollection(collectionId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Collection not found" });
       }
       
       return res.status(204).end();
@@ -513,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Review routes
   app.get("/api/products/:productId/reviews", async (req, res) => {
     try {
-      const productId = parseInt(req.params.productId);
+      const productId = req.params.productId;
       
       const reviews = await storage.getProductReviews(productId);
       
@@ -525,7 +744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/reviews", async (req, res) => {
     try {
-      const validatedData = reviewInsertSchema.parse(req.body);
+      const validatedData = req.body; // TODO: add validation
       
       const review = await storage.createReview(validatedData);
       
@@ -567,7 +786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/testimonials", async (req, res) => {
     try {
-      const validatedData = testimonialInsertSchema.parse(req.body);
+      const validatedData = req.body; // TODO: add validation
       
       const testimonial = await storage.createTestimonial(validatedData);
       
@@ -583,28 +802,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Order routes
   app.get("/api/orders", async (req, res) => {
     try {
-      const { userId } = req.query;
-      const userIdNum = userId ? parseInt(userId as string) : undefined;
-      
-      const orders = await storage.getOrders(userIdNum);
-      
-      return res.status(200).json(orders);
+      const { userId, page, limit, status, search, date } = req.query;
+      if (userId) {
+        // User orders (no pagination needed)
+        const orders = await storage.getOrders(userId as string);
+        return res.json(orders);
+      }
+      // Admin: filters, pagination, total count
+      const query: Record<string, any> = {};
+      if (status && status !== 'all') query.status = status;
+      if (search) {
+        query.$or = [
+          { shippingAddress: { $regex: search, $options: 'i' } },
+          { userId: { $regex: search, $options: 'i' } },
+          { _id: { $regex: search, $options: 'i' } }
+        ];
+      }
+      if (date && date !== 'all') {
+        let start, end;
+        if ((date as string).includes('_to_')) [start, end] = (date as string).split('_to_');
+        else start = end = date;
+        query.createdAt = {
+          $gte: new Date(start + 'T00:00:00.000Z'),
+          $lte: new Date(end + 'T23:59:59.999Z')
+        };
+      }
+      const pageNum = page ? parseInt(page as string, 10) : 1;
+      const limitNum = limit ? parseInt(limit as string, 10) : 10;
+      const skip = (pageNum - 1) * limitNum;
+      const total = await OrderModel.countDocuments(query);
+      const orders = await OrderModel.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum);
+      const ordersList = orders.map((o) => o.toObject ? o.toObject() : o);
+      return res.status(200).json({ orders: ordersList, total });
     } catch (error) {
+      console.error(error);
       return res.status(500).json({ message: "Server error" });
     }
   });
-  
   app.get("/api/orders/:id", async (req, res) => {
     try {
-      const orderId = parseInt(req.params.id);
-      
+      const orderId = req.params.id;
       const order = await storage.getOrderById(orderId);
-      
-      if (!order) {
-        return res.status(404).json({ message: "Order not found" });
-      }
-      
-      return res.status(200).json(order);
+      if (!order) return res.status(404).json({ message: "Order not found" });
+      const items = await storage.getOrderItems(orderId);
+      return res.status(200).json({ order, items });
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
     }
@@ -612,7 +856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/orders/:id/items", async (req, res) => {
     try {
-      const orderId = parseInt(req.params.id);
+      const orderId = req.params.id;
       
       const orderItems = await storage.getOrderItems(orderId);
       
@@ -624,27 +868,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/orders", async (req, res) => {
     try {
-      const validatedData = orderInsertSchema.parse(req.body);
-      
-      const order = await storage.createOrder(validatedData);
-      
-      return res.status(201).json(order);
+      // Require authenticated user
+      if (!req.body?.order?.userId) {
+        return res.status(401).json({ message: 'Authentication required to place order' });
+      }
+      const { order: orderData, items: itemsData } = orderPayloadSchema.parse(req.body);
+      const createdOrder = await storage.createOrder(orderData);
+      if (!createdOrder.id) {
+        return res.status(500).json({ message: 'Order created without ID' });
+      }
+      const orderId = createdOrder.id!;
+      for (const item of itemsData) {
+        await storage.addOrderItem({ ...item, orderId });
+      }
+      return res.status(201).json({ id: createdOrder.id! });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+        return res.status(400).json({ message: 'Invalid order payload', errors: error.errors });
       }
-      return res.status(500).json({ message: "Server error" });
+      console.error('Order creation error:', error);
+      return res.status(500).json({ message: 'Server error' });
     }
   });
   
   app.post("/api/orders/:id/items", async (req, res) => {
     try {
-      const orderId = parseInt(req.params.id);
+      const orderId = req.params.id;
       
-      const validatedData = orderItemInsertSchema.parse({
-        ...req.body,
-        orderId
-      });
+      const validatedData = { ...req.body, orderId }; // TODO: add validation
       
       const orderItem = await storage.addOrderItem(validatedData);
       
@@ -657,27 +908,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put("/api/orders/:id/status", async (req, res) => {
+  // --- Remove duplicate update order endpoints and keep only the correct one (PUT /api/orders/:id) ---
+  // Remove the old endpoint for /api/orders/:id/status
+  // The correct endpoint is:
+  app.put('/api/orders/:id', async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ message: 'Status is required' });
+
+    // TODO: Add admin authentication middleware here in production
     try {
-      const orderId = parseInt(req.params.id);
-      const { status } = req.body;
-      
-      if (!status) {
-        return res.status(400).json({ message: "Status is required" });
-      }
-      
-      const updatedOrder = await storage.updateOrderStatus(orderId, status);
-      
+      const updatedOrder = await storage.updateOrderStatus(id, status);
       if (!updatedOrder) {
-        return res.status(404).json({ message: "Order not found" });
+        return res.status(404).json({ message: 'Order not found' });
       }
-      
       return res.status(200).json(updatedOrder);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
+    } catch (err) {
+      return res.status(500).json({ message: 'Failed to update order' });
     }
   });
-  
+
   // Cart routes
   app.get("/api/cart", async (req, res) => {
     try {
@@ -687,21 +937,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Either userId or sessionId is required" });
       }
       
-      const userIdNum = userId ? parseInt(userId as string) : undefined;
+      const userIdStr = userId as string;
       const sessionIdStr = sessionId as string;
       
-      let cart = await storage.getCart(userIdNum, sessionIdStr);
+      let cart = await storage.getCart(userIdStr, sessionIdStr);
       
       // Create cart if it doesn't exist
       if (!cart) {
         cart = await storage.createCart({
-          userId: userIdNum,
+          userId: userIdStr,
           sessionId: sessionIdStr
         });
       }
       
       // Get cart items
-      const cartItems = await storage.getCartItems(cart.id);
+      const cartItems = await storage.getCartItems(cart.id!);
       
       // Get product details for each cart item
       const cartItemsWithProduct = await Promise.all(
@@ -750,7 +1000,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.put("/api/cart/items/:id", async (req, res) => {
     try {
-      const cartItemId = parseInt(req.params.id);
+      const cartItemId = req.params.id;
       const { quantity } = req.body;
       
       if (quantity === undefined) {
@@ -763,7 +1013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Cart item not found" });
       }
       
-      return res.status(200).json(updatedCartItem || { id: cartItemId, deleted: true });
+      return res.status(200).json(updatedCartItem || { _id: cartItemId, deleted: true });
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
     }
@@ -771,7 +1021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.delete("/api/cart/items/:id", async (req, res) => {
     try {
-      const cartItemId = parseInt(req.params.id);
+      const cartItemId = req.params.id;
       
       const success = await storage.removeCartItem(cartItemId);
       
@@ -787,7 +1037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.delete("/api/cart/:id", async (req, res) => {
     try {
-      const cartId = parseInt(req.params.id);
+      const cartId = req.params.id;
       
       const success = await storage.clearCart(cartId);
       
@@ -800,37 +1050,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Banner routes
   app.get("/api/banners", async (req, res) => {
     try {
-      const { active } = req.query;
-      const activeFilter = active !== undefined ? active === "true" : undefined;
+      const banners = await storage.getBanners();
+      return res.status(200).json(banners);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Failed to fetch banners' });
+    }
+  });
+  app.get("/api/banners", async (req, res) => {
+    try {
+      const { enabled } = req.query;
+      const enabledFilter = enabled !== undefined ? enabled === "true" : undefined;
       
-      const banners = await storage.getBanners(activeFilter);
+      const banners = await storage.getBanners(enabledFilter);
       
       return res.status(200).json(banners);
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
     }
   });
-  
-  app.post("/api/banners", async (req, res) => {
+  app.post("/api/banners", upload.fields([{ name: 'desktopImage', maxCount: 1 }, { name: 'mobileImage', maxCount: 1 }]), async (req, res) => {
     try {
-      const validatedData = bannerInsertSchema.parse(req.body);
-      
+      // parse and prepare input, handle file uploads
+      const raw = { ...req.body } as any;
+      raw.enabled = raw.enabled === 'true';
+      raw.position = Number(raw.position);
+      // Extract uploaded files before validation
+      const files = req.files as Record<string, Express.Multer.File[]>;
+      const desktopUpload = files.desktopImage?.[0]?.path;
+      const mobileUpload = files.mobileImage?.[0]?.path;
+      if (desktopUpload) raw.desktopImageUrl = desktopUpload;
+      if (mobileUpload) raw.mobileImageUrl = mobileUpload;
+      // Validate input
+      const data = bannerSchema.parse(raw);
+      // determine URLs (fallback to imageUrl)
+      const desktop = desktopUpload ?? data.desktopImageUrl ?? data.imageUrl;
+      const mobile = mobileUpload ?? data.mobileImageUrl ?? data.imageUrl;
+      // --- FIX: Enforce both required fields for schema ---
+      if (!desktop || !mobile) {
+        return res.status(400).json({ message: "Both desktopImageUrl and mobileImageUrl (or imageUrl fallback) are required." });
+      }
+      const validatedData: InsertBanner = {
+        title: data.title,
+        subtitle: data.subtitle,
+        alt: data.alt,
+        linkUrl: data.linkUrl,
+        enabled: data.enabled,
+        position: data.position,
+        desktopImageUrl: desktop,
+        mobileImageUrl: mobile
+      };
       const banner = await storage.createBanner(validatedData);
-      
       return res.status(201).json(banner);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: error.errors });
       }
+      console.error("Create banner error:", error);
       return res.status(500).json({ message: "Server error" });
     }
   });
   
-  app.put("/api/banners/:id", async (req, res) => {
+  app.put("/api/banners/:id", upload.fields([{ name: 'desktopImage', maxCount: 1 }, { name: 'mobileImage', maxCount: 1 }]), async (req, res) => {
     try {
-      const bannerId = parseInt(req.params.id);
-      const bannerData = req.body;
-      
+      const bannerId = req.params.id;
+      // parse and prepare input, handle file uploads
+      const raw = { ...req.body } as any;
+      raw.enabled = raw.enabled === 'true';
+      raw.position = Number(raw.position);
+      // Extract uploaded files before validation
+      const files = req.files as Record<string, Express.Multer.File[]>;
+      const desktopUpload = files.desktopImage?.[0]?.path;
+      const mobileUpload = files.mobileImage?.[0]?.path;
+      if (desktopUpload) raw.desktopImageUrl = desktopUpload;
+      if (mobileUpload) raw.mobileImageUrl = mobileUpload;
+      // Validate input and update
+      const bannerData = bannerUpdateSchema.parse(raw);
       const updatedBanner = await storage.updateBanner(bannerId, bannerData);
       
       if (!updatedBanner) {
@@ -842,13 +1137,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: error.errors });
       }
+      console.error("Update banner error:", error);
       return res.status(500).json({ message: "Server error" });
     }
   });
   
   app.delete("/api/banners/:id", async (req, res) => {
     try {
-      const bannerId = parseInt(req.params.id);
+      const bannerId = req.params.id;
       
       const success = await storage.deleteBanner(bannerId);
       
@@ -859,6 +1155,311 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(204).end();
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Admin: list all users
+  app.get("/api/admin/users", async (req, res) => {
+    try {
+      const users = await UserModel.find();
+      const sanitized = users.map((u) => {
+        const obj: any = u.toObject();
+        delete obj.password;
+        obj.id = obj._id.toString();
+        return obj;
+      });
+      return res.status(200).json(sanitized);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Admin: update user
+  app.put("/api/admin/users/:id", async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const { isAdmin } = req.body;
+      const updated = await UserModel.findByIdAndUpdate(userId, { isAdmin }, { new: true });
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      const obj: any = updated.toObject();
+      delete obj.password;
+      obj.id = obj._id.toString();
+      return res.status(200).json(obj);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Admin: delete user
+  app.delete("/api/admin/users/:id", async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const result = await UserModel.deleteOne({ _id: userId });
+      if (result.deletedCount === 0) return res.status(404).json({ message: "User not found" });
+      return res.status(204).end();
+    } catch (error) {
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Admin: get settings
+  app.get("/api/admin/settings", async (req, res) => {
+    try {
+      const settings = await SettingModel.findOne();
+      if (!settings) return res.status(404).json({ message: "Settings not found" });
+      return res.status(200).json(settings.toObject());
+    } catch (error) {
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Admin: update settings
+  app.put("/api/admin/settings", async (req, res) => {
+    try {
+      const { siteName, maintenanceMode, supportEmail, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode } = req.body;
+      const updated = await SettingModel.findOneAndUpdate(
+        {},
+        { siteName, maintenanceMode, supportEmail, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode },
+        { new: true, upsert: true }
+      );
+      return res.status(200).json(updated!.toObject());
+    } catch (error) {
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Public: get Razorpay Key ID for frontend
+  app.get('/api/config', async (req, res) => {
+    try {
+      const settings = await SettingModel.findOne();
+      return res.json({ razorpayKeyId: settings?.razorpayKeyId });
+    } catch (error) {
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Create Razorpay order
+  app.post('/api/razorpay/order', async (req, res) => {
+    try {
+      const { amount, currency } = req.body;
+      const order = await razorpay.orders.create({ amount, currency });
+      return res.json({ orderId: order.id, amount: order.amount, currency: order.currency });
+    } catch (error) {
+      console.error('Razorpay order create error:', error);
+      return res.status(500).json({ message: 'Failed to create order' });
+    }
+  });
+
+  // Verify Razorpay payment
+  app.post('/api/razorpay/verify', async (req, res) => {
+    try {
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+      const generatedSignature = crypto
+        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest('hex');
+      if (generatedSignature === razorpay_signature) {
+        return res.json({ valid: true });
+      }
+      return res.status(400).json({ valid: false });
+    } catch (error) {
+      console.error('Razorpay verify error:', error);
+      return res.status(500).json({ message: 'Verification failed' });
+    }
+  });
+
+  // Shiprocket: serviceability check
+  app.post('/api/shiprocket/serviceability', async (req, res) => {
+    try {
+      const { delivery_pincode, weight, cod } = req.body;
+      const settings = await SettingModel.findOne();
+      if (!settings) return res.status(500).json({ message: 'Settings not found' });
+      const result = await getServiceability({
+        pickup_pincode: settings.shiprocketSourcePincode,
+        delivery_pincode,
+        weight,
+        cod,
+      });
+      return res.json(result);
+    } catch (error) {
+      console.error('Serviceability error:', error);
+      return res.status(500).json({ message: 'Serviceability check failed' });
+    }
+  });
+
+  app.post('/api/shiprocket/serviceability', async (req, res) => {
+    try {
+      const { delivery_pincode, weight, cod } = req.body;
+      const settings = await SettingModel.findOne();
+      if (!settings) return res.status(500).json({ message: 'Settings not found' });
+      const result = await getServiceability({
+        pickup_pincode: settings.shiprocketSourcePincode,
+        delivery_pincode,
+        weight,
+        cod,
+      });
+      return res.json(result);
+    } catch (error) {
+      console.error('Serviceability error:', error);
+      return res.status(500).json({ message: 'Serviceability check failed' });
+    }
+  });
+
+  // Create new order (with items)
+  app.post('/api/orders', async (req, res) => {
+    try {
+      const { order, items } = orderPayloadSchema.parse(req.body);
+      const createdOrder = await storage.createOrder(order);
+      if (!createdOrder.id) {
+        return res.status(500).json({ message: 'Order created without ID' });
+      }
+      const orderId = createdOrder.id!;
+      for (const item of items) {
+        await storage.addOrderItem({ ...item, orderId });
+      }
+      return res.status(201).json({ id: createdOrder.id! });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid order payload', errors: error.errors });
+      }
+      console.error('Order creation error:', error);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Contact form submission
+  app.post('/api/contacts', async (req, res) => {
+    try {
+      const { name, email, country, mobile, comments } = req.body;
+      const contact = await ContactModel.create({ name, email, country, mobile, comments });
+      // send notification email
+      sendMail({
+        to: process.env.SUPPORT_EMAIL || email,
+        subject: 'New Contact Us Submission',
+        text: `Name: ${name}\nEmail: ${email}\nCountry: ${country}\nMobile: ${mobile}\nComments: ${comments}`
+      });
+      return res.status(201).json(contact);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Failed to submit contact' });
+    }
+  });
+
+  // Contacts API route
+  app.get('/api/contacts', async (req, res) => {
+    try {
+      const contacts = await ContactModel.find().sort({ createdAt: -1 });
+      return res.status(200).json(contacts);
+    } catch (err) {
+      console.error('Failed to fetch contacts:', err);
+      return res.status(500).json({ message: 'Failed to fetch contacts' });
+    }
+  });
+
+  // Get all contact submissions (admin)
+  app.get('/api/contacts', async (req, res) => {
+    try {
+      const contacts = await ContactModel.find().sort({ createdAt: -1 });
+      return res.json(contacts);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Failed to fetch contacts' });
+    }
+  });
+
+  // Public: get all blogs
+  app.get('/api/blogs', async (req, res) => {
+    try {
+      const blogs = await BlogModel.find().sort({ publishedAt: -1 });
+      return res.json(blogs);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Failed to fetch blogs' });
+    }
+  });
+
+  // Public: get blog by slug
+  app.get('/api/blogs/:slug', async (req, res) => {
+    try {
+      const blog = await BlogModel.findOne({ slug: req.params.slug });
+      if (!blog) return res.status(404).json({ message: 'Not found' });
+      return res.json(blog);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Failed to fetch blog' });
+    }
+  });
+
+  // Admin: create blog
+  app.post('/api/blogs', async (req, res) => {
+    try {
+      const data = req.body;
+      const blog = await BlogModel.create(data);
+      return res.status(201).json(blog);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Failed to create blog' });
+    }
+  });
+
+  // Admin: update blog
+  app.put('/api/blogs/:id', async (req, res) => {
+    try {
+      const blog = await BlogModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      if (!blog) return res.status(404).json({ message: 'Not found' });
+      return res.json(blog);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Failed to update blog' });
+    }
+  });
+
+  // Admin: delete blog
+  app.delete('/api/blogs/:id', async (req, res) => {
+    try {
+      await BlogModel.findByIdAndDelete(req.params.id);
+      return res.json({ success: true });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Failed to delete blog' });
+    }
+  });
+
+  // Users API route
+  app.get('/api/users', async (req, res) => {
+    try {
+      const users = await UserModel.find();
+      res.status(200).json(users);
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+      res.status(500).json({ message: 'Failed to fetch users' });
+    }
+  });
+
+  app.put('/api/users/:id', async (req, res) => {
+    try {
+      const { isAdmin } = req.body;
+      const user = await UserModel.findByIdAndUpdate(
+        req.params.id,
+        { isAdmin },
+        { new: true }
+      );
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      res.status(200).json(user);
+    } catch (err) {
+      console.error('Failed to update user:', err);
+      res.status(500).json({ message: 'Failed to update user' });
+    }
+  });
+
+  app.delete('/api/users/:id', async (req, res) => {
+    try {
+      const user = await UserModel.findByIdAndDelete(req.params.id);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      res.status(200).json({ message: 'User deleted' });
+    } catch (err) {
+      console.error('Failed to delete user:', err);
+      res.status(500).json({ message: 'Failed to delete user' });
     }
   });
 

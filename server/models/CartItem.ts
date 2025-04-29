@@ -1,14 +1,14 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICartItem extends Document {
-  cartId: number;
-  productId: number;
+  cartId: string;
+  productId: string;
   quantity: number;
 }
 
 const CartItemSchema: Schema = new Schema({
-  cartId: { type: Number, required: true },
-  productId: { type: Number, required: true },
+  cartId: { type: String, required: true },
+  productId: { type: String, required: true },
   quantity: { type: Number, required: true, min: 1 }
 });
 

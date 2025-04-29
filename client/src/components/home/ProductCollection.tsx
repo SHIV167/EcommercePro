@@ -3,15 +3,20 @@ import { Link } from "wouter";
 import ProductCard from "@/components/products/ProductCard";
 import { useQuery } from "@tanstack/react-query";
 import { Product, Collection } from "@shared/schema";
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
 interface ProductCollectionProps {
   collectionSlug: string;
   title?: string;
+  slider?: boolean;
 }
 
-export default function ProductCollection({ collectionSlug, title }: ProductCollectionProps) {
+export default function ProductCollection({ collectionSlug, title, slider = false }: ProductCollectionProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   
   const { data: collection } = useQuery<Collection>({
     queryKey: [`/api/collections/${collectionSlug}`],
@@ -24,7 +29,7 @@ export default function ProductCollection({ collectionSlug, title }: ProductColl
   // Define demo product data - used only when API returns no results
   const demoProducts: Product[] = [
     {
-      id: 1,
+      _id: '1',
       name: "Kumkumadi Youth-Clarifying Mask-Scrub",
       slug: "kumkumadi-youth-clarifying-mask-scrub",
       description: "Gently cleanses and clears skin while enhancing radiance",
@@ -38,11 +43,12 @@ export default function ProductCollection({ collectionSlug, title }: ProductColl
       featured: true,
       bestseller: true,
       isNew: false,
-      categoryId: 1,
-      createdAt: new Date()
+      categoryId: '1',
+      createdAt: new Date(),
+      images: []
     },
     {
-      id: 2,
+      _id: '2',
       name: "Kumkumadi Youth-Illuminating Silky Serum",
       slug: "kumkumadi-youth-illuminating-silky-serum",
       description: "The botanical alternative to vitamin C",
@@ -56,11 +62,12 @@ export default function ProductCollection({ collectionSlug, title }: ProductColl
       featured: true,
       bestseller: true,
       isNew: true,
-      categoryId: 1,
-      createdAt: new Date()
+      categoryId: '1',
+      createdAt: new Date(),
+      images: []
     },
     {
-      id: 3,
+      _id: '3',
       name: "Kumkumadi Glow Discovery Set",
       slug: "kumkumadi-glow-discovery-set",
       description: "Glow trio powered with saffron",
@@ -74,8 +81,9 @@ export default function ProductCollection({ collectionSlug, title }: ProductColl
       featured: true,
       bestseller: true,
       isNew: false,
-      categoryId: 1,
-      createdAt: new Date()
+      categoryId: '1',
+      createdAt: new Date(),
+      images: []
     }
   ];
 
@@ -102,6 +110,45 @@ export default function ProductCollection({ collectionSlug, title }: ProductColl
   
   const collectionTitle = title || collection?.name || "Kumkumadi Collection";
 
+  // Custom arrows (copied from NewLaunchSection for consistency)
+  const PrevArrow = ({ onClick }: any) => (
+    <button onClick={onClick} className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white p-2 rounded-full shadow z-10">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+  );
+  const NextArrow = ({ onClick }: any) => (
+    <button onClick={onClick} className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white p-2 rounded-full shadow z-10">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  );
+  const sliderSettings = {
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 3,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 5000,
+    pauseOnHover: true,
+    arrows: true,
+    prevArrow: <PrevArrow />,
+    nextArrow: <NextArrow />,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: { slidesToShow: 2 },
+      },
+      {
+        breakpoint: 640,
+        settings: { slidesToShow: 1 },
+      },
+    ],
+  };
+
   return (
     <section className="py-12 bg-white">
       <div className="container mx-auto px-4">
@@ -112,39 +159,48 @@ export default function ProductCollection({ collectionSlug, title }: ProductColl
           </Link>
         </div>
         
-        <div className="relative" ref={containerRef}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
-            {displayProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+        {slider ? (
+          <Slider {...sliderSettings} className="px-4">
+            {productsToDisplay.map((product) => (
+              <div key={product._id} className="p-2">
+                <ProductCard product={product} />
+              </div>
             ))}
+          </Slider>
+        ) : (
+          <div className="relative" ref={containerRef}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+              {displayProducts.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))}
+            </div>
+            {/* Collection Navigation Controls - only show if there are multiple pages */}
+            {totalPages > 1 && (
+              <>
+                <button 
+                  className={`absolute -left-4 md:-left-6 top-1/2 transform -translate-y-1/2 bg-white border border-neutral-sand ${currentPage === 0 ? 'text-neutral-gray' : 'hover:border-primary text-primary'} rounded-full p-2 shadow-sm z-10`}
+                  aria-label="Previous products"
+                  onClick={handlePrev}
+                  disabled={currentPage === 0}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button 
+                  className={`absolute -right-4 md:-right-6 top-1/2 transform -translate-y-1/2 bg-white border border-neutral-sand ${currentPage === totalPages - 1 ? 'text-neutral-gray' : 'hover:border-primary text-primary'} rounded-full p-2 shadow-sm z-10`}
+                  aria-label="Next products"
+                  onClick={handleNext}
+                  disabled={currentPage === totalPages - 1}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
           </div>
-          
-          {/* Collection Navigation Controls - only show if there are multiple pages */}
-          {totalPages > 1 && (
-            <>
-              <button 
-                className={`absolute -left-4 md:-left-6 top-1/2 transform -translate-y-1/2 bg-white border border-neutral-sand ${currentPage === 0 ? 'text-neutral-gray' : 'hover:border-primary text-primary'} rounded-full p-2 shadow-sm z-10`}
-                aria-label="Previous products"
-                onClick={handlePrev}
-                disabled={currentPage === 0}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button 
-                className={`absolute -right-4 md:-right-6 top-1/2 transform -translate-y-1/2 bg-white border border-neutral-sand ${currentPage === totalPages - 1 ? 'text-neutral-gray' : 'hover:border-primary text-primary'} rounded-full p-2 shadow-sm z-10`}
-                aria-label="Next products"
-                onClick={handleNext}
-                disabled={currentPage === totalPages - 1}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </>
-          )}
-        </div>
+        )}
       </div>
     </section>
   );

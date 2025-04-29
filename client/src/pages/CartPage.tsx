@@ -50,19 +50,23 @@ export default function CartPage() {
                     <div key={item.id} className="p-4 md:p-6">
                       <div className="flex flex-col md:flex-row gap-4">
                         <div className="w-full md:w-24 h-24 bg-neutral-sand rounded-md overflow-hidden">
-                          <img
-                            src={item.product.imageUrl}
-                            alt={item.product.name}
-                            className="w-full h-full object-cover object-center"
-                          />
+                          {item.product && item.product.imageUrl ? (
+                            <img
+                              src={item.product.imageUrl}
+                              alt={item.product.name}
+                              className="w-full h-full object-cover object-center"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200" />
+                          )}
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between">
                             <Link 
-                              href={`/products/${item.product.slug}`}
+                              href={`/products/${item.product?.slug ?? ""}`}
                               className="font-heading text-primary hover:text-primary-light line-clamp-2"
                             >
-                              {item.product.name}
+                              {item.product?.name ?? "Unknown Product"}
                             </Link>
                             <button
                               onClick={() => removeItem(item.id)}
@@ -74,7 +78,7 @@ export default function CartPage() {
                               </svg>
                             </button>
                           </div>
-                          {item.product.shortDescription && (
+                          {item.product?.shortDescription && (
                             <p className="text-sm text-neutral-gray mt-1">
                               {item.product.shortDescription}
                             </p>
@@ -104,10 +108,10 @@ export default function CartPage() {
                             </div>
                             <div className="text-right">
                               <p className="font-medium text-primary">
-                                {formatCurrency(item.product.price * item.quantity)}
+                                {formatCurrency((item.product?.price ?? 0) * item.quantity)}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {formatCurrency(item.product.price)} each
+                                {formatCurrency(item.product?.price ?? 0)} each
                               </p>
                             </div>
                           </div>

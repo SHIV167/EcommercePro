@@ -1,49 +1,270 @@
 import { log } from './vite';
 import { storage } from './storage';
+import { type Category, type Collection } from '@shared/schema';
 
 // Initialize demo data for the MongoDB database
 export async function initDemoData() {
   try {
-    log('Initializing demo data...', 'mongodb');
-    
-    // Check if we already have categories
-    const existingCategories = await storage.getCategories();
-    log(`Found ${existingCategories.length} existing categories`, 'mongodb');
-    
-    // Check if we have products in the database
-    const products = await storage.getProducts();
-    log(`Found ${products.length} existing products`, 'mongodb');
-    
-    // If we have both categories and products, skip initialization
-    if (existingCategories.length > 0 && products.length > 0) {
-      log('Demo data already exists. Skipping initialization.', 'mongodb');
+    console.log("Initializing demo data...");
+    // Skip if demo data already initialized
+    const existingProducts = await storage.getProducts({ limit: 1 });
+    if (existingProducts.length > 0) {
+      console.log("Demo data already exists. Skipping initialization.");
       return;
     }
+    // Fetch or create demo categories
+    let herbCategory = await storage.getCategoryBySlug("herbs-supplements");
+    if (!herbCategory) herbCategory = await storage.createCategory({
+      name: "Herbs & Supplements", slug: "herbs-supplements", description: "Natural herbs and supplements for holistic wellness", imageUrl: "/images/categories/herbs.jpg", featured: true
+    });
+    let skinCategory = await storage.getCategoryBySlug("skin-care");
+    if (!skinCategory) skinCategory = await storage.createCategory({
+      name: "Skin Care", slug: "skin-care", description: "Ayurvedic skincare formulations for radiant skin", imageUrl: "/images/categories/skincare.jpg", featured: true
+    });
+    let hairCategory = await storage.getCategoryBySlug("hair-care");
+    if (!hairCategory) hairCategory = await storage.createCategory({
+      name: "Hair Care", slug: "hair-care", description: "Natural hair care products based on Ayurvedic principles", imageUrl: "/images/categories/haircare.jpg", featured: true
+    });
+    let bodyCategory = await storage.getCategoryBySlug("body-care");
+    if (!bodyCategory) bodyCategory = await storage.createCategory({
+      name: "Body Care", slug: "body-care", description: "Nourishing body care products with Ayurvedic ingredients", imageUrl: "/images/categories/bodycare.jpg", featured: true
+    });
     
-    // If we have categories but no products
-    if (existingCategories.length > 0 && products.length === 0) {
-      await createProductsWithExistingCategories(existingCategories);
-      return;
+    console.log("Created categories successfully");
+    
+    // Fetch or create collections
+    let summerCollection = await storage.getCollectionBySlug("summer-essentials");
+    if (!summerCollection) summerCollection = await storage.createCollection({
+      name: "Summer Essentials", slug: "summer-essentials", description: "Beat the heat with these cooling and calming Ayurvedic products", imageUrl: "/images/collections/summer.jpg", featured: true
+    });
+    let bestsellersCollection = await storage.getCollectionBySlug("best-sellers");
+    if (!bestsellersCollection) bestsellersCollection = await storage.createCollection({
+      name: "Best Sellers", slug: "best-sellers", description: "Our most popular Ayurvedic products loved by our customers", imageUrl: "/images/collections/bestsellers.jpg", featured: true
+    });
+    let giftsCollection = await storage.getCollectionBySlug("gift-sets");
+    if (!giftsCollection) giftsCollection = await storage.createCollection({
+      name: "Gift Sets", slug: "gift-sets", description: "Perfect Ayurvedic gift sets for your loved ones", imageUrl: "/images/collections/gifts.jpg", featured: true
+    });
+    
+    console.log("Created collections successfully");
+    
+    // Create products and add to collections
+    // Sample products
+    const products = [
+      {
+        name: "Ashwagandha Root Powder",
+        slug: "ashwagandha-root-powder",
+        description: "Organic Ashwagandha root powder for stress relief and improved vitality.",
+        price: 24.99,
+        discountedPrice: 19.99,
+        categoryId: herbCategory.id,
+        sku: "HERB-001",
+        stock: 100,
+        imageUrl: "/images/products/ashwagandha.jpg",
+        featured: true,
+        bestseller: true,
+        isNew: false
+      },
+      {
+        name: "Kumkumadi Brightening Face Oil",
+        slug: "kumkumadi-brightening-oil",
+        description: "Traditional Ayurvedic facial oil for brightening and rejuvenating skin.",
+        price: 49.99,
+        discountedPrice: null,
+        categoryId: skinCategory.id,
+        sku: "SKIN-001",
+        stock: 50,
+        imageUrl: "/images/products/kumkumadi.jpg",
+        featured: true,
+        bestseller: true,
+        isNew: false
+      },
+      {
+        name: "Bhringraj Hair Oil",
+        slug: "bhringraj-hair-oil",
+        description: "Nourishing hair oil to promote hair growth and prevent premature graying.",
+        price: 34.99,
+        discountedPrice: 29.99,
+        categoryId: hairCategory.id,
+        sku: "HAIR-001",
+        stock: 75,
+        imageUrl: "/images/products/bhringraj.jpg",
+        featured: false,
+        bestseller: true,
+        isNew: false
+      },
+      {
+        name: "Rose & Jasmine Body Oil",
+        slug: "rose-jasmine-body-oil",
+        description: "Luxurious body oil with the goodness of rose and jasmine for deep moisturization.",
+        price: 39.99,
+        discountedPrice: null,
+        categoryId: bodyCategory.id,
+        sku: "BODY-001",
+        stock: 60,
+        imageUrl: "/images/products/rosejasmine.jpg",
+        featured: true,
+        bestseller: false,
+        isNew: true
+      },
+      {
+        name: "Triphala Powder",
+        slug: "triphala-powder",
+        description: "Traditional Ayurvedic formula for digestive health and detoxification.",
+        price: 19.99,
+        discountedPrice: 17.99,
+        categoryId: herbCategory.id,
+        sku: "HERB-002",
+        stock: 120,
+        imageUrl: "/images/products/triphala.jpg",
+        featured: false,
+        bestseller: false,
+        isNew: true
+      },
+      {
+        name: "Aloe Vera Gel",
+        slug: "aloe-vera-gel",
+        description: "Pure aloe vera gel for soothing and hydrating skin.",
+        price: 14.99,
+        discountedPrice: null,
+        categoryId: skinCategory.id,
+        sku: "SKIN-002",
+        stock: 90,
+        imageUrl: "/images/products/aloevera.jpg",
+        featured: false,
+        bestseller: false,
+        isNew: true
+      },
+      {
+        name: "Herbal Bath Salts",
+        slug: "herbal-bath-salts",
+        description: "Detoxifying bath salts with Ayurvedic herbs for relaxation.",
+        price: 29.99,
+        discountedPrice: 24.99,
+        categoryId: bodyCategory.id,
+        sku: "BODY-002",
+        stock: 40,
+        imageUrl: "/images/products/bathsalts.jpg",
+        featured: false,
+        bestseller: true,
+        isNew: false
+      }
+    ];
+    
+    // Create each product
+    for (const productData of products) {
+      const product = await storage.createProduct(productData);
+      
+      // Add products to relevant collections
+      if (productData.featured) {
+        await storage.addProductToCollection({
+          productId: product.id,
+          collectionId: bestsellersCollection.id
+        });
+      }
+      
+      if (productData.categoryId === skinCategory.id || productData.categoryId === bodyCategory.id) {
+        await storage.addProductToCollection({
+          productId: product.id,
+          collectionId: summerCollection.id
+        });
+      }
     }
     
-    // If we don't have categories or products, create everything
-    log('Creating complete demo data...', 'mongodb');
-    await createCompleteData();
+    console.log("Created products and added to collections successfully");
     
-    log('Demo data initialization completed successfully', 'mongodb');
+    // Create some testimonials
+    const testimonials = [
+      {
+        name: "Priya S.",
+        rating: 5,
+        testimonial: "The Ashwagandha powder has been a game-changer for my stress levels and sleep quality. I feel more balanced and energetic throughout the day. Highly recommend!",
+        featured: true,
+        location: "Yoga Instructor"
+      },
+      {
+        name: "Amit K.",
+        rating: 5,
+        testimonial: "I've been using the Kumkumadi face oil for a month now, and the difference in my skin is remarkable. My complexion is brighter, and the fine lines around my eyes are less visible.",
+        featured: true,
+        location: "IT Professional"
+      },
+      {
+        name: "Sarah T.",
+        rating: 4,
+        testimonial: "The herbal bath salts are the perfect way to unwind after a long day. They smell amazing and leave my skin feeling soft and nourished.",
+        featured: true,
+        location: "Wellness Coach"
+      }
+    ];
+    
+    for (const testimonialData of testimonials) {
+      await storage.createTestimonial(testimonialData);
+    }
+    
+    console.log("Created testimonials successfully");
+    
+    // Create banners
+    const banners = [
+      {
+        title: "Summer Ayurveda Sale",
+        subtitle: "Up to 30% off on selected products",
+        imageUrl: "/images/banners/summer-sale.jpg",
+        buttonText: "Shop Now",
+        buttonLink: "/collections/summer-essentials",
+        active: true,
+        order: 1
+      },
+      {
+        title: "New Arrivals",
+        subtitle: "Discover our latest Ayurvedic formulations",
+        imageUrl: "/images/banners/new-arrivals.jpg",
+        buttonText: "Explore",
+        buttonLink: "/new-arrivals",
+        active: true,
+        order: 2
+      }
+    ];
+    
+    for (const bannerData of banners) {
+      await storage.createBanner(bannerData);
+    }
+    
+    console.log("Created banners successfully");
+    
+    // Create an admin user
+    await storage.createUser({
+      name: "Admin User",
+      email: "admin@kamaayurveda.com",
+      password: "admin123" // In a real app, this would be hashed
+    });
+    
+    console.log("Created admin user successfully");
+    
+    // Create a regular user
+    await storage.createUser({
+      name: "John Doe",
+      email: "john@example.com",
+      password: "password123" // In a real app, this would be hashed
+    });
+    
+    console.log("Created regular user successfully");
+    console.log("Demo data initialization complete!");
+    
   } catch (error) {
-    log(`Error initializing demo data: ${error}`, 'mongodb');
+    console.error("Error initializing demo data:", error);
+    throw error;
   }
 }
 
 // Create products using existing categories
-async function createProductsWithExistingCategories(categories) {
+async function createProductsWithExistingCategories(categories: Category[]) {
   try {
     log('Categories exist but no products. Creating products only...', 'mongodb');
     
     // Use existing categories
-    const skinCare = categories.find(cat => cat.slug === 'skincare');
-    const hairCare = categories.find(cat => cat.slug === 'haircare');
+    const skinCare = categories.find((cat: Category) => cat.slug === 'skincare');
+    const hairCare = categories.find((cat: Category) => cat.slug === 'haircare');
     
     if (!skinCare || !hairCare) {
       log('Required categories not found. Cannot create products.', 'mongodb');
@@ -67,15 +288,13 @@ async function createProductsWithExistingCategories(categories) {
     log(`Debug - skinCare: ${JSON.stringify(skinCare)}`, 'mongodb');
     log(`Debug - hairCare: ${JSON.stringify(hairCare)}`, 'mongodb');
     
-    // For MongoDB, we need to extract the ID as a number
-    // Use a numeric ID or generate one
     await createProducts(
-      { id: 1, ...skinCare },  // Use simple numeric IDs
-      { id: 2, ...hairCare },
-      { id: 3, ...kumkumadi },
-      { id: 4, ...amrrepa },
-      { id: 5, ...ujjasara },
-      { id: 6, ...bestsellers }
+      skinCare,
+      hairCare,
+      kumkumadi,
+      amrrepa,
+      ujjasara,
+      bestsellers
     );
     
     log('Products created successfully using existing categories and collections', 'mongodb');
@@ -160,12 +379,12 @@ async function createCompleteData() {
     
     // Use simple numeric IDs for consistency with the other function
     await createProducts(
-      { id: 1, ...skinCare },
-      { id: 2, ...hairCare },
-      { id: 3, ...kumkumadi },
-      { id: 4, ...amrrepa },
-      { id: 5, ...ujjasara },
-      { id: 6, ...bestsellers }
+      skinCare,
+      hairCare,
+      kumkumadi,
+      amrrepa,
+      ujjasara,
+      bestsellers
     );
     
     // Add testimonials
@@ -184,7 +403,14 @@ async function createCompleteData() {
 }
 
 // Common function to create products
-async function createProducts(skinCare, hairCare, kumkumadi, amrrepa, ujjasara, bestsellers) {
+async function createProducts(
+  skinCare: Category, 
+  hairCare: Category, 
+  kumkumadi: Collection, 
+  amrrepa: Collection, 
+  ujjasara: Collection, 
+  bestsellers: Collection
+) {
   try {
     // Add demo products
     const product1 = await storage.createProduct({

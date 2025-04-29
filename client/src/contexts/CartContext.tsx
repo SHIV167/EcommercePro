@@ -10,10 +10,10 @@ interface CartItem {
 
 interface CartContextType {
   cartItems: CartItem[];
-  addItem: (product: Product) => void;
-  removeItem: (itemId: number) => void;
-  updateQuantity: (itemId: number, quantity: number) => void;
-  clearCart: () => void;
+  addItem: (product: Product) => Promise<void>;
+  removeItem: (itemId: number) => Promise<void>;
+  updateQuantity: (itemId: number, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
   subtotal: number;
   totalItems: number;
   isEmpty: boolean;
@@ -21,10 +21,10 @@ interface CartContextType {
 
 export const CartContext = createContext<CartContextType>({
   cartItems: [],
-  addItem: () => {},
-  removeItem: () => {},
-  updateQuantity: () => {},
-  clearCart: () => {},
+  addItem: async () => {},
+  removeItem: async () => {},
+  updateQuantity: async () => {},
+  clearCart: async () => {},
   subtotal: 0,
   totalItems: 0,
   isEmpty: true,
@@ -36,12 +36,16 @@ interface CartProviderProps {
 
 export const CartProvider = ({ children }: CartProviderProps) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [cartId, setCartId] = useState<number | null>(null);
+  const [cartId, setCartId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Calculate derived values
   const subtotal = cartItems.reduce(
-    (total, item) => total + item.product.price * item.quantity,
+    (total, item) =>
+      total +
+      (item.product && typeof item.product.price === 'number'
+        ? item.product.price * item.quantity
+        : 0),
     0
   );
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
@@ -81,71 +85,84 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     initializeCart();
   }, []);
 
-  // Add item to cart
+  // Add item to cart with optimistic updates
   const addItem = async (product: Product) => {
+    const previousItems = [...cartItems];
     try {
-      // If we don't have a cartId yet, we can't add items
-      if (!cartId && isInitialized) {
-        // Create a cart first
+      // Ensure cartId is available before proceeding
+      let currentCartId = cartId;
+      if (!currentCartId) {
         const sessionId = localStorage.getItem("cartSessionId");
-        const response = await apiRequest("POST", "/api/cart", { sessionId });
-        const data = await response.json();
-        setCartId(data.id);
+        const cartResponse = await apiRequest("GET", `/api/cart?sessionId=${sessionId}`);
+        const cartData = await cartResponse.json();
+        setCartId(cartData.id);
+        currentCartId = cartData.id;
       }
+      if (!currentCartId) throw new Error("Cart ID not initialized");
 
-      // Find if the item already exists in the cart
+      // Find if the item already exists
       const existingItemIndex = cartItems.findIndex(
-        (item) => item.product.id === product.id
+        (item) => {
+          const itemId = (item.product as any).id ?? (item.product as any)._id;
+          const prodId = (product as any).id ?? (product as any)._id;
+          return itemId === prodId;
+        }
       );
 
       if (existingItemIndex !== -1) {
-        // Item exists, update quantity
+        // Optimistically update existing item
         const updatedItems = [...cartItems];
         updatedItems[existingItemIndex].quantity += 1;
         setCartItems(updatedItems);
 
-        // Update the item in the API
-        if (cartId) {
-          await apiRequest("PUT", `/api/cart/items/${updatedItems[existingItemIndex].id}`, {
-            quantity: updatedItems[existingItemIndex].quantity,
-          });
-        }
+        // Update in API
+        await apiRequest("PUT", `/api/cart/items/${cartItems[existingItemIndex].id}`, {
+          quantity: updatedItems[existingItemIndex].quantity,
+        });
       } else {
-        // Item doesn't exist, add it
-        const newItem: CartItem = {
-          id: Date.now(), // Temporary ID until we get response from API
+        // Create a temporary item for new addition
+        const tempItem: CartItem = {
+          id: Date.now(),
           product,
           quantity: 1,
         };
+        setCartItems([...cartItems, tempItem]);
 
-        setCartItems([...cartItems, newItem]);
-
-        // Add the item to the API
-        if (cartId) {
-          const response = await apiRequest("POST", "/api/cart/items", {
-            cartId,
-            productId: product.id,
-            quantity: 1,
-          });
-          
-          const data = await response.json();
-          
-          // Update the item with the correct ID from the API
-          setCartItems((prev) =>
-            prev.map((item) =>
-              item.id === newItem.id ? { ...item, id: data.id } : item
-            )
-          );
+        // Add to API
+        const prodId = (product as any).id ?? (product as any)._id;
+        const response = await apiRequest("POST", "/api/cart/items", {
+          cartId: currentCartId,
+          productId: prodId,
+          quantity: 1,
+        });
+        // Defensive: handle empty or invalid JSON
+        let data: any = {};
+        try {
+          const text = await response.text();
+          data = text ? JSON.parse(text) : {};
+        } catch (err) {
+          data = {};
         }
+        setCartItems((prev) =>
+          prev.map((item) =>
+            item.id === tempItem.id ? { ...item, id: (data as any)?.id ?? item.id } : item
+          )
+        );
       }
     } catch (error) {
       console.error("Failed to add item to cart:", error);
+      setCartItems(previousItems);
+      throw error;
     }
   };
 
-  // Remove item from cart
+  // Remove item from cart with optimistic updates
   const removeItem = async (itemId: number) => {
+    // Store previous state for rollback
+    const previousItems = [...cartItems];
+    
     try {
+      // Optimistically remove item
       setCartItems(cartItems.filter((item) => item.id !== itemId));
 
       // Remove from API
@@ -154,17 +171,23 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       }
     } catch (error) {
       console.error("Failed to remove item from cart:", error);
+      // Rollback on error
+      setCartItems(previousItems);
     }
   };
 
-  // Update item quantity
+  // Update item quantity with optimistic updates
   const updateQuantity = async (itemId: number, quantity: number) => {
+    // Store previous state for rollback
+    const previousItems = [...cartItems];
+
     try {
       if (quantity <= 0) {
-        removeItem(itemId);
+        await removeItem(itemId);
         return;
       }
 
+      // Optimistically update quantity
       setCartItems(
         cartItems.map((item) =>
           item.id === itemId ? { ...item, quantity } : item
@@ -177,12 +200,18 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       }
     } catch (error) {
       console.error("Failed to update cart item quantity:", error);
+      // Rollback on error
+      setCartItems(previousItems);
     }
   };
 
-  // Clear cart
+  // Clear cart with optimistic updates
   const clearCart = async () => {
+    // Store previous state for rollback
+    const previousItems = [...cartItems];
+
     try {
+      // Optimistically clear cart
       setCartItems([]);
 
       // Clear in API
@@ -191,6 +220,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       }
     } catch (error) {
       console.error("Failed to clear cart:", error);
+      // Rollback on error
+      setCartItems(previousItems);
     }
   };
 

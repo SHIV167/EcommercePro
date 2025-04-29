@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, ReactNode } from "react";
+import React, { createContext, ReactNode, useEffect, useState, useContext, createElement } from "react";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { User } from "@shared/schema";
@@ -57,7 +57,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   // Login function
   const login = async (email: string, password: string): Promise<User> => {
     try {
-      const response = await apiRequest("POST", "/api/auth/login", {
+      const response = await apiRequest("POST", `${import.meta.env.VITE_API_URL}/api/auth/login`, {
         email,
         password,
       });
@@ -92,18 +92,18 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  return (
-    <AdminAuthContext.Provider
-      value={{
+  return React.createElement(
+    AdminAuthContext.Provider,
+    {
+      value: {
         admin,
         isAuthenticated: !!admin && admin.isAdmin,
         isLoading,
         login,
         logout,
-      }}
-    >
-      {children}
-    </AdminAuthContext.Provider>
+      },
+    },
+    children
   );
 };
 

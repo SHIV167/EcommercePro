@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAdminAuth } from "../../hooks/useAdminAuth";
 import {
   DropdownMenu,
   DropdownMenuContent,

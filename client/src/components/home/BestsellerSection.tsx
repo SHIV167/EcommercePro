@@ -4,16 +4,19 @@ import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/products/ProductCard";
 import { useQuery } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
 export default function BestsellerSection() {
   const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ['/api/products/bestsellers?limit=4'],
+    queryKey: ['/api/products/bestsellers?limit=5'],
   });
 
   // Use demo products if none are returned from API
   const demoProducts: Product[] = [
     {
-      id: 101,
+      _id: '101',
       name: "Kumkumadi Brightening Ayurvedic Face Scrub",
       slug: "kumkumadi-brightening-ayurvedic-face-scrub",
       description: "Gently exfoliates and improves skin radiance",
@@ -27,11 +30,12 @@ export default function BestsellerSection() {
       featured: true,
       bestseller: true,
       isNew: false,
-      categoryId: 1,
-      createdAt: new Date()
+      categoryId: '1',
+      createdAt: new Date(),
+      images: [],
     },
     {
-      id: 102,
+      _id: '102',
       name: "Himalayan Deodar Hair Cleanser",
       slug: "himalayan-deodar-hair-cleanser",
       description: "Strengthens hair and reduces hair fall",
@@ -45,11 +49,12 @@ export default function BestsellerSection() {
       featured: true,
       bestseller: true,
       isNew: false,
-      categoryId: 2,
-      createdAt: new Date()
+      categoryId: '2',
+      createdAt: new Date(),
+      images: [],
     },
     {
-      id: 103,
+      _id: '103',
       name: "Rose & Jasmine Body Cleanser",
       slug: "rose-jasmine-body-cleanser",
       description: "Organic body wash with floral essence",
@@ -63,11 +68,12 @@ export default function BestsellerSection() {
       featured: true,
       bestseller: true,
       isNew: false,
-      categoryId: 3,
-      createdAt: new Date()
+      categoryId: '3',
+      createdAt: new Date(),
+      images: [],
     },
     {
-      id: 104,
+      _id: '104',
       name: "Pure Rose Water Toner",
       slug: "pure-rose-water-toner",
       description: "Balances skin pH and improves texture",
@@ -81,12 +87,75 @@ export default function BestsellerSection() {
       featured: true,
       bestseller: true,
       isNew: true,
-      categoryId: 1,
-      createdAt: new Date()
+      categoryId: '1',
+      createdAt: new Date(),
+      images: [],
+    },
+    {
+      _id: '105',
+      name: "New Product",
+      slug: "new-product",
+      description: "New product description",
+      shortDescription: "New product short description",
+      price: 1995,
+      discountedPrice: null,
+      stock: 20,
+      imageUrl: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b",
+      rating: 4.5,
+      totalReviews: 10,
+      featured: true,
+      bestseller: true,
+      isNew: true,
+      categoryId: '1',
+      createdAt: new Date(),
+      images: [],
     }
   ];
 
   const displayProducts = products.length > 0 ? products : demoProducts;
+
+  // Custom arrow components
+  const PrevArrow = ({ onClick }: any) => (
+    <button onClick={onClick} className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white p-2 rounded-full shadow z-10">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+  );
+  const NextArrow = ({ onClick }: any) => (
+    <button onClick={onClick} className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white p-2 rounded-full shadow z-10">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  );
+  const settings = {
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 3,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 5000,
+    pauseOnHover: true,
+    arrows: true,
+    prevArrow: <PrevArrow />,
+    nextArrow: <NextArrow />,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 2,
+        },
+      },
+      {
+        breakpoint: 640,
+        settings: {
+          slidesToShow: 1,
+        },
+      },
+    ],
+  };
 
   return (
     <section className="py-12 bg-white">
@@ -98,24 +167,21 @@ export default function BestsellerSection() {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {isLoading ? (
-            // Render skeleton cards when loading
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-white border border-neutral-sand p-6 animate-pulse">
-                <div className="mb-4 w-full h-64 bg-neutral-sand"></div>
-                <div className="w-24 h-3 bg-neutral-sand mb-2"></div>
-                <div className="w-full h-5 bg-neutral-sand mb-1"></div>
-                <div className="w-3/4 h-4 bg-neutral-sand mb-3"></div>
-                <div className="w-16 h-4 bg-neutral-sand"></div>
-              </div>
-            ))
-          ) : (
-            displayProducts.map((product) => (
-              <ProductCard key={product.id} product={product} showAddToCart={true} />
-            ))
-          )}
-        </div>
+        {/* Slick slider */}
+        <Slider {...settings} className="px-4">
+          {isLoading
+            ? Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="p-2 bg-white animate-pulse">
+                  <div className="mb-4 w-full h-64 bg-neutral-sand"></div>
+                  <div className="w-24 h-3 bg-neutral-sand mb-2"></div>
+                </div>
+              ))
+            : displayProducts.map((product) => (
+                <div key={product._id || product.slug} className="p-2">
+                  <ProductCard product={product} showAddToCart />
+                </div>
+              ))}
+        </Slider>
         
         <div className="text-center mt-12">
           <Button 

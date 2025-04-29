@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAdminAuth } from "../hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,10 +33,11 @@ export default function AdminLogin() {
   const { toast } = useToast();
   
   // If already authenticated, redirect to dashboard
-  if (isAuthenticated) {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/admin/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -56,11 +57,17 @@ export default function AdminLogin() {
         title: "Login successful",
         description: "Welcome to Kama Ayurveda Admin dashboard.",
       });
-      navigate("/");
+      navigate("/admin/dashboard");
     } catch (error: any) {
-      setError(
-        error.message || "Invalid credentials or you don't have admin access."
-      );
+      console.error("Login error details:", error);
+      
+      // Extract the error message for display
+      let errorMessage = "Invalid credentials or you don't have admin access.";
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

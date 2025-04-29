@@ -1,13 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICart extends Document {
-  userId?: number;
+  userId?: string;
   sessionId?: string;
   createdAt: Date;
 }
 
 const CartSchema: Schema = new Schema({
-  userId: { type: Number },
+  userId: { type: String },
   sessionId: { type: String },
   createdAt: { type: Date, default: Date.now }
 });

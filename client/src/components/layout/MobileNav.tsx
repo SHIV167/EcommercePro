@@ -1,162 +1,106 @@
+import React from "react";
 import { Link } from "wouter";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Collection } from "@shared/schema";
+import { Dialog } from "@/components/ui/dialog";
+import { X, ChevronRight, Home, Heart, ShoppingBag, User, Package, PhoneCall } from "react-feather";
 
 interface MobileNavProps {
-  isOpen: boolean;
-  onClose: () => void;
-  collections: Collection[];
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
 }
 
-export default function MobileNav({ isOpen, onClose, collections }: MobileNavProps) {
+export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
+  // Hardcoded sample categories for demo
+  const categories = [
+    { name: "Wellness", slug: "wellness" },
+    { name: "Herbs & Supplements", slug: "herbs-supplements" },
+    { name: "Skin Care", slug: "skin-care" },
+    { name: "Hair Care", slug: "hair-care" },
+    { name: "Body Care", slug: "body-care" }
+  ];
+
+  // Quick links
+  const quickLinks = [
+    { name: "Home", slug: "/", icon: Home },
+    { name: "My Account", slug: "/account", icon: User },
+    { name: "My Orders", slug: "/orders", icon: Package },
+    { name: "Wishlist", slug: "/wishlist", icon: Heart },
+    { name: "Cart", slug: "/cart", icon: ShoppingBag },
+    { name: "Contact Us", slug: "/contact", icon: PhoneCall },
+  ];
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[350px] p-0 h-full top-0 left-0 translate-x-0 border-r" side="left">
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <p className="font-medium">Menu</p>
+      <div 
+        className={`fixed inset-0 bg-black bg-opacity-50 z-[9998] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div 
+        className={`fixed inset-y-0 left-0 max-w-[320px] w-full bg-white shadow-lg z-[9999] transform transition-transform duration-300 ease-in-out h-full overflow-hidden flex flex-col ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
+          <h2 className="font-medium text-lg text-gray-900">Menu</h2>
           <button 
-            className="text-foreground" 
+            className="text-gray-500 hover:text-primary transition-colors p-1 rounded-full hover:bg-gray-100"
             onClick={onClose}
+            onKeyDown={(e) => e.key === 'Enter' && onClose()}
             aria-label="Close menu"
+            tabIndex={0}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X size={20} />
           </button>
         </div>
         
-        <div className="p-4">
-          <ul className="space-y-4">
-            {collections.length > 0 ? (
-              collections.map((collection) => (
-                <li key={collection.id} className="border-b border-gray-100 pb-2">
+        <div className="flex-1 overflow-y-auto">
+          <div className="py-4 px-6 border-b border-gray-100">
+            <h3 className="font-medium text-sm uppercase tracking-wider text-gray-500 mb-3">Categories</h3>
+            <ul className="space-y-2">
+              {categories.map((category) => (
+                <li key={category.slug}>
                   <Link 
-                    href={`/collections/${collection.slug}`}
-                    className="text-foreground flex justify-between items-center"
+                    href={`/categories/${category.slug}`} 
+                    className="flex items-center justify-between py-2 text-gray-800 hover:text-primary transition-colors"
                     onClick={onClose}
                   >
-                    {collection.name}
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <span>{category.name}</span>
+                    <ChevronRight size={18} className="text-gray-400" />
                   </Link>
                 </li>
-              ))
-            ) : (
-              <>
-                <li className="border-b border-gray-100 pb-2">
+              ))}
+            </ul>
+          </div>
+          
+          <div className="py-4 px-6">
+            <h3 className="font-medium text-sm uppercase tracking-wider text-gray-500 mb-3">Quick Links</h3>
+            <ul className="space-y-3">
+              {quickLinks.map((link) => (
+                <li key={link.slug}>
                   <Link 
-                    href="/collections/kumkumadi"
-                    className="text-foreground flex justify-between items-center"
+                    href={link.slug} 
+                    className="flex items-center py-2 text-gray-800 hover:text-primary transition-colors"
                     onClick={onClose}
                   >
-                    Kumkumadi Collection
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <link.icon size={18} className="mr-3" />
+                    <span>{link.name}</span>
                   </Link>
                 </li>
-                <li className="border-b border-gray-100 pb-2">
-                  <Link 
-                    href="/collections/amrrepa"
-                    className="text-foreground flex justify-between items-center"
-                    onClick={onClose}
-                  >
-                    Amrrepa Collection
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-                <li className="border-b border-gray-100 pb-2">
-                  <Link 
-                    href="/collections/ujjasara"
-                    className="text-foreground flex justify-between items-center"
-                    onClick={onClose}
-                  >
-                    Ujjasara Collection
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-                <li className="border-b border-gray-100 pb-2">
-                  <Link 
-                    href="/collections/bestsellers"
-                    className="text-foreground flex justify-between items-center"
-                    onClick={onClose}
-                  >
-                    Bestsellers
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-                <li className="border-b border-gray-100 pb-2">
-                  <Link 
-                    href="/collections/skincare"
-                    className="text-foreground flex justify-between items-center"
-                    onClick={onClose}
-                  >
-                    Skincare
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-                <li className="border-b border-gray-100 pb-2">
-                  <Link 
-                    href="/collections/haircare"
-                    className="text-foreground flex justify-between items-center"
-                    onClick={onClose}
-                  >
-                    Haircare
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-                <li className="border-b border-gray-100 pb-2">
-                  <Link 
-                    href="/collections/bath-body"
-                    className="text-foreground flex justify-between items-center"
-                    onClick={onClose}
-                  >
-                    Bath & Body
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-                <li className="border-b border-gray-100 pb-2">
-                  <Link 
-                    href="/collections/gifting"
-                    className="text-foreground flex justify-between items-center"
-                    onClick={onClose}
-                  >
-                    Gifting
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-                <li className="border-b border-gray-100 pb-2">
-                  <Link 
-                    href="/collections/all"
-                    className="text-foreground flex justify-between items-center"
-                    onClick={onClose}
-                  >
-                    All Products
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-              </>
-            )}
-          </ul>
+              ))}
+            </ul>
+          </div>
+          
+          <div className="mt-auto p-6 border-t border-gray-100">
+            <Link 
+              href="/login" 
+              className="block w-full py-3 px-4 bg-primary text-white text-center rounded-md font-medium hover:bg-primary-dark transition-colors"
+              onClick={onClose}
+            >
+              Sign In / Register
+            </Link>
+          </div>
         </div>
-      </DialogContent>
+      </div>
     </Dialog>
   );
 }
