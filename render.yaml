@@ -11,25 +11,25 @@ services:
     startCommand: npm run start
     envVars:
       - key: MONGODB_URI
-        fromEnv: MONGODB_URI
+        sync: false
       - key: SMTP_HOST
-        fromEnv: SMTP_HOST
+        sync: false
       - key: SMTP_PORT
-        fromEnv: SMTP_PORT
+        sync: false
       - key: SMTP_SECURE
-        fromEnv: SMTP_SECURE
+        sync: false
       - key: SMTP_USER
-        fromEnv: SMTP_USER
+        sync: false
       - key: SMTP_PASS
-        fromEnv: SMTP_PASS
+        sync: false
       - key: SMTP_FROM
-        fromEnv: SMTP_FROM
+        sync: false
       - key: JWT_SECRET
-        fromEnv: JWT_SECRET
+        sync: false
       - key: JWT_EXPIRES_IN
-        fromEnv: JWT_EXPIRES_IN
+        sync: false
       - key: COOKIE_MAX_AGE
-        fromEnv: COOKIE_MAX_AGE
+        sync: false
 
   # Static Site for Client
   - type: web
@@ -41,7 +41,7 @@ services:
     staticPublishPath: dist/public
     envVars:
       - key: VITE_API_BASE_URL
-        fromEnv: CLIENT_BASE_URL
+        sync: false
 
   # Static Site for Admin
   - type: web
@@ -53,4 +53,4 @@ services:
     staticPublishPath: dist/public/admin
     envVars:
       - key: VITE_API_BASE_URL
-        fromEnv: ADMIN_BASE_URL
+        sync: false
