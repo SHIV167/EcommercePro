@@ -36,8 +36,8 @@ services:
     runtime: static
     name: EcommercePro-Client
     plan: starter
-    rootDir: client
-    buildCommand: npm install && vite build --config vite.config.ts
+    rootDir: .
+    buildCommand: npm install && npm run build
     staticPublishPath: dist/public
     envVars:
       - key: VITE_API_BASE_URL
@@ -48,8 +48,8 @@ services:
     runtime: static
     name: EcommercePro-Admin
     plan: starter
-    rootDir: admin
-    buildCommand: npm install && vite build --config vite.admin.config.ts
+    rootDir: .
+    buildCommand: npm install && npm run build
     staticPublishPath: dist/public/admin
     envVars:
       - key: VITE_API_BASE_URL
