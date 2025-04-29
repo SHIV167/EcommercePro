@@ -2,9 +2,9 @@
 
 services:
   # Web Service for Node backend
-  - type: web_service
+  - type: web
+    runtime: node
     name: EcommercePro-Server
-    env: node
     plan: free
     rootDir: .
     buildCommand: npm install && npm run build
@@ -32,23 +32,25 @@ services:
         fromEnv: COOKIE_MAX_AGE
 
   # Static Site for Client
-  - type: static_site
+  - type: web
+    runtime: static
     name: EcommercePro-Client
     plan: free
     rootDir: client
     buildCommand: npm install && vite build --config vite.config.ts
-    publishPath: dist/public
+    staticPublishPath: dist/public
     envVars:
       - key: VITE_API_BASE_URL
         fromEnv: CLIENT_BASE_URL
 
   # Static Site for Admin
-  - type: static_site
+  - type: web
+    runtime: static
     name: EcommercePro-Admin
     plan: free
     rootDir: admin
     buildCommand: npm install && vite build --config vite.admin.config.ts
-    publishPath: dist/public/admin
+    staticPublishPath: dist/public/admin
     envVars:
       - key: VITE_API_BASE_URL
         fromEnv: ADMIN_BASE_URL
