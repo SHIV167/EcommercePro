@@ -5,7 +5,7 @@ services:
   - type: web
     runtime: node
     name: EcommercePro-Server
-    plan: free
+    plan: starter
     rootDir: .
     buildCommand: npm install && npm run build
     startCommand: npm run start
@@ -35,7 +35,7 @@ services:
   - type: web
     runtime: static
     name: EcommercePro-Client
-    plan: free
+    plan: starter
     rootDir: client
     buildCommand: npm install && vite build --config vite.config.ts
     staticPublishPath: dist/public
@@ -47,7 +47,7 @@ services:
   - type: web
     runtime: static
     name: EcommercePro-Admin
-    plan: free
+    plan: starter
     rootDir: admin
     buildCommand: npm install && vite build --config vite.admin.config.ts
     staticPublishPath: dist/public/admin
