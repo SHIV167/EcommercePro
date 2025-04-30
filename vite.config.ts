@@ -34,12 +34,12 @@ export default defineConfig({
     open: '/',
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://ecommercepro-0ukc.onrender.com',
         changeOrigin: true,
         secure: false
       },
       '/admin/api': {
-        target: 'http://localhost:5000',
+        target: 'https://ecommercepro-0ukc.onrender.com',
         rewrite: (path) => path.replace(/^\/admin\/api/, '/api')
       }
     }

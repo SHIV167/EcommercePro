@@ -10,7 +10,7 @@ export default defineConfig({
     open: '/admin/',
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://ecommercepro-0ukc.onrender.com',
         changeOrigin: true,
         secure: false
       },
