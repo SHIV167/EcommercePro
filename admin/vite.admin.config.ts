@@ -9,13 +9,13 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: 'https://ecommercepro-0ukc.onrender.com', // Your backend port
+        target: 'http://127.0.0.1:5000', // Your backend port
         changeOrigin: true,
         secure: false,
       },
       // Proxy static uploads to backend
       '/uploads': {
-        target: 'https://ecommercepro-0ukc.onrender.com',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: false,
       },
