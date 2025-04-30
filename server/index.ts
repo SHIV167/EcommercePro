@@ -15,9 +15,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  process.env.CLIENT_BASE_URL,
+  process.env.ADMIN_BASE_URL,
+].filter((o): o is string => Boolean(o));
+
 // CORS middleware: allow all origins and all methods for development
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
@@ -25,7 +32,7 @@ app.use(cors({
 
 // Handle preflight requests globally
 app.options('*', cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
