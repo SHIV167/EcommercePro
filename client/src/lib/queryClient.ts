@@ -12,7 +12,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const baseUrl = import.meta.env.VITE_API_URL || "";
+  const baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
   const fullUrl = url.startsWith("http") ? url : baseUrl + url;
   const res = await fetch(fullUrl, {
     method,
