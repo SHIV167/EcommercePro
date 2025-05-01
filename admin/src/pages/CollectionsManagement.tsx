@@ -147,24 +147,18 @@ export default function CollectionsManagement() {
     queryKey: ['/api/collections'],
     queryFn: () => apiRequest('GET', '/api/collections').then(res => res.json()),
   });
-  const createCol = useMutation<Response, unknown, Partial<Collection>>(
-    (data) => apiRequest('POST', '/api/collections', data),
-    {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
-    }
-  );
-  const updateCol = useMutation<Response, unknown, Partial<Collection>>(
-    (data) => apiRequest('PUT', `/api/collections/${data.id!}`, data),
-    {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
-    }
-  );
-  const deleteCol = useMutation<Response, unknown, string>(
-    (id) => apiRequest('DELETE', `/api/collections/${id}`),
-    {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
-    }
-  );
+  const createCol = useMutation<Response, unknown, Partial<Collection>>({
+    mutationFn: (data: Partial<Collection>) => apiRequest('POST', '/api/collections', data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
+  });
+  const updateCol = useMutation<Response, unknown, Partial<Collection>>({
+    mutationFn: (data: Partial<Collection>) => apiRequest('PUT', `/api/collections/${data.id!}`, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
+  });
+  const deleteCol = useMutation<Response, unknown, string>({
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/collections/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
+  });
 
   // fetch all products for mapping
   const { data: allProducts = [], isLoading: productsLoading } = useQuery<Product[]>({
