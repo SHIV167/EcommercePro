@@ -57,7 +57,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   // Login function
   const login = async (email: string, password: string): Promise<User> => {
     try {
-      const response = await apiRequest("POST", `${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
+      const response = await apiRequest("POST", "/api/auth/login", {
         email,
         password,
       });
