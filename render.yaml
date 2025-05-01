@@ -30,6 +30,8 @@ services:
         sync: false
       - key: COOKIE_MAX_AGE
         sync: false
+      - key: CORS_ORIGINS
+        sync: false
 
   # Static Site for Client
   - type: web
@@ -40,7 +42,7 @@ services:
     buildCommand: npm install && npm run build
     staticPublishPath: dist/public
     envVars:
-      - key: VITE_API_BASE_URL
+      - key: VITE_API_URL
         sync: false
 
   # Static Site for Admin
@@ -52,5 +54,5 @@ services:
     buildCommand: npm install && npm run build
     staticPublishPath: dist/public/admin
     envVars:
-      - key: VITE_API_BASE_URL
+      - key: VITE_API_URL
         sync: false
