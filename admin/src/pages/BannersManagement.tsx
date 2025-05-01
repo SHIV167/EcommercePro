@@ -181,7 +181,7 @@ function BannerForm({ open, onClose, onSave, initial }: BannerFormProps) {
 export default function BannersManagement() {
   const queryClient = useQueryClient();
   // Determine API base path: in dev, Vite admin proxy uses /admin/api; in prod/SSR, use /api
-  const apiBase = import.meta.env.DEV ? '/admin/api' : '/api';
+  const apiBase = import.meta.env.DEV ? '/admin/api' : (import.meta.env.VITE_API_URL ?? '');
   const [formOpen, setFormOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | undefined>();
 
@@ -192,8 +192,8 @@ export default function BannersManagement() {
 
   // Fetch banners from the correct API endpoint
   const { data: bannersData = [], isLoading } = useQuery({
-    queryKey: ['/api/banners'],
-    queryFn: () => fetch('/api/banners').then(res => res.json()),
+    queryKey: ['banners'],
+    queryFn: () => fetch(`${apiBase}/api/banners`).then(res => res.json()),
   });
 
   // Mutations for create, update, delete
@@ -218,14 +218,14 @@ export default function BannersManagement() {
       } else if (mobileImageUrl !== undefined) {
         formData.append('mobileImageUrl', mobileImageUrl);
       }
-      return fetch('/api/banners', {
+      return fetch(`${apiBase}/api/banners`, {
         method: "POST",
         body: formData,
       }).then(res => res.json());
     },
     onSuccess: () => {
       toast({ title: "Banner added" });
-      queryClient.invalidateQueries({ queryKey: ['/api/banners'] });
+      queryClient.invalidateQueries({ queryKey: ['banners'] });
     },
     onError: (error: any) => toast({ title: (error as Error).message, variant: "destructive" }),
   });
@@ -250,7 +250,7 @@ export default function BannersManagement() {
       } else if (mobileImageUrl !== undefined) {
         formData.append('mobileImageUrl', mobileImageUrl);
       }
-      return fetch(`/api/banners/${id}`, {
+      return fetch(`${apiBase}/api/banners/${id}`, {
         method: "PUT",
         body: formData,
       }).then(res => res.json());
@@ -259,16 +259,16 @@ export default function BannersManagement() {
       toast({ title: "Banner updated" });
       setFormOpen(false);
       setEditingBanner(undefined);
-      queryClient.invalidateQueries({ queryKey: ['/api/banners'] });
+      queryClient.invalidateQueries({ queryKey: ['banners'] });
     },
     onError: (error: any) => toast({ title: (error as Error).message, variant: "destructive" }),
   });
 
   const deleteBanner = useMutation({
-    mutationFn: (id: string) => fetch(`/api/banners/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => fetch(`${apiBase}/api/banners/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       toast({ title: "Banner deleted" });
-      queryClient.invalidateQueries({ queryKey: ['/api/banners'] });
+      queryClient.invalidateQueries({ queryKey: ['banners'] });
     },
     onError: () => toast({ title: "Failed to delete banner", variant: "destructive" }),
   });

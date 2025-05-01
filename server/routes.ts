@@ -7,6 +7,8 @@ import ContactModel from "./models/Contact";
 import BlogModel from "./models/Blog";
 import OrderModel from "./models/Order";
 import ProductModel from "./models/Product"; // Import ProductModel
+import BannerModel from "./models/Banner"; // Import BannerModel
+import { v4 as uuidv4 } from "uuid"; // Import uuid
 import { z } from "zod";
 import { productSchema, categorySchema, collectionSchema, productCollectionSchema, Banner, InsertBanner } from "@shared/schema";
 import { sendMail } from "./utils/mailer";
@@ -250,6 +252,72 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Newsletter subscription routes
   app.post('/api/newsletter/subscribe', subscribeNewsletter);
   app.get('/api/newsletter/subscribers', getNewsletterSubscribers);
+
+  // Banner routes
+  app.get('/api/banners', async (req, res) => {
+    try {
+      const banners = await BannerModel.find();
+      return res.status(200).json(banners);
+    } catch (error) {
+      console.error('Get banners error:', error);
+      return res.status(500).json({ message: 'Error fetching banners' });
+    }
+  });
+
+  app.post('/api/banners', upload.fields([{ name: 'desktopImage', maxCount: 1 }, { name: 'mobileImage', maxCount: 1 }]), async (req, res) => {
+    try {
+      const { title, subtitle, alt, linkUrl, enabled, position, desktopImageUrl, mobileImageUrl } = req.body;
+      const id = uuidv4();
+      let desktopUrl = desktopImageUrl;
+      let mobileUrl = mobileImageUrl;
+      const files = req.files as Record<string, Express.Multer.File[]>;
+      if (files?.desktopImage) desktopUrl = `/uploads/${files.desktopImage[0].filename}`;
+      if (files?.mobileImage) mobileUrl = `/uploads/${files.mobileImage[0].filename}`;
+      const banner = new BannerModel({ id, title, subtitle, desktopImageUrl: desktopUrl, mobileImageUrl: mobileUrl, alt, linkUrl, enabled: enabled === 'true' || enabled === true, position: parseInt(position, 10) });
+      await banner.save();
+      return res.status(201).json(banner);
+    } catch (error) {
+      console.error('Create banner error:', error);
+      return res.status(500).json({ message: 'Error creating banner' });
+    }
+  });
+
+  app.put('/api/banners/:id', upload.fields([{ name: 'desktopImage', maxCount: 1 }, { name: 'mobileImage', maxCount: 1 }]), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const banner = await BannerModel.findOne({ id });
+      if (!banner) return res.status(404).json({ message: 'Banner not found' });
+      const { title, subtitle, alt, linkUrl, enabled, position, desktopImageUrl, mobileImageUrl } = req.body;
+      let desktopUrl = desktopImageUrl;
+      let mobileUrl = mobileImageUrl;
+      const files = req.files as Record<string, Express.Multer.File[]>;
+      if (files?.desktopImage) desktopUrl = `/uploads/${files.desktopImage[0].filename}`;
+      if (files?.mobileImage) mobileUrl = `/uploads/${files.mobileImage[0].filename}`;
+      banner.title = title;
+      banner.subtitle = subtitle;
+      banner.alt = alt;
+      banner.linkUrl = linkUrl;
+      banner.enabled = enabled === 'true' || enabled === true;
+      banner.position = parseInt(position, 10);
+      banner.desktopImageUrl = desktopUrl;
+      banner.mobileImageUrl = mobileUrl;
+      await banner.save();
+      return res.status(200).json(banner);
+    } catch (error) {
+      console.error('Update banner error:', error);
+      return res.status(500).json({ message: 'Error updating banner' });
+    }
+  });
+
+  app.delete('/api/banners/:id', async (req, res) => {
+    try {
+      await BannerModel.deleteOne({ id: req.params.id });
+      return res.status(204).end();
+    } catch (error) {
+      console.error('Delete banner error:', error);
+      return res.status(500).json({ message: 'Error deleting banner' });
+    }
+  });
 
   // Collection routes
   app.get('/api/collections', async (req, res) => {
@@ -1109,117 +1177,6 @@ export async function registerRoutes(app: Application): Promise<Server> {
     }
   });
   
-  // Banner routes
-  app.get("/api/banners", async (req, res) => {
-    try {
-      const banners = await storage.getBanners();
-      return res.status(200).json(banners);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: 'Failed to fetch banners' });
-    }
-  });
-  app.get("/api/banners", async (req, res) => {
-    try {
-      const { enabled } = req.query;
-      const enabledFilter = enabled !== undefined ? enabled === "true" : undefined;
-      
-      const banners = await storage.getBanners(enabledFilter);
-      
-      return res.status(200).json(banners);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  app.post("/api/banners", upload.fields([{ name: 'desktopImage', maxCount: 1 }, { name: 'mobileImage', maxCount: 1 }]), async (req, res) => {
-    try {
-      // parse and prepare input, handle file uploads
-      const raw = { ...req.body } as any;
-      raw.enabled = raw.enabled === 'true';
-      raw.position = Number(raw.position);
-      // Extract uploaded files before validation
-      const files = req.files as Record<string, Express.Multer.File[]>;
-      const desktopUpload = files.desktopImage?.[0]?.path;
-      const mobileUpload = files.mobileImage?.[0]?.path;
-      if (desktopUpload) raw.desktopImageUrl = desktopUpload;
-      if (mobileUpload) raw.mobileImageUrl = mobileUpload;
-      // Validate input
-      const data = bannerSchema.parse(raw);
-      // determine URLs (fallback to imageUrl)
-      const desktop = desktopUpload ?? data.desktopImageUrl ?? data.imageUrl;
-      const mobile = mobileUpload ?? data.mobileImageUrl ?? data.imageUrl;
-      // --- FIX: Enforce both required fields for schema ---
-      if (!desktop || !mobile) {
-        return res.status(400).json({ message: "Both desktopImageUrl and mobileImageUrl (or imageUrl fallback) are required." });
-      }
-      const validatedData: InsertBanner = {
-        title: data.title,
-        subtitle: data.subtitle,
-        alt: data.alt,
-        linkUrl: data.linkUrl,
-        enabled: data.enabled,
-        position: data.position,
-        desktopImageUrl: desktop,
-        mobileImageUrl: mobile
-      };
-      const banner = await storage.createBanner(validatedData);
-      return res.status(201).json(banner);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      console.error("Create banner error:", error);
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.put("/api/banners/:id", upload.fields([{ name: 'desktopImage', maxCount: 1 }, { name: 'mobileImage', maxCount: 1 }]), async (req, res) => {
-    try {
-      const bannerId = req.params.id;
-      // parse and prepare input, handle file uploads
-      const raw = { ...req.body } as any;
-      raw.enabled = raw.enabled === 'true';
-      raw.position = Number(raw.position);
-      // Extract uploaded files before validation
-      const files = req.files as Record<string, Express.Multer.File[]>;
-      const desktopUpload = files.desktopImage?.[0]?.path;
-      const mobileUpload = files.mobileImage?.[0]?.path;
-      if (desktopUpload) raw.desktopImageUrl = desktopUpload;
-      if (mobileUpload) raw.mobileImageUrl = mobileUpload;
-      // Validate input and update
-      const bannerData = bannerUpdateSchema.parse(raw);
-      const updatedBanner = await storage.updateBanner(bannerId, bannerData);
-      
-      if (!updatedBanner) {
-        return res.status(404).json({ message: "Banner not found" });
-      }
-      
-      return res.status(200).json(updatedBanner);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      console.error("Update banner error:", error);
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.delete("/api/banners/:id", async (req, res) => {
-    try {
-      const bannerId = req.params.id;
-      
-      const success = await storage.deleteBanner(bannerId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Banner not found" });
-      }
-      
-      return res.status(204).end();
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
   // Admin: list all users
   app.get("/api/admin/users", async (req, res) => {
     try {
