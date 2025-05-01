@@ -203,7 +203,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
         await user.save();
         console.log('Forgot-password: reset token saved for user', email);
       }
-      const resetUrl = `${process.env.CLIENT_BASE_URL}/reset-password?token=${token}`;
+      const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
       const html = `<p>You requested a password reset. Click <a href="${resetUrl}">here</a> to reset your password. If you did not request this, ignore this email.</p>`;
       await sendMail({ to: user.email, subject: "Password Reset Request", html });
       return res.status(200).json({ message: "If that email is registered, you will receive a password reset link" });
