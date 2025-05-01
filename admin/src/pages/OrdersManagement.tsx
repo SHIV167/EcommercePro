@@ -43,11 +43,13 @@ export default function OrdersManagement() {
 
   const limit = 10;
 
+  const apiBase = import.meta.env.DEV ? '/admin/api' : (import.meta.env.VITE_API_URL ?? '');
+
   // Fetch orders
   const { data: ordersData, isLoading, isError } = useQuery({
-    queryKey: ['/api/orders', { page, limit, search, statusFilter, dateFilter }],
+    queryKey: ['orders', page, limit, search, statusFilter, dateFilter],
     queryFn: async () => {
-      let url = `/api/orders?page=${page}&limit=${limit}`;
+      let url = `${apiBase}/api/orders?page=${page}&limit=${limit}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (statusFilter && statusFilter !== "all") url += `&status=${statusFilter}`;
       if (dateFilter && dateFilter !== "all") url += `&date=${dateFilter}`;
@@ -105,7 +107,7 @@ export default function OrdersManagement() {
 
   const updateOrderMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const res = await fetch(`/api/orders/${id}`, {
+      const res = await fetch(`${apiBase}/api/orders/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
