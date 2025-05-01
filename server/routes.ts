@@ -193,7 +193,14 @@ export async function registerRoutes(app: Application): Promise<Server> {
         return res.status(200).json({ message: "If that email is registered, you will receive a password reset link" });
       }
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as Secret, { expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN as any || "1h" });
-      const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+      // Store reset token and expiry in database
+      const expireSeconds = parseInt(process.env.RESET_PASSWORD_EXPIRES_IN || '3600', 10);
+      const expireDate = new Date(Date.now() + expireSeconds * 1000);
+      await UserModel.findOneAndUpdate(
+        { id: user.id },
+        { resetPasswordToken: token, resetPasswordExpire: expireDate }
+      );
+      const resetUrl = `${process.env.CLIENT_BASE_URL}/reset-password?token=${token}`;
       const html = `<p>You requested a password reset. Click <a href="${resetUrl}">here</a> to reset your password. If you did not request this, ignore this email.</p>`;
       await sendMail({ to: user.email, subject: "Password Reset Request", html });
       return res.status(200).json({ message: "If that email is registered, you will receive a password reset link" });
@@ -209,12 +216,25 @@ export async function registerRoutes(app: Application): Promise<Server> {
       if (!token || !password) {
         return res.status(400).json({ message: "Token and password are required" });
       }
-      const payload = jwt.verify(token, process.env.JWT_SECRET as Secret) as { id: string };
-      const hashed = await bcrypt.hash(password, 10);
-      const user = await storage.updateUser(payload.id, { password: hashed });
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      let payload;
+      try {
+        payload = jwt.verify(token, process.env.JWT_SECRET as Secret) as { id: string };
+      } catch (err) {
+        return res.status(400).json({ message: "Invalid or expired token" });
       }
+      const userRecord = await UserModel.findOne({
+        id: payload.id,
+        resetPasswordToken: token,
+        resetPasswordExpire: { $gt: new Date() },
+      });
+      if (!userRecord) {
+        return res.status(400).json({ message: "Invalid or expired token" });
+      }
+      const hashed = await bcrypt.hash(password, 10);
+      userRecord.password = hashed;
+      userRecord.resetPasswordToken = undefined;
+      userRecord.resetPasswordExpire = undefined;
+      await userRecord.save();
       return res.status(200).json({ message: "Password has been reset successfully" });
     } catch (error) {
       console.error("Reset password error:", error);
