@@ -5,7 +5,8 @@ import UserModel from "./models/User";
 import SettingModel from "./models/Setting";
 import ContactModel from "./models/Contact";
 import BlogModel from "./models/Blog";
-import OrderModel from "./models/Order"; // Import OrderModel directly
+import OrderModel from "./models/Order";
+import ProductModel from "./models/Product"; // Import ProductModel
 import { z } from "zod";
 import { productSchema, categorySchema, collectionSchema, productCollectionSchema, Banner, InsertBanner } from "@shared/schema";
 import { sendMail } from "./utils/mailer";
@@ -619,7 +620,6 @@ export async function registerRoutes(app: Application): Promise<Server> {
       console.log(`[routes] /api/products/${id}/images - received files:`, files.map(f => f.originalname));
       const urls = files.map(f => `/uploads/${f.filename}`);
       // update product images array
-      const ProductModel = (await import('./models/Product')).default;
       const updated = await ProductModel.findByIdAndUpdate(id, { $push: { images: { $each: urls } } }, { new: true });
       return res.json({ images: updated?.images || [] });
     } catch (err) {
@@ -1501,6 +1501,47 @@ export async function registerRoutes(app: Application): Promise<Server> {
     } catch (err) {
       console.error('Failed to delete user:', err);
       res.status(500).json({ message: 'Failed to delete user' });
+    }
+  });
+
+  // Admin dashboard endpoints
+  app.get("/api/admin/dashboard/summary", async (req, res) => {
+    try {
+      const totalOrders = await OrderModel.countDocuments();
+      const revenueResult = await OrderModel.aggregate([{ $group: { _id: null, total: { $sum: "$totalAmount" } } }]);
+      const totalRevenue = revenueResult[0]?.total || 0;
+      const totalCustomers = await UserModel.countDocuments();
+      const lowStockProducts = await ProductModel.countDocuments({ stock: { $lte: Number(process.env.LOW_STOCK_THRESHOLD) || 5 } });
+      return res.json({ totalOrders, totalRevenue, totalCustomers, lowStockProducts });
+    } catch (error) {
+      console.error("Dashboard summary error:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.get("/api/admin/dashboard/top-products", async (req, res) => {
+    try {
+      const limit = Number(process.env.TOP_PRODUCTS_LIMIT) || 5;
+      const topProducts = await storage.getBestsellerProducts(limit);
+      return res.json(topProducts);
+    } catch (error) {
+      console.error("Top products error:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Recent orders route
+  app.get("/api/orders", async (req, res) => {
+    try {
+      const limitParam = req.query.limit as string;
+      const limit = limitParam ? parseInt(limitParam) : undefined;
+      const orders = OrderModel.find().sort({ createdAt: -1 });
+      if (limit) orders.limit(limit);
+      const result = await orders.exec();
+      return res.json(result);
+    } catch (error) {
+      console.error("Fetch orders error:", error);
+      return res.status(500).json({ message: "Server error" });
     }
   });
 

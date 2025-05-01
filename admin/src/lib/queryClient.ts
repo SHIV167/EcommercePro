@@ -1,7 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// Use relative URLs since we're using a proxy
-export const API_BASE_URL = "";
+// Base URL for API (should be set via env VITE_API_URL in production)
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
