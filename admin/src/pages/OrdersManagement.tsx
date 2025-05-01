@@ -43,7 +43,7 @@ export default function OrdersManagement() {
 
   const limit = 10;
 
-  const apiBase = import.meta.env.DEV ? '/admin/api' : (import.meta.env.VITE_API_URL ?? '');
+  const apiBase = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL ?? '');
 
   // Fetch orders
   const { data: ordersData, isLoading, isError } = useQuery({

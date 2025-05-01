@@ -181,7 +181,7 @@ function BannerForm({ open, onClose, onSave, initial }: BannerFormProps) {
 export default function BannersManagement() {
   const queryClient = useQueryClient();
   // Determine API base path: in dev, Vite admin proxy uses /admin/api; in prod/SSR, use /api
-  const apiBase = import.meta.env.DEV ? '/admin/api' : (import.meta.env.VITE_API_URL ?? '');
+  const apiBase = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL ?? '');
   const [formOpen, setFormOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | undefined>();
 

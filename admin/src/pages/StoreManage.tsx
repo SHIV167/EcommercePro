@@ -18,7 +18,7 @@ interface Store {
   longitude: number;
 }
 
-const API_BASE = "http://localhost:5000";
+const apiBase = import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "");
 
 export default function StoreManagePage() {
   const [stores, setStores] = useState<Store[]>([]);
@@ -28,7 +28,7 @@ export default function StoreManagePage() {
 
   const fetchStores = async () => {
     setLoading(true);
-    const res = await fetch(`${API_BASE}/api/stores`);
+    const res = await fetch(`${apiBase}/api/stores`);
     const data = await res.json();
     setStores(data);
     setLoading(false);
@@ -48,8 +48,8 @@ export default function StoreManagePage() {
     if (!form.name || !form.address || !form.city || !form.state || !form.latitude || !form.longitude) return;
     const method = editingId ? "PUT" : "POST";
     const url = editingId
-      ? `${API_BASE}/api/stores/${editingId}`
-      : `${API_BASE}/api/stores`;
+      ? `${apiBase}/api/stores/${editingId}`
+      : `${apiBase}/api/stores`;
     await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
@@ -66,7 +66,7 @@ export default function StoreManagePage() {
   };
 
   const handleDelete = async (id: string) => {
-    await fetch(`${API_BASE}/api/stores/${id}`, { method: "DELETE" });
+    await fetch(`${apiBase}/api/stores/${id}`, { method: "DELETE" });
     fetchStores();
   };
 

@@ -18,6 +18,7 @@ import { Product } from "@shared/schema";
 
 // Collection type (sync with backend)
 type Collection = {
+  _id?: string;
   id?: string;
   name: string;
   slug: string;
@@ -142,28 +143,34 @@ function CollectionForm({ open, onClose, onSave, initial, products, selectedProd
 
 export default function CollectionsManagement() {
   const queryClient = useQueryClient();
-  const { data: collectionsData = [], isLoading } = useQuery({
+  const { data: collectionsData = [], isLoading } = useQuery<Collection[]>({
     queryKey: ['/api/collections'],
     queryFn: () => apiRequest('GET', '/api/collections').then(res => res.json()),
   });
-  const createCol = useMutation({
-    mutationFn: (data: Partial<Collection>) => apiRequest('POST', '/api/collections', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
-  });
-  const updateCol = useMutation({
-    mutationFn: (data: Collection) => apiRequest('PUT', `/api/collections/${data._id}`, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
-  });
-  const deleteCol = useMutation({
-    mutationFn: (id: string) => apiRequest('DELETE', `/api/collections/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
-  });
+  const createCol = useMutation<Response, unknown, Partial<Collection>>(
+    (data) => apiRequest('POST', '/api/collections', data),
+    {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
+    }
+  );
+  const updateCol = useMutation<Response, unknown, Partial<Collection>>(
+    (data) => apiRequest('PUT', `/api/collections/${data.id!}`, data),
+    {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
+    }
+  );
+  const deleteCol = useMutation<Response, unknown, string>(
+    (id) => apiRequest('DELETE', `/api/collections/${id}`),
+    {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/collections'] }),
+    }
+  );
 
   // fetch all products for mapping
   const { data: allProducts = [], isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ['/admin/api/products'],
+    queryKey: ['/api/products'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/admin/api/products');
+      const res = await apiRequest('GET', '/api/products');
       const json = await res.json();
       return (json.data ?? json) as Product[];
     },
@@ -176,7 +183,7 @@ export default function CollectionsManagement() {
   // load mapped products when editing
   useEffect(() => {
     if (editCol?.slug) {
-      apiRequest('GET', `/admin/api/collections/${editCol.slug}/products`)
+      apiRequest('GET', `/api/collections/${editCol.slug}/products`)
         .then(res => res.json())
         .then((mapped: Product[]) => {
           const ids = mapped.map(p => p._id!);
@@ -186,15 +193,15 @@ export default function CollectionsManagement() {
     }
   }, [editCol]);
 
-  function handleSave(col: Partial<Collection>) {
+  function handleSave(col: Partial<Collection>): void {
     if (col.id) {
       updateCol.mutate(col, {
         onSuccess: async () => {
           // sync mapping
           const toAdd = selectedProductIds.filter(id => !initialProductIds.includes(id));
           const toRemove = initialProductIds.filter(id => !selectedProductIds.includes(id));
-          await Promise.all(toAdd.map(pid => apiRequest('POST', `/admin/api/collections/${col.slug}/products`, { productId: pid })));
-          await Promise.all(toRemove.map(pid => apiRequest('DELETE', `/admin/api/collections/${col.slug}/products/${pid}`)));
+          await Promise.all(toAdd.map(pid => apiRequest('POST', `/api/collections/${col.slug}/products`, { productId: pid })));
+          await Promise.all(toRemove.map(pid => apiRequest('DELETE', `/api/collections/${col.slug}/products/${pid}`)));
           setInitialProductIds(selectedProductIds);
           queryClient.invalidateQueries({ queryKey: ['/api/collections'] });
         }
@@ -204,7 +211,7 @@ export default function CollectionsManagement() {
         onSuccess: async res => {
           const newCol: Collection = await res.json();
           // map products after create
-          await Promise.all(selectedProductIds.map(pid => apiRequest('POST', `/admin/api/collections/${newCol.slug}/products`, { productId: pid })));
+          await Promise.all(selectedProductIds.map(pid => apiRequest('POST', `/api/collections/${newCol.slug}/products`, { productId: pid })));
           queryClient.invalidateQueries({ queryKey: ['/api/collections'] });
         }
       });
