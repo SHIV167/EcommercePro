@@ -1,7 +1,9 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 // Base API URL; in development proxied to localhost:5000
-export const API_BASE_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || "");
+export const API_BASE_URL = import.meta.env.DEV
+  ? ''
+  : (import.meta.env.VITE_API_URL || 'https://ecommercepro-0ukc.onrender.com');
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
