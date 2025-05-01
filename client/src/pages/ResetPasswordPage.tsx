@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Helmet } from 'react-helmet';
 
 const resetSchema = z.object({
@@ -46,13 +47,7 @@ export default function ResetPasswordPage() {
     if (!token) return;
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ token, password: values.password }),
-      });
-      if (!response.ok) throw new Error(await response.text());
+      await apiRequest("POST", "/api/auth/reset-password", { token, password: values.password });
       toast({ title: "Password reset successful", description: "You can now login with your new password" });
       navigate("/login");
     } catch (error: any) {

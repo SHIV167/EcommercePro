@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Helmet } from 'react-helmet';
 
 const forgotSchema = z.object({
@@ -35,12 +36,7 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (values: ForgotFormValues) => {
     setIsLoading(true);
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(values),
-      });
+      await apiRequest("POST", "/api/auth/forgot-password", values);
       toast({ title: "Password reset link sent", description: "Check your email for the reset link." });
       navigate("/login");
     } catch (error) {
