@@ -193,13 +193,16 @@ export async function registerRoutes(app: Application): Promise<Server> {
         return res.status(200).json({ message: "If that email is registered, you will receive a password reset link" });
       }
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as Secret, { expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN as any || "1h" });
-      // Store reset token and expiry in database
-      const expireSeconds = parseInt(process.env.RESET_PASSWORD_EXPIRES_IN || '3600', 10);
-      const expireDate = new Date(Date.now() + expireSeconds * 1000);
-      await UserModel.findOneAndUpdate(
-        { id: user.id },
-        { resetPasswordToken: token, resetPasswordExpire: expireDate }
-      );
+      // Save token on user document and persist
+      const userToUpdate = await UserModel.findOne({ id: user.id });
+      if (!userToUpdate) {
+        console.error('Forgot-password: user not found for update', user.id);
+      } else {
+        userToUpdate.resetPasswordToken = token;
+        userToUpdate.resetPasswordExpire = new Date(Date.now() + parseInt(process.env.RESET_PASSWORD_EXPIRES_IN || '3600', 10) * 1000);
+        await userToUpdate.save();
+        console.log('Forgot-password: reset token saved for user', user.id);
+      }
       const resetUrl = `${process.env.CLIENT_BASE_URL}/reset-password?token=${token}`;
       const html = `<p>You requested a password reset. Click <a href="${resetUrl}">here</a> to reset your password. If you did not request this, ignore this email.</p>`;
       await sendMail({ to: user.email, subject: "Password Reset Request", html });
