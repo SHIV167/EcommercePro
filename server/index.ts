@@ -15,13 +15,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',').map(s => s.trim())
-  : [];
+const allowedOriginsEnv = process.env.CORS_ORIGINS;
+const allowedOrigins = allowedOriginsEnv ? allowedOriginsEnv.split(',').map(s => s.trim()) : [];
+const corsOrigin = process.env.NODE_ENV === 'development' || allowedOrigins.length === 0 ? true : allowedOrigins;
 
-// CORS middleware: allow all origins and all methods for development
+// CORS middleware: allow all origins in dev or when not configured
 app.use(cors({
-  origin: allowedOrigins,
+  origin: corsOrigin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
@@ -29,7 +29,7 @@ app.use(cors({
 
 // Handle preflight requests globally
 app.options('*', cors({
-  origin: allowedOrigins,
+  origin: corsOrigin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
