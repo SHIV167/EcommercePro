@@ -1,12 +1,13 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 dotenv.config();
+console.log('DEBUG env MONGODB_URI:', process.env.MONGODB_URI);
 // DEBUG: log loaded env var
 console.log('DEBUG env MONGODB_URL:', process.env.MONGODB_URL);
 
 // MongoDB connection string with cloud MongoDB as the primary connection
-const MONGODB_URL = process.env.MONGODB_URL || 
-                   'mongodb://127.0.0.1:27017/KAMAONE';
+const MONGODB_URL = process.env.MONGODB_URI || process.env.MONGODB_URL ||
+                   'mongodb://127.0.0.1:27017/newecom';
 
 // Connect to MongoDB
 export async function connectToDatabase() {
