@@ -188,20 +188,18 @@ export async function registerRoutes(app: Application): Promise<Server> {
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return res.status(200).json({ message: "If that email is registered, you will receive a password reset link" });
-      }
+      // Fetch user document directly from MongoDB to ensure persistence
+      const user = await UserModel.findOne({ email });
+      if (!user) return res.status(200).json({ message: "If that email is registered, you will receive a password reset link" });
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as Secret, { expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN as any || "1h" });
-      // Save token on user document and persist
-      const userToUpdate = await UserModel.findOne({ id: user.id });
-      if (!userToUpdate) {
-        console.error('Forgot-password: user not found for update', user.id);
+      // Save token and expiry on Mongoose document
+      if (!user) {
+        console.error('Forgot-password: no user found for update', email);
       } else {
-        userToUpdate.resetPasswordToken = token;
-        userToUpdate.resetPasswordExpire = new Date(Date.now() + parseInt(process.env.RESET_PASSWORD_EXPIRES_IN || '3600', 10) * 1000);
-        await userToUpdate.save();
-        console.log('Forgot-password: reset token saved for user', user.id);
+        user.resetPasswordToken = token;
+        user.resetPasswordExpire = new Date(Date.now() + parseInt(process.env.RESET_PASSWORD_EXPIRES_IN || '3600', 10) * 1000);
+        await user.save();
+        console.log('Forgot-password: reset token saved for user', email);
       }
       const resetUrl = `${process.env.CLIENT_BASE_URL}/reset-password?token=${token}`;
       const html = `<p>You requested a password reset. Click <a href="${resetUrl}">here</a> to reset your password. If you did not request this, ignore this email.</p>`;
