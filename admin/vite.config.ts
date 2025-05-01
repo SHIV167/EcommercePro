@@ -16,7 +16,7 @@ export default defineConfig({
       },
       // --- Only proxy admin API requests ---
       '/admin/api': {
-        target: 'http://127.0.0.1:5000',
+        target: 'https://ecommercepro-0ukc.onrender.com',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/admin\/api/, '/api'),
