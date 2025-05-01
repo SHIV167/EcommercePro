@@ -165,8 +165,8 @@ export default function CollectionsManagement() {
     queryKey: ['/api/products'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/products');
-      const json = await res.json();
-      return (json.data ?? json) as Product[];
+      const json = await res.json() as { products: Product[] };
+      return json.products;
     },
   });
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
