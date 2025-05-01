@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Login function
   const login = async (email: string, password: string): Promise<User> => {
     try {
-      const response = await apiRequest("POST", `${import.meta.env.VITE_API_URL}/api/auth/login`, {
+      const response = await apiRequest("POST", "/api/auth/login", {
         email,
         password,
       });

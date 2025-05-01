@@ -12,7 +12,8 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+  // Use VITE_API_URL or VITE_API_BASE_URL, fallback to current origin if unset
+  const baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || window.location.origin;
   const fullUrl = url.startsWith("http") ? url : baseUrl + url;
   const res = await fetch(fullUrl, {
     method,
