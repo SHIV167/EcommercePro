@@ -6,7 +6,16 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': 'https://ecommercepro-0ukc.onrender.com',
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/uploads': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });
