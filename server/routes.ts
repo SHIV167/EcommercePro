@@ -180,6 +180,47 @@ export async function registerRoutes(app: Application): Promise<Server> {
     return res.status(200).json({ message: 'Logged out' });
   });
 
+  // Password reset endpoints
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(200).json({ message: "If that email is registered, you will receive a password reset link" });
+      }
+      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as Secret, { expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN as any || "1h" });
+      const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+      const html = `<p>You requested a password reset. Click <a href="${resetUrl}">here</a> to reset your password. If you did not request this, ignore this email.</p>`;
+      await sendMail({ to: user.email, subject: "Password Reset Request", html });
+      return res.status(200).json({ message: "If that email is registered, you will receive a password reset link" });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      if (!token || !password) {
+        return res.status(400).json({ message: "Token and password are required" });
+      }
+      const payload = jwt.verify(token, process.env.JWT_SECRET as Secret) as { id: string };
+      const hashed = await bcrypt.hash(password, 10);
+      const user = await storage.updateUser(payload.id, { password: hashed });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      return res.status(200).json({ message: "Password has been reset successfully" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+  });
+
   // Popup settings routes
   app.get('/api/popup-settings', getPopupSetting);
   app.put('/api/popup-settings', updatePopupSetting);

@@ -159,9 +159,12 @@ export default function LoginPage() {
                   </Link>
                 </p>
                 <p className="mt-2">
-                  <a href="#" className="text-sm text-primary hover:underline">
+                  <Link
+                    href={`/forgot-password${redirectTo !== "/account" ? `?redirect=${redirectTo}` : ""}`}
+                    className="text-sm text-primary hover:underline"
+                  >
                     Forgot your password?
-                  </a>
+                  </Link>
                 </p>
               </div>
             </div>

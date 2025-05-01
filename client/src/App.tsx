@@ -11,6 +11,8 @@ import CollectionPage from "./pages/CollectionPage";
 import CategoryPage from "./pages/CategoryPage";
 import ProductPage from "./pages/ProductPage";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import RegisterPage from "./pages/RegisterPage";
 import AccountPage from "./pages/AccountPage";
 import Popup from "./pages/Popup";
@@ -39,6 +41,8 @@ export default function App() {
           <Route path="/categories/:slug" component={CategoryPage} />
           <Route path="/products/:slug" component={ProductPage} />
           <Route path="/login" component={LoginPage} />
+          <Route path="/forgot-password" component={ForgotPasswordPage} />
+          <Route path="/reset-password" component={ResetPasswordPage} />
           <Route path="/register" component={RegisterPage} />
           <Route path="/account" component={AccountPage} />
           <Route path="/popup" component={Popup} />

@@ -10,7 +10,7 @@ export default defineConfig({
     proxy: {
       // Proxy ALL /api requests to backend (for popup settings and more)
       '/api': {
-        target: 'http://127.0.0.1:5000', // Confirmed backend port
+        target: 'https://ecommercepro-0ukc.onrender.com', // Confirmed backend port
         changeOrigin: true,
         secure: false,
       },
@@ -23,7 +23,7 @@ export default defineConfig({
       },
       // Proxy static uploads to backend
       '/uploads': {
-        target: 'http://127.0.0.1:5000',
+        target: 'https://ecommercepro-0ukc.onrender.com',
         changeOrigin: true,
         secure: false,
       },
