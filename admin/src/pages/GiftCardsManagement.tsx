@@ -68,7 +68,10 @@ export default function GiftCardsManagement() {
     return [];
   };
 
-  const { data: cards = [], isLoading, isError, error } = useQuery<GiftCard[], Error>(['giftcards'], fetchGiftCards);
+  const { data: cards = [], isLoading, isError, error } = useQuery<GiftCard[], Error, GiftCard[]>({
+    queryKey: ['giftcards'],
+    queryFn: fetchGiftCards,
+  });
   if (isLoading) return <div className="p-6">Loading gift cards...</div>;
   if (isError) return <div className="p-6 text-red-500">Error fetching gift cards: {error?.message}</div>;
 
