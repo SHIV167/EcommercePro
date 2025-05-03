@@ -101,6 +101,10 @@ import giftCardTemplateRoutes from './routes/giftCardTemplateRoutes';
 
 
 export async function registerRoutes(app: Application): Promise<Server> {
+  // Enable JSON and URL-encoded body parsing for incoming requests
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
   // ensure upload directory exists in public/uploads
   const uploadDir = path.join(__dirname, '../public/uploads');
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
