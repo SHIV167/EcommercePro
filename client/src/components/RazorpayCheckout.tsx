@@ -32,6 +32,13 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({ orderId, amount, cu
       .catch(err => console.error(err));
   }, []);
 
+  // Auto-open Razorpay checkout when SDK is ready
+  useEffect(() => {
+    if (sdkReady) {
+      handlePayment();
+    }
+  }, [sdkReady]);
+
   const handlePayment = async () => {
     if (!sdkReady) {
       console.error('Razorpay SDK not loaded');
