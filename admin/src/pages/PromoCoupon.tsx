@@ -50,6 +50,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Info, AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/queryClient";
 
 interface CouponFormValues {
   code: string;
@@ -146,10 +147,7 @@ export default function PromoCoupon() {
   const fetchCoupons = async () => {
     setLoading(true);
     try {
-      // Update server URL to port 5000 where the server is actually running
-      const apiUrl = import.meta.env.DEV 
-        ? 'http://localhost:5000/api/admin/coupons' 
-        : '/api/admin/coupons';
+      const apiUrl = `${API_BASE_URL}/api/admin/coupons`;
         
       console.log('Fetching coupons from:', apiUrl);
       const response = await axios.get(apiUrl, { withCredentials: true });
@@ -188,11 +186,11 @@ export default function PromoCoupon() {
     try {
       if (editingCoupon) {
         // Update existing coupon
-        await axios.put(`/api/admin/coupons/${editingCoupon._id}`, data, { withCredentials: true });
+        await axios.put(`${API_BASE_URL}/api/admin/coupons/${editingCoupon._id}`, data, { withCredentials: true });
         toast.success("Coupon updated successfully");
       } else {
         // Create new coupon
-        await axios.post("/api/admin/coupons", data, { withCredentials: true });
+        await axios.post(`${API_BASE_URL}/api/admin/coupons`, data, { withCredentials: true });
         toast.success("Coupon created successfully");
       }
       
@@ -214,7 +212,7 @@ export default function PromoCoupon() {
     if (!couponToDelete) return;
     
     try {
-      await axios.delete(`/api/admin/coupons/${couponToDelete}`, { withCredentials: true });
+      await axios.delete(`${API_BASE_URL}/api/admin/coupons/${couponToDelete}`, { withCredentials: true });
       toast.success("Coupon deleted successfully");
       fetchCoupons();
       setDeleteDialogOpen(false);

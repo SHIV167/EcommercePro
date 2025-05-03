@@ -1,9 +1,13 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 // Base API URL; in development proxied to localhost:5000
-export const API_BASE_URL = import.meta.env.DEV
-  ? ''
-  : (import.meta.env.VITE_API_URL || 'https://ecommercepro-0ukc.onrender.com');
+export const API_BASE_URL = (() => {
+  if (import.meta.env.DEV) return '';
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  const origin = window.location.origin;
+  if (origin.includes('-admin')) return origin.replace('-admin', '');
+  return origin;
+})();
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
