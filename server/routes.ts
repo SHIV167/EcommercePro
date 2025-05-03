@@ -24,11 +24,6 @@ import fs from "fs";
 import path, { dirname } from "path";
 import multer from "multer";
 import { fileURLToPath } from "url";
-// Load Razorpay via CommonJS require to avoid default-import issues
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const Razorpay = require('razorpay');
-// Minimal Razorpay order type
-interface RazorpayOrderType { id: string; amount: number; currency: string; }
 // Define __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1260,10 +1255,11 @@ export async function registerRoutes(app: Application): Promise<Server> {
       if (!settings?.razorpayKeyId || !settings.razorpayKeySecret) {
         return res.status(500).json({ message: 'Razorpay not configured' });
       }
-      // Instantiate Razorpay
-      const razor = new Razorpay({ key_id: settings.razorpayKeyId, key_secret: settings.razorpayKeySecret });
+      // Dynamically import Razorpay in ESM
+      const { default: RazorpayCls } = (await import('razorpay')) as any;
+      const razor = new RazorpayCls({ key_id: settings.razorpayKeyId, key_secret: settings.razorpayKeySecret });
       const receipt = `order_rcptid_${Date.now()}`;
-      const order = (await razor.orders.create({ amount, currency, receipt, payment_capture: true })) as RazorpayOrderType;
+      const order = (await razor.orders.create({ amount, currency, receipt, payment_capture: true })) as any;
       return res.status(200).json({ orderId: order.id, amount: order.amount, currency: order.currency });
     } catch (error) {
       console.error('Razorpay order create error:', error);
