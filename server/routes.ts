@@ -15,7 +15,7 @@ import { categorySchema, collectionSchema } from "@shared/schema";
 import { sendMail } from "./utils/mailer";
 import upload from "./utils/upload";
 import crypto from "crypto";
-import { getServiceability } from "./utils/shiprocket";
+import { getServiceability, createShipment } from "./utils/shiprocket";
 import bcrypt from "bcrypt";
 import jwt, { Secret } from "jsonwebtoken";
 import { getPopupSetting, updatePopupSetting } from "./controllers/popupSettingController";
@@ -1339,6 +1339,12 @@ export async function registerRoutes(app: Application): Promise<Server> {
       const orderId = createdOrder.id!;
       for (const item of items) {
         await storage.addOrderItem({ ...item, orderId });
+      }
+      // send order to Shiprocket
+      try {
+        await createShipment(createdOrder, items);
+      } catch (err) {
+        console.error('Shiprocket shipment error:', err);
       }
       return res.status(201).json({ id: createdOrder.id! });
     } catch (error) {
