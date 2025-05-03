@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 
 interface RazorpayCheckoutProps {
+  orderId: string;
   amount: number; // in paise, e.g. ₹100 => 10000
   currency?: string;
   onSuccess: (payment: any) => void;
@@ -18,7 +19,7 @@ const loadScript = (src: string): Promise<void> => {
   });
 };
 
-const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({ amount, currency = 'INR', onSuccess, onError }) => {
+const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({ orderId, amount, currency = 'INR', onSuccess, onError }) => {
   useEffect(() => {
     loadScript('https://checkout.razorpay.com/v1/checkout.js')
       .catch(err => console.error(err));
@@ -28,14 +29,13 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({ amount, currency = 
     try {
       // fetch key id
       const cfg = await apiRequest('GET', '/api/config').then(res => res.json());
-      // create order
-      const { orderId, amount: amt } = await apiRequest('POST', '/api/razorpay/order', { amount, currency }).then(res => res.json());
+      // use existing orderId and amount from props
       const options: any = {
         key: cfg.razorpayKeyId,
-        amount: amt,
+        amount,
         currency,
         order_id: orderId,
-        handler: (res: any) => onSuccess(res),
+        handler: onSuccess,
         prefill: {},
       };
       const rzp = new window.Razorpay(options);

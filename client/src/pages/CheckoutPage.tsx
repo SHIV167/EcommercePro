@@ -186,6 +186,7 @@ export default function CheckoutPage() {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <RazorpayCheckout
+          orderId={razorpayOrder.orderId}
           amount={razorpayOrder.amount}
           currency={razorpayOrder.currency}
           onSuccess={async res => {
