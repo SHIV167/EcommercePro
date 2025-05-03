@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAdminAuth } from "../../hooks/useAdminAuth";
+import { Gift } from "lucide-react";
 
 interface SidebarLinkProps {
   href: string;
@@ -266,6 +267,14 @@ export default function Sidebar() {
                 </svg>
               }
               label="PromoTimer"
+              isCollapsed={isCollapsed}
+            />
+          </li>
+          <li>
+            <SidebarLink
+              href="/admin/giftcards"
+              icon={<Gift size={20} />}
+              label="Gift Cards"
               isCollapsed={isCollapsed}
             />
           </li>
