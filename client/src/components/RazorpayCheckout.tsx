@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 
 interface RazorpayCheckoutProps {
@@ -9,37 +9,49 @@ interface RazorpayCheckoutProps {
   onError?: (error: any) => void;
 }
 
-const loadScript = (src: string): Promise<void> => {
+// Load Razorpay checkout script once
+const loadRazorpayScript = (): Promise<void> => {
   return new Promise((resolve, reject) => {
+    if (document.getElementById('razorpay-script')) {
+      resolve(); return;
+    }
     const script = document.createElement('script');
-    script.src = src;
+    script.id = 'razorpay-script';
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Failed to load ${src}`));
-    document.head.appendChild(script);
+    script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
+    document.body.appendChild(script);
   });
 };
 
 const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({ orderId, amount, currency = 'INR', onSuccess, onError }) => {
+  const [sdkReady, setSdkReady] = useState(false);
   useEffect(() => {
-    loadScript('https://checkout.razorpay.com/v1/checkout.js')
+    loadRazorpayScript()
+      .then(() => setSdkReady(true))
       .catch(err => console.error(err));
   }, []);
 
   const handlePayment = async () => {
+    if (!sdkReady) {
+      console.error('Razorpay SDK not loaded');
+      return;
+    }
     try {
-      // fetch key id
       const cfg = await apiRequest('GET', '/api/config').then(res => res.json());
-      // use existing orderId and amount from props
       const options: any = {
         key: cfg.razorpayKeyId,
         amount,
         currency,
         order_id: orderId,
-        handler: onSuccess,
+        handler: (response: any) => onSuccess(response),
         prefill: {},
+        modal: { ondismiss: () => onError?.({ message: 'Payment popup closed' }) }
       };
       const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', (err: any) => onError?.(err));
+      // Ensure success callback is triggered
+      rzp.on('payment.success', (response: any) => onSuccess(response));
+      // Razorpay opens payment modal
       rzp.open();
     } catch (err) {
       console.error('Razorpay init error:', err);
@@ -48,8 +60,8 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({ orderId, amount, cu
   };
 
   return (
-    <button onClick={handlePayment} className="btn-primary">
-      Pay ₹{(amount / 100).toFixed(2)}
+    <button onClick={handlePayment} disabled={!sdkReady} className="btn-primary disabled:opacity-50">
+      {sdkReady ? `Pay ₹${(amount / 100).toFixed(2)}` : 'Loading...' }
     </button>
   );
 };

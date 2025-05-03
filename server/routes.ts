@@ -1272,8 +1272,13 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.post('/api/razorpay/verify', async (req, res) => {
     try {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-      const generatedSignature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+      // Load Razorpay secret, prefer DB but fallback to ENV
+      const settings = await SettingModel.findOne();
+      const secret = settings?.razorpayKeySecret || process.env.RAZORPAY_KEY_SECRET;
+      if (!secret) {
+        return res.status(500).json({ message: 'Razorpay secret missing' });
+      }
+      const generatedSignature = crypto.createHmac('sha256', secret)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest('hex');
       if (generatedSignature === razorpay_signature) {
