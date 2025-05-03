@@ -1,11 +1,16 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
+import { useCoupon } from "@/hooks/useCoupon";
+import { CouponForm } from "@/components/coupon/CouponForm";
 import { formatCurrency } from "@/lib/utils";
 import { Helmet } from 'react-helmet';
 
 export default function CartPage() {
   const { cartItems, removeItem, updateQuantity, subtotal, isEmpty, totalItems } = useCart();
+  const { appliedCoupon, applyCoupon, removeCoupon, calculateDiscountedTotal } = useCoupon();
+  
+  const finalTotal = calculateDiscountedTotal(subtotal);
   
   return (
     <>
@@ -144,6 +149,22 @@ export default function CartPage() {
                       <span className="text-neutral-gray">Subtotal</span>
                       <span className="font-medium">{formatCurrency(subtotal)}</span>
                     </div>
+                    
+                    {/* Coupon Form */}
+                    <CouponForm
+                      cartTotal={subtotal}
+                      onCouponApplied={applyCoupon}
+                      onCouponRemoved={removeCoupon}
+                      appliedCoupon={appliedCoupon}
+                    />
+                    
+                    {appliedCoupon && (
+                      <div className="flex justify-between items-center text-green-600">
+                        <span>Discount</span>
+                        <span>-{formatCurrency(appliedCoupon.discountValue)}</span>
+                      </div>
+                    )}
+                    
                     <div className="flex justify-between items-center">
                       <span className="text-neutral-gray">Shipping</span>
                       <span>Calculated at checkout</span>
@@ -154,7 +175,7 @@ export default function CartPage() {
                     </div>
                     <div className="border-t border-neutral-sand pt-4 flex justify-between items-center">
                       <span className="font-heading text-primary">Total</span>
-                      <span className="font-heading text-xl text-primary">{formatCurrency(subtotal)}</span>
+                      <span className="font-heading text-xl text-primary">{formatCurrency(finalTotal)}</span>
                     </div>
                   </div>
                   

@@ -10,9 +10,16 @@ export default defineConfig({
     open: '/admin/',
     proxy: {
       '/api': {
-        target: 'https://ecommercepro-0ukc.onrender.com',
+        target: 'http://localhost:5000',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
+        configure: (proxy) => {
+          proxy.on('proxyReq', function(proxyReq) {
+            proxyReq.setHeader('Connection', 'keep-alive');
+          });
+        },
+        xfwd: true
       },
     },
   },

@@ -7,6 +7,8 @@ export interface IOrder extends Document {
   shippingAddress: string;
   paymentMethod: string;
   paymentStatus: string;
+  couponCode: string | null;
+  discountAmount: number;
   createdAt: Date;
 }
 
@@ -17,6 +19,8 @@ const OrderSchema: Schema = new Schema({
   shippingAddress: { type: String, required: true },
   paymentMethod: { type: String, required: true },
   paymentStatus: { type: String, required: true, default: 'pending' },
+  couponCode: { type: String, default: null },
+  discountAmount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 

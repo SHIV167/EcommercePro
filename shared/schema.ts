@@ -51,6 +51,8 @@ export type Order = {
   shippingAddress: string;
   paymentMethod: string;
   paymentStatus: string;
+  couponCode?: string | null;
+  discountAmount?: number;
   createdAt: Date;
 };
 export type InsertOrder = Omit<Order, 'id' | '_id' | 'createdAt'>;

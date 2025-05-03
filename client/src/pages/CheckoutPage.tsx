@@ -5,10 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
+import { useCoupon } from "@/hooks/useCoupon";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CouponForm } from "@/components/coupon/CouponForm";
 import {
   Form,
   FormControl,
@@ -65,6 +67,7 @@ export default function CheckoutPage() {
   const [shippingCodFlag, setShippingCodFlag] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const { cartItems, subtotal, clearCart, isEmpty } = useCart();
+  const { appliedCoupon, applyCoupon, removeCoupon, calculateDiscountedTotal } = useCoupon();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -112,10 +115,31 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
+  // Calculate final total with discount
+  const finalTotal = calculateDiscountedTotal(subtotal);
+
   const onSubmit = async (values: CheckoutFormValues) => {
     setIsSubmitting(true);
-    const totalAmount = subtotal + (subtotal > 500 ? 0 : 50) + subtotal * 0.18;
-    const payload = { order: { userId: user?.id||'', status:'pending', totalAmount, shippingAddress: values.address, paymentMethod: values.paymentMethod, paymentStatus: values.paymentMethod==='cod'?'unpaid':'pending' }, items: cartItems.map(i=>({ productId: i.product._id!, quantity: i.quantity, price: i.product.price })) };
+    // Update to use finalTotal which includes any applied discounts
+    const totalAmount = finalTotal + (finalTotal > 500 ? 0 : 50) + finalTotal * 0.18;
+    const payload = { 
+      order: { 
+        userId: user?.id||'', 
+        status:'pending', 
+        totalAmount, 
+        shippingAddress: values.address, 
+        paymentMethod: values.paymentMethod, 
+        paymentStatus: values.paymentMethod==='cod'?'unpaid':'pending',
+        // Include coupon information if applied
+        couponCode: appliedCoupon?.code || null,
+        discountAmount: appliedCoupon?.discountValue || 0
+      }, 
+      items: cartItems.map(i=>({ 
+        productId: i.product._id!, 
+        quantity: i.quantity, 
+        price: i.product.price 
+      })) 
+    };
     if (values.paymentMethod === 'cod') {
       try {
         // Dev: skip serviceability; place COD order directly
@@ -507,55 +531,49 @@ export default function CheckoutPage() {
             </Form>
           </div>
           
-          <div>
+          <div className="lg:col-span-1">
             <div className="border border-neutral-sand rounded-md overflow-hidden sticky top-4">
               <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
                 <h2 className="font-heading text-lg text-primary">Order Summary</h2>
               </div>
               <div className="p-4">
-                <div className="divide-y divide-neutral-sand">
-                  {cartItems.map((item) => (
-                    <div key={item.id} className="py-3 flex justify-between">
-                      <div className="flex items-start">
-                        <span className="text-sm font-medium">
-                          {item.quantity} x {item.product.name}
-                        </span>
-                      </div>
-                      <span className="text-sm">
-                        {formatCurrency(item.product.price * item.quantity)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="space-y-4 mt-6 pt-4 border-t border-neutral-sand">
+                <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-gray">Subtotal</span>
                     <span className="font-medium">{formatCurrency(subtotal)}</span>
                   </div>
+                  
+                  {/* Add Coupon Form */}
+                  <CouponForm
+                    cartTotal={subtotal}
+                    onCouponApplied={applyCoupon}
+                    onCouponRemoved={removeCoupon}
+                    appliedCoupon={appliedCoupon}
+                  />
+                  
+                  {appliedCoupon && (
+                    <div className="flex justify-between items-center text-green-600">
+                      <span>Discount</span>
+                      <span>-{formatCurrency(appliedCoupon.discountValue)}</span>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-gray">Shipping</span>
-                    <span>{subtotal > 500 ? "Free" : formatCurrency(50)}</span>
+                    <span>{finalTotal > 500 ? "Free" : formatCurrency(50)}</span>
                   </div>
+                  
                   <div className="flex justify-between items-center">
-                    <span className="text-neutral-gray">Tax</span>
-                    <span>{formatCurrency(subtotal * 0.18)}</span>
+                    <span className="text-neutral-gray">Tax (18%)</span>
+                    <span>{formatCurrency(finalTotal * 0.18)}</span>
                   </div>
+                  
                   <div className="border-t border-neutral-sand pt-4 flex justify-between items-center">
                     <span className="font-heading text-primary">Total</span>
                     <span className="font-heading text-xl text-primary">
-                      {formatCurrency(subtotal + (subtotal > 500 ? 0 : 50) + (subtotal * 0.18))}
+                      {formatCurrency(finalTotal + (finalTotal > 500 ? 0 : 50) + finalTotal * 0.18)}
                     </span>
                   </div>
-                </div>
-                
-                <div className="mt-4 text-xs text-neutral-gray">
-                  <p className="mb-2">
-                    Get complimentary products worth ₹3990 on orders above ₹4000
-                  </p>
-                  <p>
-                    Free shipping on orders above ₹500
-                  </p>
                 </div>
               </div>
             </div>

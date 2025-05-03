@@ -21,6 +21,9 @@ import AdminLogin from "./pages/AdminLogin";
 import Popup from "./pages/Popup";
 import StoreManagePage from "./pages/StoreManage";
 import PromoTimerPage from "./pages/promotimer";
+import PopupManagement from './pages/PopupManagement';
+import PromoTimer from './pages/promotimer';
+import PromoCoupon from './pages/PromoCoupon';
 
 function AdminContainer() {
   const { isAuthenticated, isLoading } = useAdminAuth();
@@ -48,6 +51,7 @@ function AdminContainer() {
             <Route path="/admin/settings" component={SettingsManagement} />
             <Route path="/admin/contacts" component={ContactsManagement} />
             <Route path="/admin/blogs" component={BlogsManagement} />
+            <Route path="/admin/promocoupon" component={PromoCoupon} />
             <Route path="/admin" component={Dashboard} />
             <Route>
               <div className="flex items-center justify-center h-full">

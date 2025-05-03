@@ -1,5 +1,5 @@
 import { createServer, type Server } from "http";
-import express, { Application, Request, Response } from "express";
+import express, { Application, Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 import UserModel from "./models/User";
 import SettingModel from "./models/Setting";
@@ -8,16 +8,17 @@ import BlogModel from "./models/Blog";
 import OrderModel from "./models/Order";
 import ProductModel from "./models/Product"; // Import ProductModel
 import BannerModel from "./models/Banner"; // Import BannerModel
+
 import { v4 as uuidv4 } from "uuid"; // Import uuid
 import { z } from "zod";
-import { productSchema, categorySchema, collectionSchema, productCollectionSchema, Banner, InsertBanner } from "@shared/schema";
+import { categorySchema, collectionSchema } from "@shared/schema";
 import { sendMail } from "./utils/mailer";
 import upload from "./utils/upload";
 import razorpay from "./utils/razorpay";
 import crypto from "crypto";
 import { getServiceability } from "./utils/shiprocket";
 import bcrypt from "bcrypt";
-import jwt, { Secret, SignOptions } from "jsonwebtoken";
+import jwt, { Secret } from "jsonwebtoken";
 import { getPopupSetting, updatePopupSetting } from "./controllers/popupSettingController";
 import { subscribeNewsletter, getNewsletterSubscribers } from "./controllers/newsletterController";
 import fs from "fs";
@@ -42,6 +43,8 @@ const orderInsertSchema = z.object({
   shippingAddress: z.string(),
   paymentMethod: z.string(),
   paymentStatus: z.string(),
+  couponCode: z.string().nullable().optional(),
+  discountAmount: z.number().optional().default(0),
 });
 const orderItemInsertSchema = z.object({
   productId: z.string(),
@@ -76,6 +79,12 @@ const bannerSchema = bannerObjectSchema
   });
 const bannerUpdateSchema = bannerObjectSchema.partial();
 
+// Import routes
+import couponRoutes from './routes/couponRoutes';
+
+// Import controllers for coupons
+
+
 export async function registerRoutes(app: Application): Promise<Server> {
   // ensure upload directory exists in public/uploads
   const uploadDir = path.join(__dirname, '../public/uploads');
@@ -103,7 +112,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const validatedData = req.body; // TODO: add validation with Zod schema if available
+      const validatedData = req.body; // add validation with Zod schema
       
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(validatedData.email);
@@ -996,48 +1005,6 @@ export async function registerRoutes(app: Application): Promise<Server> {
     }
   });
   
-  app.post("/api/orders", async (req, res) => {
-    try {
-      // Require authenticated user
-      if (!req.body?.order?.userId) {
-        return res.status(401).json({ message: 'Authentication required to place order' });
-      }
-      const { order: orderData, items: itemsData } = orderPayloadSchema.parse(req.body);
-      const createdOrder = await storage.createOrder(orderData);
-      if (!createdOrder.id) {
-        return res.status(500).json({ message: 'Order created without ID' });
-      }
-      const orderId = createdOrder.id!;
-      for (const item of itemsData) {
-        await storage.addOrderItem({ ...item, orderId });
-      }
-      return res.status(201).json({ id: createdOrder.id! });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Invalid order payload', errors: error.errors });
-      }
-      console.error('Order creation error:', error);
-      return res.status(500).json({ message: 'Server error' });
-    }
-  });
-  
-  app.post("/api/orders/:id/items", async (req, res) => {
-    try {
-      const orderId = req.params.id;
-      
-      const validatedData = { ...req.body, orderId }; // TODO: add validation
-      
-      const orderItem = await storage.addOrderItem(validatedData);
-      
-      return res.status(201).json(orderItem);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
   // --- Remove duplicate update order endpoints and keep only the correct one (PUT /api/orders/:id) ---
   // Remove the old endpoint for /api/orders/:id/status
   // The correct endpoint is:
@@ -1046,7 +1013,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
     const { status } = req.body;
     if (!status) return res.status(400).json({ message: 'Status is required' });
 
-    // TODO: Add admin authentication middleware here in production
+    // Use admin authentication middleware here in production
     try {
       const updatedOrder = await storage.updateOrderStatus(id, status);
       if (!updatedOrder) {
@@ -1522,6 +1489,33 @@ export async function registerRoutes(app: Application): Promise<Server> {
       return res.status(500).json({ message: "Server error" });
     }
   });
+
+  // Authentication middleware
+  const isAuthenticatedMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const token = req.cookies.token;
+      if (!token) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as Secret);
+      (req as any).user = decoded;
+      next();
+    } catch (error) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+  };
+
+  // Admin check middleware
+  const isAdminMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    if (!(req as any).user || !(req as any).user.isAdmin) {
+      return res.status(403).json({ message: 'Forbidden: Admin access required' });
+    }
+    next();
+  };
+
+  // Register routes
+  app.use('/api', couponRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
