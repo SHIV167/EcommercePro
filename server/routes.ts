@@ -14,7 +14,6 @@ import { z } from "zod";
 import { categorySchema, collectionSchema } from "@shared/schema";
 import { sendMail } from "./utils/mailer";
 import upload from "./utils/upload";
-import razorpay from "./utils/razorpay";
 import crypto from "crypto";
 import { getServiceability } from "./utils/shiprocket";
 import bcrypt from "bcrypt";
@@ -25,6 +24,8 @@ import fs from "fs";
 import path, { dirname } from "path";
 import multer from "multer";
 import { fileURLToPath } from "url";
+import Razorpay from 'razorpay';
+import type { Order as RazorpayOrderType } from 'razorpay';
 // Define __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1247,11 +1248,26 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.post('/api/razorpay/order', async (req, res) => {
     try {
       const { amount, currency } = req.body;
-      const order = await razorpay.orders.create({ amount, currency });
-      return res.json({ orderId: order.id, amount: order.amount, currency: order.currency });
+      // Validate inputs
+      if (typeof amount !== 'number' || isNaN(amount) || typeof currency !== 'string') {
+        return res.status(400).json({ message: 'Invalid order parameters', params: req.body });
+      }
+      // Load Razorpay keys from DB settings
+      const settings = await SettingModel.findOne();
+      if (!settings?.razorpayKeyId || !settings.razorpayKeySecret) {
+        return res.status(500).json({ message: 'Razorpay not configured' });
+      }
+      // Instantiate Razorpay
+      const razor = new Razorpay({ key_id: settings.razorpayKeyId, key_secret: settings.razorpayKeySecret });
+      const receipt = `order_rcptid_${Date.now()}`;
+      // Fix TS overload: cast to Promise<Order> then await to get correct type
+      const orderPromise = razor.orders.create({ amount, currency, receipt, payment_capture: true }) as unknown as Promise<RazorpayOrderType>;
+      const order = await orderPromise;
+      return res.status(200).json({ orderId: order.id, amount: order.amount, currency: order.currency });
     } catch (error) {
       console.error('Razorpay order create error:', error);
-      return res.status(500).json({ message: 'Failed to create order' });
+      const msg = error instanceof Error ? error.message : JSON.stringify(error);
+      return res.status(500).json({ message: `Failed to create order: ${msg}` });
     }
   });
 
