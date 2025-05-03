@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useEffect, useState, useContext, createElement } from "react";
+import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { User } from "@shared/schema";

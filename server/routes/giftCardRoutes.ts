@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response, NextFunction, Router } from 'express';
 import { getAllGiftCards, getGiftCardById, createGiftCard, updateGiftCard, deleteGiftCard } from '../controllers/giftCardController';
 import jwt from 'jsonwebtoken';
 

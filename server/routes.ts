@@ -29,6 +29,8 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN;
+
 const cartItemInsertSchema = z.object({
   cartId: z.string(),
   productId: z.string(),
@@ -141,7 +143,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
         { expiresIn: process.env.JWT_EXPIRES_IN as any }
       );
       const maxAge = Number(process.env.COOKIE_MAX_AGE) || 86400000;
-      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax', maxAge });
+      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax', maxAge, domain: COOKIE_DOMAIN });
       return res.status(201).json(userWithoutPassword);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -180,7 +182,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
         { expiresIn: process.env.JWT_EXPIRES_IN as any }
       );
       const maxAge = Number(process.env.COOKIE_MAX_AGE) || 86400000;
-      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax', maxAge });
+      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax', maxAge, domain: COOKIE_DOMAIN });
       return res.status(200).json(userWithoutPassword);
     } catch (error) {
       console.error("Login error:", error);
@@ -190,7 +192,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
 
   // Auth: logout (clear token)
   app.post("/api/auth/logout", (req, res) => {
-    res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax' });
+    res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax', domain: COOKIE_DOMAIN });
     return res.status(200).json({ message: 'Logged out' });
   });
 

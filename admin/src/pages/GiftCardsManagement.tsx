@@ -35,7 +35,16 @@ interface GiftCard {
 
 export default function GiftCardsManagement() {
   const queryClient = useQueryClient();
-  const apiBase = import.meta.env.VITE_API_URL ?? '';
+  const apiBase: string = (() => {
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) return envUrl;
+    const origin = window.location.origin;
+    // If on admin domain (e.g. ecommercepro-admin.onrender.com), map to main API domain
+    if (origin.includes('-admin')) {
+      return origin.replace('-admin', '');
+    }
+    return origin;
+  })();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<GiftCard | null>(null);
@@ -44,12 +53,22 @@ export default function GiftCardsManagement() {
   const [expiryDate, setExpiryDate] = useState<Date>(new Date());
   const [isActive, setIsActive] = useState<boolean>(true);
 
-  const { data: cards = [], isLoading } = useQuery({
-    queryKey: ['giftcards'],
-    queryFn: () =>
-      fetch(`${apiBase}/api/admin/giftcards`, { credentials: 'include' })
-        .then(res => res.json()),
-  });
+  // Fetch gift cards with auth-check and data-sanity
+  const fetchGiftCards = async (): Promise<GiftCard[]> => {
+    const res = await fetch(`${apiBase}/api/admin/giftcards`, { credentials: 'include' });
+    if (res.status === 401) {
+      // Not authenticated: redirect to login
+      window.location.href = '/admin/login';
+      return [];
+    }
+    if (!res.ok) throw new Error('Failed to fetch gift cards');
+    const data = await res.json();
+    if (Array.isArray(data)) return data;
+    if (Array.isArray((data as any).data)) return (data as any).data;
+    return [];
+  };
+
+  const { data: cards = [], isLoading } = useQuery<GiftCard[], Error>(['giftcards'], fetchGiftCards);
 
   const saveMutation = useMutation({
     mutationFn: (payload: any) => {
