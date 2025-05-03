@@ -31,6 +31,17 @@ const __dirname = dirname(__filename);
 
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN;
 
+// Derive cookie domain: use explicit COOKIE_DOMAIN or fallback to root domain in production
+function getCookieDomain(req: Request): string | undefined {
+  if (COOKIE_DOMAIN) return COOKIE_DOMAIN;
+  if (process.env.NODE_ENV === 'production') {
+    const parts = req.hostname.split('.');
+    const root = parts.slice(-2).join('.');
+    return `.${root}`;
+  }
+  return undefined;
+}
+
 const cartItemInsertSchema = z.object({
   cartId: z.string(),
   productId: z.string(),
@@ -143,7 +154,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
         { expiresIn: process.env.JWT_EXPIRES_IN as any }
       );
       const maxAge = Number(process.env.COOKIE_MAX_AGE) || 86400000;
-      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax', maxAge, domain: COOKIE_DOMAIN });
+      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'none', maxAge, domain: getCookieDomain(req) });
       return res.status(201).json(userWithoutPassword);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -182,7 +193,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
         { expiresIn: process.env.JWT_EXPIRES_IN as any }
       );
       const maxAge = Number(process.env.COOKIE_MAX_AGE) || 86400000;
-      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax', maxAge, domain: COOKIE_DOMAIN });
+      res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'none', maxAge, domain: getCookieDomain(req) });
       return res.status(200).json(userWithoutPassword);
     } catch (error) {
       console.error("Login error:", error);
@@ -192,7 +203,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
 
   // Auth: logout (clear token)
   app.post("/api/auth/logout", (req, res) => {
-    res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'lax', domain: COOKIE_DOMAIN });
+    res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV==='production', sameSite: 'none', domain: getCookieDomain(req) });
     return res.status(200).json({ message: 'Logged out' });
   });
 
