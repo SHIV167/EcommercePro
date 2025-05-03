@@ -1,38 +1,36 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-export default defineConfig({
-  root: path.resolve(__dirname, 'admin'),
-  base: '/',
-  server: {
-    port: 5174,
-    open: '/admin/',
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/api'),
-        configure: (proxy) => {
-          proxy.on('proxyReq', function(proxyReq) {
-            proxyReq.setHeader('Connection', 'keep-alive');
-          });
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd());
+  const backend = env.VITE_API_URL || 'http://localhost:5000';
+
+  return {
+    root: path.resolve(__dirname, 'admin'),
+    base: '/',
+    server: {
+      port: 5174,
+      open: '/admin/',
+      proxy: {
+        '/api': {
+          target: backend,
+          changeOrigin: true,
+          secure: false,
         },
-        xfwd: true
       },
     },
-  },
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'admin', 'src'),
-      '@shared': path.resolve(__dirname, 'shared'),
-      '@assets': path.resolve(__dirname, 'attached_assets'),
+    plugins: [react()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'admin', 'src'),
+        '@shared': path.resolve(__dirname, 'shared'),
+        '@assets': path.resolve(__dirname, 'attached_assets'),
+      },
     },
-  },
-  build: {
-    outDir: path.resolve(__dirname, 'dist/public/admin'),
-    emptyOutDir: false,
-  },
+    build: {
+      outDir: path.resolve(__dirname, 'dist/public/admin'),
+      emptyOutDir: false,
+    },
+  };
 });
