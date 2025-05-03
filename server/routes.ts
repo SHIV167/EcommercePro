@@ -82,6 +82,7 @@ const bannerUpdateSchema = bannerObjectSchema.partial();
 // Import routes
 import couponRoutes from './routes/couponRoutes';
 import giftCardRoutes from './routes/giftCardRoutes';
+import giftCardTemplateRoutes from './routes/giftCardTemplateRoutes';
 
 // Import controllers for coupons
 
@@ -1518,6 +1519,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Register routes
   app.use('/api', couponRoutes);
   app.use('/api', giftCardRoutes);
+  app.use('/api', giftCardTemplateRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

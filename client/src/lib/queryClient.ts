@@ -32,16 +32,18 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
+    // Construct full URL with base
+    const path = queryKey[0] as string;
+    const baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || window.location.origin;
+    const url = path.startsWith('http') ? path : `${baseUrl}${path}`;
+    const res = await fetch(url, { credentials: 'include' });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
     }
 
     await throwIfResNotOk(res);
-    return await res.json();
+    return res.json();
   };
 
 export const queryClient = new QueryClient({

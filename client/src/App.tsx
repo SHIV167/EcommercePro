@@ -5,6 +5,7 @@ import NewsletterPopup from "./components/layout/NewsletterPopup";
 import Footer from "./components/layout/Footer";
 import HomePage from "./pages/HomePage";
 import CartPage from "./pages/CartPage";
+import GiftCardsPage from "./pages/GiftCardsPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ThankYouPage from "./pages/ThankYouPage";
 import CollectionPage from "./pages/CollectionPage";
@@ -35,6 +36,7 @@ export default function App() {
         <Switch>
           <Route path="/" component={HomePage} />
           <Route path="/cart" component={CartPage} />
+          <Route path="/giftcards" component={GiftCardsPage} />
           <Route path="/checkout" component={CheckoutPage} />
           <Route path="/thank-you/:orderId" component={ThankYouPage} />
           <Route path="/collections/:slug" component={CollectionPage} />

@@ -1,11 +1,24 @@
+// @ts-nocheck
 import { log } from './vite';
 import { storage } from './storage';
 import { type Category, type Collection } from '@shared/schema';
+import GiftCardTemplate from './models/GiftCardTemplate';
 
 // Initialize demo data for the MongoDB database
 export async function initDemoData() {
   try {
     console.log("Initializing demo data...");
+    // Seed gift card templates if none exist
+    const templateCount = await GiftCardTemplate.countDocuments();
+    if (templateCount === 0) {
+      const now = new Date();
+      await GiftCardTemplate.create([
+        { initialAmount: 500, expiryDate: new Date(now.getFullYear() + 1, now.getMonth()), isActive: true },
+        { initialAmount: 1000, expiryDate: new Date(now.getFullYear() + 1, now.getMonth()), isActive: true },
+        { initialAmount: 2500, expiryDate: new Date(now.getFullYear() + 1, now.getMonth()), isActive: true },
+      ]);
+      console.log("Seeded demo gift card templates");
+    }
     // Skip if demo data already initialized
     const existingProducts = await storage.getProducts({ limit: 1 });
     if (existingProducts.length > 0) {

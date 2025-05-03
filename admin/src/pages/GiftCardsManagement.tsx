@@ -30,11 +30,12 @@ interface GiftCard {
   balance: number;
   expiryDate: string;
   isActive: boolean;
+  imageUrl?: string;
 }
 
 export default function GiftCardsManagement() {
   const queryClient = useQueryClient();
-  const apiBase = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL ?? '');
+  const apiBase = import.meta.env.VITE_API_URL ?? '';
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<GiftCard | null>(null);
@@ -67,11 +68,11 @@ export default function GiftCardsManagement() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['giftcards']);
+      queryClient.invalidateQueries({ queryKey: ['giftcards'] });
       setFormOpen(false);
-      toast.success(editing ? 'Updated gift card' : 'Created gift card');
+      toast({ title: editing ? 'Updated gift card' : 'Created gift card', variant: 'default' });
     },
-    onError: () => toast.error('Error saving'),
+    onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
@@ -83,10 +84,10 @@ export default function GiftCardsManagement() {
         if (!res.ok) throw new Error('Failed');
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['giftcards']);
-      toast.success('Deleted gift card');
+      queryClient.invalidateQueries({ queryKey: ['giftcards'] });
+      toast({ title: 'Deleted gift card', variant: 'default' });
     },
-    onError: () => toast.error('Error deleting'),
+    onError: () => toast({ title: 'Error deleting', variant: 'destructive' }),
   });
 
   function openForm(card?: GiftCard) {
@@ -107,7 +108,7 @@ export default function GiftCardsManagement() {
   }
 
   function handleSubmit() {
-    const payload: any = { initialAmount, expiryDate, isActive };
+    const payload: any = { initialAmount, expiryDate: expiryDate.toISOString(), isActive };
     if (editing) payload.balance = balance;
     saveMutation.mutate(payload);
   }
@@ -171,7 +172,11 @@ export default function GiftCardsManagement() {
             )}
             <div>
               <Label>Expiry Date</Label>
-              <DatePicker selected={expiryDate} onChange={(d: Date) => setExpiryDate(d)} className="w-full" />
+              <DatePicker
+                selected={expiryDate}
+                onChange={(date: Date | null) => { if (date) setExpiryDate(date); }}
+                className="w-full"
+              />
             </div>
             <div className="flex items-center space-x-2">
               <Switch checked={isActive} onCheckedChange={setIsActive} />
