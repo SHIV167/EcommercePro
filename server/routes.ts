@@ -5,7 +5,7 @@ import UserModel from "./models/User";
 import SettingModel from "./models/Setting";
 import ContactModel from "./models/Contact";
 import BlogModel from "./models/Blog";
-import OrderModel from "./models/Order";
+import OrderModel from "./models/Order"; // Import OrderModel
 import ProductModel from "./models/Product"; // Import ProductModel
 import BannerModel from "./models/Banner"; // Import BannerModel
 
@@ -1382,12 +1382,6 @@ export async function registerRoutes(app: Application): Promise<Server> {
       const orderId = createdOrder.id!;
       for (const item of items) {
         await storage.addOrderItem({ ...item, orderId });
-      }
-      // send order to Shiprocket
-      try {
-        await createShipment({ ...order, id: createdOrder.id! }, items);
-      } catch (err) {
-        console.error('Shiprocket shipment error:', err);
       }
       return res.status(201).json({ id: createdOrder.id! });
     } catch (error) {
