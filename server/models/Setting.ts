@@ -9,6 +9,8 @@ export interface ISetting extends Document {
   shiprocketApiKey: string;
   shiprocketApiSecret: string;
   shiprocketSourcePincode: string;
+  shiprocketPickupLocation: string;
+  shiprocketChannelId: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +25,8 @@ const SettingSchema = new Schema<ISetting>(
     shiprocketApiKey: { type: String, required: true },
     shiprocketApiSecret: { type: String, required: true },
     shiprocketSourcePincode: { type: String, required: true },
+    shiprocketPickupLocation: { type: String, required: true },
+    shiprocketChannelId: { type: Number, required: true },
   },
   { timestamps: true }
 );

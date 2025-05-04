@@ -8,7 +8,13 @@ interface ServiceabilityParams {
   cod: number; // 1 or 0
 }
 
+let cachedToken: string | null = null;
+let tokenExpiry: number = 0;
+
 async function getAuthToken(): Promise<string> {
+  if (cachedToken && Date.now() < tokenExpiry) {
+    return cachedToken;
+  }
   const settings = await SettingModel.findOne();
   if (!settings) throw new Error('Shiprocket settings not configured');
   const { shiprocketApiKey: email, shiprocketApiSecret: password } = settings;
@@ -16,7 +22,10 @@ async function getAuthToken(): Promise<string> {
     'https://apiv2.shiprocket.in/v1/external/auth/login',
     { email, password }
   );
-  return resp.data.token;
+  const { token, expires_in } = resp.data;
+  cachedToken = token;
+  tokenExpiry = Date.now() + (expires_in - 60) * 1000;
+  return token;
 }
 
 export async function getServiceability(params: ServiceabilityParams) {
@@ -36,23 +45,35 @@ export async function getServiceability(params: ServiceabilityParams) {
 
 // Create an adhoc shipment/order in Shiprocket
 export async function createShipment(order: any, items: any[]) {
+  const settings = await SettingModel.findOne();
+  if (!settings) throw new Error('Shiprocket settings not configured');
   const token = await getAuthToken();
   const url = 'https://apiv2.shiprocket.in/v1/external/orders/create/adhoc';
   const payload = {
     order_id: order.id,
     order_date: new Date().toISOString(),
-    pickup_location: 'Primary',
-    channel_id: 1,
-    billing_customer_name: '', // TODO: provide customer name
-    billing_address: order.shippingAddress || '',
-    billing_city: '', billing_state: '', billing_country: '', billing_pincode: '',
-    billing_email: '', billing_phone: '',
-    shipping_is_billing: true,
+    pickup_location: settings.shiprocketPickupLocation || 'Primary',
+    channel_id: settings.shiprocketChannelId,
+    billing_customer_name: order.billingCustomerName || '',
+    billing_last_name: order.billingLastName || '',
+    billing_address: order.billingAddress || '',
+    billing_city: order.billingCity || '',
+    billing_state: order.billingState || '',
+    billing_country: order.billingCountry || '',
+    billing_pincode: order.billingPincode || '',
+    billing_email: order.billingEmail || '',
+    billing_phone: order.billingPhone || '',
+    shipping_is_billing: order.shippingIsBilling ?? true,
+    shipping_address: order.shippingAddress || '',
+    shipping_city: order.shippingCity || '',
+    shipping_state: order.shippingState || '',
+    shipping_country: order.shippingCountry || '',
+    shipping_pincode: order.shippingPincode || '',
     order_items: items.map(i => ({
-      name: i.productId,
-      sku: i.productId,
-      units: i.quantity,
-      selling_price: i.price,
+      name: i.name || i.productId,
+      sku: i.sku || i.productId,
+      units: i.units || i.quantity,
+      selling_price: i.sellingPrice || i.price,
     })),
   };
   const resp = await axios.post(url, payload, { headers: { Authorization: `Bearer ${token}` } });
