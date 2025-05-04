@@ -178,11 +178,11 @@ export async function createShipment(order: any, items: any[]) {
       channel_id: settings.shiprocketChannelId,
       billing_customer_name: order.billingCustomerName || 'Customer',
       billing_last_name: order.billingLastName || '',
-      billing_address: order.billingAddress || '',
-      billing_city: order.billingCity || '',
-      billing_state: order.billingState || '',
-      billing_country: order.billingCountry || 'India',
-      billing_pincode: order.billingPincode || '',
+      billing_address: order.billingAddress || order.shippingAddress || '',
+      billing_city: order.billingCity || order.shippingCity || '',
+      billing_state: order.billingState || order.shippingState || '',
+      billing_country: order.billingCountry || order.shippingCountry || 'India',
+      billing_pincode: order.billingPincode || order.shippingPincode || '',
       billing_email: order.billingEmail || '',
       billing_phone: order.billingPhone || '',
       shipping_is_billing: order.shippingIsBilling ?? true,
@@ -207,7 +207,24 @@ export async function createShipment(order: any, items: any[]) {
     };
     
     console.log("Sending payload to ShipRocket:", JSON.stringify(payload, null, 2));
-    
+
+    // Validate required billing/shipping fields
+    const requiredFields = {
+      billing_address: payload.billing_address,
+      billing_state: payload.billing_state,
+      billing_pincode: payload.billing_pincode,
+      billing_phone: payload.billing_phone,
+      shipping_address: payload.shipping_address,
+      shipping_state: payload.shipping_state,
+      shipping_pincode: payload.shipping_pincode
+    };
+    const missingFields = Object.entries(requiredFields)
+      .filter(([_, v]) => !v)
+      .map(([k]) => k);
+    if (missingFields.length) {
+      throw new Error(`ShipRocket payload missing required fields: ${missingFields.join(", ")}`);
+    }
+
     try {
       const resp = await axios.post(url, payload, { 
         headers: { 

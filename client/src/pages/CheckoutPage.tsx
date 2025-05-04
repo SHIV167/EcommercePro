@@ -122,23 +122,33 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
     // Update to use finalTotal which includes any applied discounts
     const totalAmount = finalTotal + (finalTotal > 500 ? 0 : 50) + finalTotal * 0.18;
-    const payload = { 
-      order: { 
-        userId: user?.id||'', 
-        status:'pending', 
-        totalAmount, 
-        shippingAddress: values.address, 
-        paymentMethod: values.paymentMethod, 
-        paymentStatus: values.paymentMethod==='cod'?'unpaid':'pending',
-        // Include coupon information if applied
+    const payload = {
+      order: {
+        userId: user?.id || '',
+        status: 'pending',
+        totalAmount,
+        // Billing fields from checkout form
+        billingCustomerName: values.name,
+        billingLastName: '', // split if you have first/last
+        billingAddress: values.address,
+        billingCity: values.city,
+        billingState: values.state,
+        billingPincode: values.zipCode,
+        billingEmail: values.email,
+        billingPhone: values.phone,
+        // Shipping fields
+        shippingIsBilling: values.sameAsBilling,
+        shippingAddress: values.sameAsBilling ? values.address : (values.shippingAddress || ''),
+        shippingCity: values.sameAsBilling ? values.city : (values.shippingCity || ''),
+        shippingState: values.sameAsBilling ? values.state : (values.shippingState || ''),
+        shippingPincode: values.sameAsBilling ? values.zipCode : (values.shippingZipCode || ''),
+        paymentMethod: values.paymentMethod,
+        paymentStatus: values.paymentMethod === 'cod' ? 'unpaid' : 'pending',
+        // Coupon and discount
         couponCode: appliedCoupon?.code || null,
-        discountAmount: appliedCoupon?.discountValue || 0
-      }, 
-      items: cartItems.map(i=>({ 
-        productId: i.product._id!, 
-        quantity: i.quantity, 
-        price: i.product.price 
-      })) 
+        discountAmount: appliedCoupon?.discountValue || 0,
+      },
+      items: cartItems.map(i => ({ productId: i.product._id!, quantity: i.quantity, price: i.product.price })),
     };
     if (values.paymentMethod === 'cod') {
       try {
@@ -475,7 +485,7 @@ export default function CheckoutPage() {
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6" viewBox="0 0 24 24">
                                     <path d="M16 9h-3.2c-.3 0-.6.1-.8.3-.2.2-.2.5-.1.7l2.5 5.8c0 .1.1.1.1.2H12l-.4-1.1H9.6l-.4 1.1H7l2.3-5.5c.2-.5.8-.9 1.3-.9H16V9z" fill="#4D4D4D" />
                                     <path d="M9.8 12.55l.8-1.9.8 1.9h-1.6z" fill="#4D4D4D" />
-                                    <path d="M22.5 4.5H1.5c-.828 0-1.5.672-1.5 1.5v12c0 .828.672 1.5 1.5 1.5h21c.828 0 1.5-.672 1.5-1.5V6c0-.828-.672-1.5-1.5-1.5zM8.7 16c-.1.1-.2.2-.4.2H5.8c-.3 0-.5-.1-.5-.4l2.1-5.2c.1-.4.5-.6.9-.6H11c.3 0 .6.1.8.3.2.2.2.5.1.7l-2.5 5c0 0-.5 0-.7 0zm5.7 0h-1.9l.8-2h-2l-1 2h-2l2.3-5.5c.2-.5.8-.9 1.3-.9H16V16zm4.1 0c-.1.1-.2.2-.4.2h-3.2V9h3.4c.3 0 .5.2.5.5v.7c0 .3-.2.5-.5.5h-2.4v.7h2.4c.3 0 .5.2.5.5v.7c0 .3-.2.5-.5.5h-2.4v.7h2.4c.3 0 .5.2.5.5v.7c0 .3-.2.5-.3.5z" fill="#231F20" />
+                                    <path d="M22.5 4.5H1.5c-.828 0-1.5.672-1.5 1.5v12c0 .828.672 1.5 1.5 1.5h21c.828 0 1.5-.672 1.5-1.5V6c0-.828-.672-1.5-1.5-1.5zM8.7 16c-.1.1-.2.2-.4.2H5.8c-.3 0-.5-.1-.5-.4l2.1-5.2c.1-.4.5-.6.9-.6H11c.3 0 .6.1.8.3.2.2.2.5.1.7l-2.5 5c0 0-.5 0-.7 0zm5.7 0h-1.9l.8-2h-2l-1 2h-2l2.3-5.5c.2-.5.8-.9 1.3-.9H16V16zm4.1 0c-.1.1-.2.2-.4.2h-3.2V9h3.4c.3 0 .5.2.5.5v.7c0 .3-.2.5-.5.5h-2.4v.7h2.4c.3 0 .5.2.5.5v.7c0 .3-.2.5-.3.5z" fill="#231F20" />
                                   </svg>
                                 </div>
                               </div>

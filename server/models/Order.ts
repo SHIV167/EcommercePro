@@ -5,6 +5,20 @@ export interface IOrder extends Document {
   status: string;
   totalAmount: number;
   shippingAddress: string;
+  shippingCity?: string;
+  shippingState?: string;
+  shippingCountry?: string;
+  shippingPincode?: string;
+  shippingIsBilling?: boolean;
+  billingCustomerName?: string;
+  billingLastName?: string;
+  billingAddress?: string;
+  billingCity?: string;
+  billingState?: string;
+  billingCountry?: string;
+  billingPincode?: string;
+  billingEmail?: string;
+  billingPhone?: string;
   paymentMethod: string;
   paymentStatus: string;
   couponCode: string | null;
@@ -17,6 +31,20 @@ const OrderSchema: Schema = new Schema({
   status: { type: String, required: true, default: 'pending' },
   totalAmount: { type: Number, required: true },
   shippingAddress: { type: String, required: true },
+  shippingCity: { type: String },
+  shippingState: { type: String },
+  shippingCountry: { type: String },
+  shippingPincode: { type: String },
+  shippingIsBilling: { type: Boolean, default: true },
+  billingCustomerName: { type: String },
+  billingLastName: { type: String },
+  billingAddress: { type: String },
+  billingCity: { type: String },
+  billingState: { type: String },
+  billingCountry: { type: String },
+  billingPincode: { type: String },
+  billingEmail: { type: String },
+  billingPhone: { type: String },
   paymentMethod: { type: String, required: true },
   paymentStatus: { type: String, required: true, default: 'pending' },
   couponCode: { type: String, default: null },

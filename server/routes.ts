@@ -57,6 +57,20 @@ const orderInsertSchema = z.object({
   paymentStatus: z.string(),
   couponCode: z.string().nullable().optional(),
   discountAmount: z.number().optional().default(0),
+  shippingCity: z.string().optional(),
+  shippingState: z.string().optional(),
+  shippingCountry: z.string().optional(),
+  shippingPincode: z.string().optional(),
+  shippingIsBilling: z.boolean().optional(),
+  billingCustomerName: z.string().optional(),
+  billingLastName: z.string().optional(),
+  billingAddress: z.string().optional(),
+  billingCity: z.string().optional(),
+  billingState: z.string().optional(),
+  billingCountry: z.string().optional(),
+  billingPincode: z.string().optional(),
+  billingEmail: z.string().optional(),
+  billingPhone: z.string().optional(),
 });
 const orderItemInsertSchema = z.object({
   productId: z.string(),
@@ -1342,7 +1356,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
       }
       // send order to Shiprocket
       try {
-        await createShipment(createdOrder, items);
+        await createShipment({ ...order, id: createdOrder.id! }, items);
       } catch (err) {
         console.error('Shiprocket shipment error:', err);
       }
