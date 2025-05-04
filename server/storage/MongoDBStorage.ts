@@ -411,9 +411,16 @@ export class MongoDBStorage implements IStorage {
   }
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
+    const updateData: any = { status };
+    // Include package dimensions and Shiprocket ID
+    if ((this as any).packageLength !== undefined) updateData.packageLength = (this as any).packageLength;
+    if ((this as any).packageBreadth !== undefined) updateData.packageBreadth = (this as any).packageBreadth;
+    if ((this as any).packageHeight !== undefined) updateData.packageHeight = (this as any).packageHeight;
+    if ((this as any).packageWeight !== undefined) updateData.packageWeight = (this as any).packageWeight;
+    if ((this as any).shiprocketOrderId) updateData.shiprocketOrderId = (this as any).shiprocketOrderId;
     const updatedOrder = await OrderModel.findByIdAndUpdate(
       id,
-      { $set: { status } },
+      { $set: updateData },
       { new: true }
     );
     

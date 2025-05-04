@@ -15,7 +15,7 @@ import { categorySchema, collectionSchema } from "@shared/schema";
 import { sendMail } from "./utils/mailer";
 import upload from "./utils/upload";
 import crypto from "crypto";
-import { getServiceability, createShipment } from "./utils/shiprocket";
+import { getServiceability, createShipment, cancelShipment, trackShipment } from "./utils/shiprocket";
 import bcrypt from "bcrypt";
 import jwt, { Secret } from "jsonwebtoken";
 import { getPopupSetting, updatePopupSetting } from "./controllers/popupSettingController";
@@ -1042,18 +1042,47 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // The correct endpoint is:
   app.put('/api/orders/:id', async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, packageLength, packageBreadth, packageHeight, packageWeight } = req.body;
     if (!status) return res.status(400).json({ message: 'Status is required' });
 
     // Use admin authentication middleware here in production
     try {
-      const updatedOrder = await storage.updateOrderStatus(id, status);
-      if (!updatedOrder) {
-        return res.status(404).json({ message: 'Order not found' });
+      // Update status and dimensions in DB
+      const updateData: any = { status };
+      if (packageLength !== undefined) updateData.packageLength = packageLength;
+      if (packageBreadth !== undefined) updateData.packageBreadth = packageBreadth;
+      if (packageHeight !== undefined) updateData.packageHeight = packageHeight;
+      if (packageWeight !== undefined) updateData.packageWeight = packageWeight;
+      let orderDoc = await OrderModel.findByIdAndUpdate(id, updateData, { new: true });
+      if (!orderDoc) return res.status(404).json({ message: 'Order not found' });
+      const order = orderDoc.toObject();
+      // Shiprocket integration based on status
+      if (status === 'shipped') {
+        const items = await storage.getOrderItems(id);
+        const shipResp = await createShipment(order, items);
+        orderDoc = await OrderModel.findByIdAndUpdate(id, { shiprocketOrderId: shipResp.order_id }, { new: true });
+      } else if (status === 'cancelled' && order.shiprocketOrderId) {
+        await cancelShipment(order.shiprocketOrderId);
       }
-      return res.status(200).json(updatedOrder);
+      return res.status(200).json(orderDoc);
     } catch (err) {
       return res.status(500).json({ message: 'Failed to update order' });
+    }
+  });
+
+  // Track Shiprocket order
+  app.get('/api/orders/:id/track', async (req, res) => {
+    const orderId = req.params.id;
+    try {
+      const order = await storage.getOrderById(orderId);
+      if (!order) return res.status(404).json({ message: 'Order not found' });
+      const srId = (order as any).shiprocketOrderId;
+      if (!srId) return res.status(400).json({ message: 'No Shiprocket order associated' });
+      const trackData = await trackShipment(srId);
+      return res.json(trackData);
+    } catch (error) {
+      console.error('TrackOrder error:', error);
+      return res.status(500).json({ message: 'Failed to fetch tracking info' });
     }
   });
 

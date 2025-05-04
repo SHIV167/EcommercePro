@@ -251,3 +251,36 @@ export async function createShipment(order: any, items: any[]) {
     };
   }
 }
+
+// Cancel a Shipment in Shiprocket
+export async function cancelShipment(orderId: string, reason: string = 'Order cancelled'): Promise<any> {
+  try {
+    const token = await getAuthToken();
+    const url = 'https://apiv2.shiprocket.in/v1/external/orders/cancel';
+    const payload = { order_id: orderId, cancel_reason: reason };
+    const resp = await axios.post(url, payload, {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    });
+    console.log('Shiprocket cancel response:', resp.data);
+    return resp.data;
+  } catch (error: unknown) {
+    logErrorDetails('SHIPROCKET CANCEL', error);
+    throw new Error(`Failed to cancel Shiprocket order: ${handleError(error)}`);
+  }
+}
+
+// Track a Shipment in Shiprocket
+export async function trackShipment(orderId: string): Promise<any> {
+  try {
+    const token = await getAuthToken();
+    const url = `https://apiv2.shiprocket.in/v1/external/orders/show/${orderId}`;
+    const resp = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    console.log('Shiprocket tracking info:', resp.data);
+    return resp.data;
+  } catch (error: unknown) {
+    logErrorDetails('SHIPROCKET TRACK', error);
+    throw new Error(`Failed to fetch Shiprocket tracking: ${handleError(error)}`);
+  }
+}

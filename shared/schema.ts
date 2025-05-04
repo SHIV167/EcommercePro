@@ -53,6 +53,10 @@ export type Order = {
   paymentStatus: string;
   couponCode?: string | null;
   discountAmount?: number;
+  packageLength?: number;
+  packageBreadth?: number;
+  packageHeight?: number;
+  packageWeight?: number;
   createdAt: Date;
 };
 export type InsertOrder = Omit<Order, 'id' | '_id' | 'createdAt'>;

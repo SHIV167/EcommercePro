@@ -40,6 +40,10 @@ export default function OrdersManagement() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
   const [statusToUpdate, setStatusToUpdate] = useState<string>("");
+  const [packageLength, setPackageLength] = useState<string>("");
+  const [packageBreadth, setPackageBreadth] = useState<string>("");
+  const [packageHeight, setPackageHeight] = useState<string>("");
+  const [packageWeight, setPackageWeight] = useState<string>("");
 
   const limit = 10;
 
@@ -76,6 +80,10 @@ export default function OrdersManagement() {
   };
 
   const handleViewOrder = (order: Order) => {
+    setPackageLength(order.packageLength?.toString() || "");
+    setPackageBreadth(order.packageBreadth?.toString() || "");
+    setPackageHeight(order.packageHeight?.toString() || "");
+    setPackageWeight(order.packageWeight?.toString() || "");
     setSelectedOrder(order);
     setIsOrderDetailsOpen(true);
   };
@@ -110,7 +118,13 @@ export default function OrdersManagement() {
       const res = await fetch(`${apiBase}/api/orders/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({
+          status,
+          packageLength: packageLength ? Number(packageLength) : undefined,
+          packageBreadth: packageBreadth ? Number(packageBreadth) : undefined,
+          packageHeight: packageHeight ? Number(packageHeight) : undefined,
+          packageWeight: packageWeight ? Number(packageWeight) : undefined,
+        }),
       });
       if (!res.ok) throw new Error("Failed to update order");
       return res.json();
@@ -133,13 +147,17 @@ export default function OrdersManagement() {
 
   const handleExportCSV = () => {
     if (!orders.length) return;
-    const header = ["Order ID", "Customer", "Date", "Status", "Total"];
+    const header = ["Order ID", "Customer", "Date", "Status", "Total", "Length", "Breadth", "Height", "Weight"];
     const rows = orders.map((order: Order) => [
       order.id,
       order.userId,
       formatDate(String(order.createdAt)),
       order.status,
       typeof order.totalAmount === 'number' ? order.totalAmount.toFixed(2) : '0.00',
+      order.packageLength ?? '-',
+      order.packageBreadth ?? '-',
+      order.packageHeight ?? '-',
+      order.packageWeight ?? '-',
     ]);
     const csvContent = [header, ...rows].map(r => r.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -295,6 +313,10 @@ export default function OrdersManagement() {
                 <th>Date</th>
                 <th>Status</th>
                 <th>Total</th>
+                <th>Length</th>
+                <th>Breadth</th>
+                <th>Height</th>
+                <th>Weight</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -318,6 +340,18 @@ export default function OrdersManagement() {
                       <div className="h-6 w-16 bg-muted animate-pulse rounded"></div>
                     </td>
                     <td>
+                      <div className="h-6 w-16 bg-muted animate-pulse rounded"></div>
+                    </td>
+                    <td>
+                      <div className="h-6 w-16 bg-muted animate-pulse rounded"></div>
+                    </td>
+                    <td>
+                      <div className="h-6 w-16 bg-muted animate-pulse rounded"></div>
+                    </td>
+                    <td>
+                      <div className="h-6 w-16 bg-muted animate-pulse rounded"></div>
+                    </td>
+                    <td>
                       <div className="h-6 w-20 bg-muted animate-pulse rounded"></div>
                     </td>
                   </tr>
@@ -334,6 +368,10 @@ export default function OrdersManagement() {
                       </span>
                     </td>
                     <td>₹{typeof order.totalAmount === 'number' ? order.totalAmount.toFixed(2) : '0.00'}</td>
+                    <td>{order.packageLength ?? '-'}</td>
+                    <td>{order.packageBreadth ?? '-'}</td>
+                    <td>{order.packageHeight ?? '-'}</td>
+                    <td>{order.packageWeight ?? '-'}</td>
                     <td>
                       <div className="flex space-x-2">
                         <Button
@@ -356,7 +394,7 @@ export default function OrdersManagement() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="text-center py-6 text-muted-foreground">
+                  <td colSpan={10} className="text-center py-6 text-muted-foreground">
                     No orders found
                   </td>
                 </tr>
@@ -510,6 +548,34 @@ export default function OrdersManagement() {
               </div>
 
               <div className="flex justify-between items-center border-t pt-4">
+                {statusToUpdate === 'shipped' && (
+                  <div className="grid grid-cols-4 gap-4 mb-4">
+                    <Input
+                      type="number"
+                      placeholder="Length"
+                      value={packageLength}
+                      onChange={(e) => setPackageLength(e.target.value)}
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Breadth"
+                      value={packageBreadth}
+                      onChange={(e) => setPackageBreadth(e.target.value)}
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Height"
+                      value={packageHeight}
+                      onChange={(e) => setPackageHeight(e.target.value)}
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Weight"
+                      value={packageWeight}
+                      onChange={(e) => setPackageWeight(e.target.value)}
+                    />
+                  </div>
+                )}
                 <Select value={statusToUpdate || selectedOrder?.status} onValueChange={handleStatusChange}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Change Status" />

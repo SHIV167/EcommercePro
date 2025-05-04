@@ -19,6 +19,11 @@ export interface IOrder extends Document {
   billingPincode?: string;
   billingEmail?: string;
   billingPhone?: string;
+  packageLength?: number;
+  packageBreadth?: number;
+  packageHeight?: number;
+  packageWeight?: number;
+  shiprocketOrderId?: string;
   paymentMethod: string;
   paymentStatus: string;
   couponCode: string | null;
@@ -45,6 +50,11 @@ const OrderSchema: Schema = new Schema({
   billingPincode: { type: String },
   billingEmail: { type: String },
   billingPhone: { type: String },
+  packageLength: { type: Number },
+  packageBreadth: { type: Number },
+  packageHeight: { type: Number },
+  packageWeight: { type: Number },
+  shiprocketOrderId: { type: String },
   paymentMethod: { type: String, required: true },
   paymentStatus: { type: String, required: true, default: 'pending' },
   couponCode: { type: String, default: null },
