@@ -8,6 +8,7 @@ import BlogModel from "./models/Blog";
 import OrderModel from "./models/Order"; // Import OrderModel
 import ProductModel from "./models/Product"; // Import ProductModel
 import BannerModel from "./models/Banner"; // Import BannerModel
+import ScannerModel from "./models/Scanner"; // Import ScannerModel
 
 import { v4 as uuidv4 } from "uuid"; // Import uuid
 import { z } from "zod";
@@ -1083,6 +1084,57 @@ export async function registerRoutes(app: Application): Promise<Server> {
     } catch (error) {
       console.error('TrackOrder error:', error);
       return res.status(500).json({ message: 'Failed to fetch tracking info' });
+    }
+  });
+
+  // QR Scanner CRUD routes
+  app.get('/api/scanners', async (req, res) => {
+    try {
+      const scanners = await ScannerModel.find().sort({ scannedAt: -1 });
+      return res.json(scanners);
+    } catch (err) {
+      console.error('Get scanners error', err);
+      return res.status(500).json({ message: 'Failed to fetch scanners' });
+    }
+  });
+  app.get('/api/scanners/:id', async (req, res) => {
+    try {
+      const scanner = await ScannerModel.findById(req.params.id);
+      if (!scanner) return res.status(404).json({ message: 'Scanner not found' });
+      return res.json(scanner);
+    } catch (err) {
+      console.error('Get scanner error', err);
+      return res.status(500).json({ message: 'Failed to fetch scanner' });
+    }
+  });
+  app.post('/api/scanners', async (req, res) => {
+    try {
+      const { data, productId } = req.body;
+      const newScanner = await ScannerModel.create({ data, productId });
+      return res.status(201).json(newScanner);
+    } catch (err) {
+      console.error('Create scanner error', err);
+      return res.status(500).json({ message: 'Failed to create scanner' });
+    }
+  });
+  app.put('/api/scanners/:id', async (req, res) => {
+    try {
+      const updated = await ScannerModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      if (!updated) return res.status(404).json({ message: 'Scanner not found' });
+      return res.json(updated);
+    } catch (err) {
+      console.error('Update scanner error', err);
+      return res.status(500).json({ message: 'Failed to update scanner' });
+    }
+  });
+  app.delete('/api/scanners/:id', async (req, res) => {
+    try {
+      const result = await ScannerModel.findByIdAndDelete(req.params.id);
+      if (!result) return res.status(404).json({ message: 'Scanner not found' });
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('Delete scanner error', err);
+      return res.status(500).json({ message: 'Failed to delete scanner' });
     }
   });
 

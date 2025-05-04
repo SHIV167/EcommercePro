@@ -165,3 +165,12 @@ export type ProductCollection = z.infer<typeof productCollectionSchema>;
 
 // InsertProductCollection type for creating product-collection mappings
 export type InsertProductCollection = Omit<ProductCollection, 'id' | '_id'>;
+
+// Scanner types
+export type Scanner = {
+  id?: string;
+  data: string;
+  productId?: string;
+  scannedAt: Date;
+};
+export type InsertScanner = Omit<Scanner, 'id' | 'scannedAt'>;
