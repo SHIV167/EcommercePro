@@ -11,7 +11,9 @@ export default function QRScannerManagement() {
   const { toast } = useToast();
   const qrRef = useRef<HTMLCanvasElement>(null);
   // Use client URL from env or fallback by stripping '-admin'
-  const clientOrigin = import.meta.env.VITE_CLIENT_URL || window.location.origin.replace('-admin', '');
+  const clientOrigin = import.meta.env.VITE_CLIENT_URL || (window.location.origin.includes('-admin')
+    ? window.location.origin.replace('-admin', '-0ukc')
+    : window.location.origin);
   // Products for QR generation
   const { data: prodData } = useQuery({
     queryKey: ["products_all"],
@@ -63,7 +65,15 @@ export default function QRScannerManagement() {
     if (!prod) return toast({ title: "Invalid product", variant: "destructive" });
     const url = `${clientOrigin}/products/${prod.slug}`;
     setQrValue(url);
-    createScanner.mutate({ data: url, productId: selectedProduct });
+    createScanner.mutate({ data: url, productId: selectedProduct, scannedAt: new Date().toISOString() });
+  };
+
+  const handleGenerateAll = () => {
+    products.forEach((prod) => {
+      const urlAll = `${clientOrigin}/products/${prod.slug}`;
+      createScanner.mutate({ data: urlAll, productId: prod._id, scannedAt: new Date().toISOString() });
+    });
+    toast({ title: "All QR codes generated" });
   };
 
   const handleShare = () => {
@@ -99,9 +109,30 @@ export default function QRScannerManagement() {
   const [scanData, setScanData] = useState<string>("");
   const [scanProductId, setScanProductId] = useState<string>("");
 
+  // State for per-row email inputs
+  const [rowEmails, setRowEmails] = useState<Record<string, string>>({});
+
   const handleAddScanner = () => {
     if (!scanData) return toast({ title: "Enter scan data", variant: "destructive" });
-    createScanner.mutate({ data: scanData, productId: scanProductId || undefined });
+    createScanner.mutate({ data: scanData, productId: scanProductId || undefined, scannedAt: new Date().toISOString() });
+  };
+
+  // Handle email share for each row
+  const handleRowEmailChange = (id: string, value: string) => {
+    setRowEmails(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleRowEmailShare = async (id: string, url: string, productName?: string) => {
+    const email = rowEmails[id];
+    if (!email) return toast({ title: "Enter email", variant: "destructive" });
+    try {
+      await apiRequest("POST", "/api/scanners/share", { email, url, productName });
+      toast({ title: "QR sent via email" });
+      setRowEmails(prev => ({ ...prev, [id]: "" }));
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Email send failed", variant: "destructive" });
+    }
   };
 
   return (
@@ -121,6 +152,7 @@ export default function QRScannerManagement() {
             ))}
           </select>
           <Button onClick={handleGenerate}>Generate</Button>
+          <Button onClick={handleGenerateAll}>Generate All</Button>
         </div>
         {qrValue && (
           <div className="mt-4">
@@ -145,6 +177,8 @@ export default function QRScannerManagement() {
                 <th className="border p-2">Data</th>
                 <th className="border p-2">Product ID</th>
                 <th className="border p-2">Scanned At</th>
+                <th className="border p-2">QR Code</th>
+                <th className="border p-2">Email</th>
                 <th className="border p-2">Actions</th>
               </tr>
             </thead>
@@ -155,6 +189,15 @@ export default function QRScannerManagement() {
                   <td className="border p-2">{s.data}</td>
                   <td className="border p-2">{s.productId || '-'}</td>
                   <td className="border p-2">{new Date(s.scannedAt).toLocaleString()}</td>
+                  <td className="border p-2">
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(s.data)}&size=100x100`} alt="QR Code" />
+                  </td>
+                  <td className="border p-2">
+                    <div className="flex items-center space-x-2">
+                      <Input type="email" placeholder="Email" value={rowEmails[s._id] || ""} onChange={e => handleRowEmailChange(s._id, e.target.value)} />
+                      <Button size="sm" onClick={() => handleRowEmailShare(s._id, s.data, products.find(p => p._id === s.productId)?.name)}>Send</Button>
+                    </div>
+                  </td>
                   <td className="border p-2">
                     <Button
                       size="sm"

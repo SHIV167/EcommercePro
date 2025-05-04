@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Helmet } from 'react-helmet';
 import { useEffect } from "react";
 import StickyAddToCart from "@/components/products/StickyAddToCart";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -40,6 +41,14 @@ export default function ProductPage() {
     }
     fetchPromoTimers();
   }, []);
+  
+  // Log QR scan event
+  useEffect(() => {
+    if (product?._id) {
+      apiRequest("POST", "/api/scanners", { data: window.location.href, productId: product._id, scannedAt: new Date().toISOString() })
+        .catch(err => console.error("Log scan error", err));
+    }
+  }, [product?._id]);
   
   if (productLoading) {
     return (

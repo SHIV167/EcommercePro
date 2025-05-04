@@ -1109,8 +1109,18 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
   app.post('/api/scanners', async (req, res) => {
     try {
-      const { data, productId } = req.body;
-      const newScanner = await ScannerModel.create({ data, productId });
+      const { data, productId, scannedAt } = req.body;
+      const scanDate = scannedAt ? new Date(scannedAt) : new Date();
+      // Check if scanner record exists for this data
+      let scanner = await ScannerModel.findOne({ data });
+      if (scanner) {
+        scanner.scanCount += 1;
+        scanner.scannedAt = scanDate;
+        const updated = await scanner.save();
+        return res.status(200).json(updated);
+      }
+      // Create new scanner entry
+      const newScanner = await ScannerModel.create({ data, productId, scannedAt: scanDate, scanCount: 1 });
       return res.status(201).json(newScanner);
     } catch (err) {
       console.error('Create scanner error', err);
