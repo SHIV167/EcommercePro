@@ -21,6 +21,7 @@ export default function QRScannerManagement() {
 
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [qrValue, setQrValue] = useState<string>("");
+  const [emailAddr, setEmailAddr] = useState<string>("");
 
   // Scanner data
   const { data: scanners, refetch } = useQuery({
@@ -54,13 +55,27 @@ export default function QRScannerManagement() {
 
   const handleGenerate = () => {
     if (!selectedProduct) return toast({ title: "Select a product", variant: "destructive" });
-    const url = `${window.location.origin}/product/${selectedProduct}`;
+    const prod = products.find(p => p._id === selectedProduct);
+    if (!prod) return toast({ title: "Invalid product", variant: "destructive" });
+    const url = `${window.location.origin}/products/${prod.slug}`;
     setQrValue(url);
   };
 
   const handleShare = () => {
     navigator.clipboard.writeText(qrValue);
     toast({ title: "URL copied" });
+  };
+
+  const handleEmailShare = async () => {
+    if (!emailAddr) return toast({ title: "Enter email", variant: "destructive" });
+    try {
+      const prod = products.find(p => p._id === selectedProduct);
+      await apiRequest("POST", "/api/scanners/share", { email: emailAddr, url: qrValue, productName: prod?.name });
+      toast({ title: "QR sent via email" });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Email send failed", variant: "destructive" });
+    }
   };
 
   // Form state for scanner
@@ -85,7 +100,7 @@ export default function QRScannerManagement() {
           >
             <option value="">Select product</option>
             {products.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
+              <option key={p._id} value={p._id}>{p.name}</option>
             ))}
           </select>
           <Button onClick={handleGenerate}>Generate</Button>
@@ -93,7 +108,11 @@ export default function QRScannerManagement() {
         {qrValue && (
           <div className="mt-4">
             <QRCodeCanvas value={qrValue} />
-            <Button className="mt-2" onClick={handleShare}>Copy URL</Button>
+            <div className="flex items-center space-x-2 mt-2">
+              <Button onClick={handleShare}>Copy URL</Button>
+              <Input type="email" placeholder="Email address" value={emailAddr} onChange={e => setEmailAddr(e.target.value)} />
+              <Button onClick={handleEmailShare}>Email QR</Button>
+            </div>
           </div>
         )}
       </section>

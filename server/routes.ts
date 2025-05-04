@@ -1138,6 +1138,24 @@ export async function registerRoutes(app: Application): Promise<Server> {
     }
   });
 
+  // Endpoint: share QR via email
+  app.post('/api/scanners/share', async (req, res) => {
+    const { email, url, productName } = req.body;
+    try {
+      await sendMail({
+        to: email,
+        subject: 'Your QR Code',
+        html: `<p>Here is your QR code link for ${productName || 'the product'}:</p>
+               <p><a href="${url}">${url}</a></p>
+               <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(url)}&size=200x200" alt="QR Code"/>`
+      });
+      return res.json({ success: true });
+    } catch (error) {
+      console.error('QR share email error:', error);
+      return res.status(500).json({ message: 'Failed to send QR code via email' });
+    }
+  });
+
   // Cart routes
   app.get("/api/cart", async (req, res) => {
     try {
