@@ -1220,10 +1220,10 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Admin: update settings
   app.put("/api/admin/settings", async (req, res) => {
     try {
-      const { siteName, maintenanceMode, supportEmail, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode } = req.body;
+      const { siteName, maintenanceMode, supportEmail, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode, shiprocketPickupLocation, shiprocketChannelId } = req.body;
       const updated = await SettingModel.findOneAndUpdate(
         {},
-        { siteName, maintenanceMode, supportEmail, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode },
+        { siteName, maintenanceMode, supportEmail, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode, shiprocketPickupLocation, shiprocketChannelId },
         { new: true, upsert: true }
       );
       return res.status(200).json(updated!.toObject());
