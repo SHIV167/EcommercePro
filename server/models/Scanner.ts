@@ -5,6 +5,7 @@ export interface IScanner extends Document {
   productId?: string;
   scannedAt?: Date;
   scanCount: number;
+  couponCode?: string;
 }
 
 const ScannerSchema: Schema = new Schema({
@@ -12,6 +13,7 @@ const ScannerSchema: Schema = new Schema({
   productId: { type: String },
   scannedAt: { type: Date },
   scanCount: { type: Number, default: 0 },
+  couponCode: { type: String },
 });
 
 const ScannerModel = mongoose.model<IScanner>("Scanner", ScannerSchema);

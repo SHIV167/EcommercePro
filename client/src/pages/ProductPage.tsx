@@ -19,6 +19,7 @@ export default function ProductPage() {
   const [, navigate] = useLocation();
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [scannerEntry, setScannerEntry] = useState<any | null>(null);
   const { addItem } = useCart();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
@@ -46,6 +47,8 @@ export default function ProductPage() {
   useEffect(() => {
     if (product?._id) {
       apiRequest("POST", "/api/scanners", { data: window.location.href, productId: product._id, scannedAt: new Date().toISOString() })
+        .then(res => res.json())
+        .then(entry => setScannerEntry(entry))
         .catch(err => console.error("Log scan error", err));
     }
   }, [product?._id]);
@@ -105,7 +108,14 @@ export default function ProductPage() {
         <title>{product.name} | Kama Ayurveda</title>
         <meta name="description" content={product.shortDescription || product.description.substring(0, 160)} />
       </Helmet>
-      
+      {scannerEntry?.couponCode && (
+        <div className="container mx-auto px-4 py-4">
+          <div className="bg-yellow-100 p-4 rounded-md mb-4">
+            <p className="text-xl font-semibold">Special Offer!</p>
+            <p>Use code <span className="font-bold">{scannerEntry.couponCode}</span> at checkout for extra savings.</p>
+          </div>
+        </div>
+      )}
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Product Image */}

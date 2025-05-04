@@ -1129,8 +1129,11 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
   app.put('/api/scanners/:id', async (req, res) => {
     try {
-      const updated = await ScannerModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
-      if (!updated) return res.status(404).json({ message: 'Scanner not found' });
+      const { couponCode } = req.body;
+      const scanner = await ScannerModel.findById(req.params.id);
+      if (!scanner) return res.status(404).json({ message: 'Scanner not found' });
+      scanner.couponCode = couponCode || undefined;
+      const updated = await scanner.save();
       return res.json(updated);
     } catch (err) {
       console.error('Update scanner error', err);
