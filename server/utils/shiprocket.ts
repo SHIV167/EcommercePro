@@ -172,7 +172,7 @@ export async function createShipment(order: any, items: any[]) {
     
     // Create order payload with default values where needed
     const payload = {
-      order_id: order.id.toString(),
+      order_id: (order.id?.toString() || order._id?.toString()),
       order_date: new Date().toISOString().split('T')[0],
       pickup_location: settings.shiprocketPickupLocation || 'Primary',
       channel_id: settings.shiprocketChannelId,
@@ -211,12 +211,16 @@ export async function createShipment(order: any, items: any[]) {
     // Validate required billing/shipping fields
     const requiredFields = {
       billing_address: payload.billing_address,
+      billing_city: payload.billing_city,
       billing_state: payload.billing_state,
       billing_pincode: payload.billing_pincode,
       billing_phone: payload.billing_phone,
+      billing_country: payload.billing_country,
       shipping_address: payload.shipping_address,
+      shipping_city: payload.shipping_city,
       shipping_state: payload.shipping_state,
-      shipping_pincode: payload.shipping_pincode
+      shipping_pincode: payload.shipping_pincode,
+      shipping_country: payload.shipping_country
     };
     const missingFields = Object.entries(requiredFields)
       .filter(([_, v]) => !v)
@@ -245,10 +249,7 @@ export async function createShipment(order: any, items: any[]) {
   } catch (error: unknown) {
     // Final catch-all error handler
     logErrorDetails("CREATE SHIPMENT", error);
-    return {
-      success: false,
-      message: `Failed to create ShipRocket order: ${handleError(error)}`
-    };
+    throw new Error(`Failed to create ShipRocket order: ${handleError(error)}`);
   }
 }
 
