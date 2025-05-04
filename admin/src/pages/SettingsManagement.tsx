@@ -25,6 +25,8 @@ export default function SettingsManagement() {
   const [shiprocketApiKey, setShiprocketApiKey] = useState('');
   const [shiprocketApiSecret, setShiprocketApiSecret] = useState('');
   const [shiprocketSourcePincode, setShiprocketSourcePincode] = useState('');
+  const [shiprocketPickupLocation, setShiprocketPickupLocation] = useState('');
+  const [shiprocketChannelId, setShiprocketChannelId] = useState<number>(0);
 
   useEffect(() => {
     if (settings) {
@@ -36,12 +38,25 @@ export default function SettingsManagement() {
       setShiprocketApiKey(settings.shiprocketApiKey || '');
       setShiprocketApiSecret(settings.shiprocketApiSecret || '');
       setShiprocketSourcePincode(settings.shiprocketSourcePincode || '');
+      setShiprocketPickupLocation(settings.shiprocketPickupLocation || '');
+      setShiprocketChannelId(settings.shiprocketChannelId || 0);
     }
   }, [settings]);
 
   const { mutate: updateSettings, status } = useMutation({
     mutationFn: async () => {
-      const payload = { siteName, supportEmail, maintenanceMode, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode };
+      const payload = { 
+        siteName, 
+        supportEmail, 
+        maintenanceMode, 
+        razorpayKeyId, 
+        razorpayKeySecret, 
+        shiprocketApiKey, 
+        shiprocketApiSecret, 
+        shiprocketSourcePincode, 
+        shiprocketPickupLocation, 
+        shiprocketChannelId 
+      };
       const res = await apiRequest('PUT', '/api/admin/settings', payload);
       return res.json();
     },
@@ -119,6 +134,23 @@ export default function SettingsManagement() {
             id="shiprocketSourcePincode"
             value={shiprocketSourcePincode}
             onChange={e => setShiprocketSourcePincode(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="shiprocketPickupLocation">Shiprocket Pickup Location</Label>
+          <Input
+            id="shiprocketPickupLocation"
+            value={shiprocketPickupLocation}
+            onChange={e => setShiprocketPickupLocation(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="shiprocketChannelId">Shiprocket Channel ID</Label>
+          <Input
+            id="shiprocketChannelId"
+            type="number"
+            value={shiprocketChannelId}
+            onChange={e => setShiprocketChannelId(Number(e.target.value))}
           />
         </div>
         <div className="flex items-center space-x-2">
