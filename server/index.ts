@@ -124,7 +124,7 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   console.log('NODE_ENV=', process.env.NODE_ENV, 'express env=', app.get('env'));
 
-  if (app.get("env") === "development") {
+  if (process.env.NODE_ENV === "development") {
     try {
       await setupVite(app, server);
       log('Vite dev server initialized successfully', 'vite');

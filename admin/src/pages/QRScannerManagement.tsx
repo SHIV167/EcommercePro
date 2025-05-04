@@ -9,6 +9,8 @@ import { Product } from "@shared/schema";
 
 export default function QRScannerManagement() {
   const { toast } = useToast();
+  // Use client URL from env or fallback by stripping '-admin'
+  const clientOrigin = import.meta.env.VITE_CLIENT_URL || window.location.origin.replace('-admin', '');
   // Products for QR generation
   const { data: prodData } = useQuery({
     queryKey: ["products_all"],
@@ -57,7 +59,7 @@ export default function QRScannerManagement() {
     if (!selectedProduct) return toast({ title: "Select a product", variant: "destructive" });
     const prod = products.find(p => p._id === selectedProduct);
     if (!prod) return toast({ title: "Invalid product", variant: "destructive" });
-    const url = `${window.location.origin}/products/${prod.slug}`;
+    const url = `${clientOrigin}/products/${prod.slug}`;
     setQrValue(url);
   };
 
