@@ -17,23 +17,24 @@ app.use(cookieParser());
 
 const allowedOriginsEnv = process.env.CORS_ORIGINS;
 const allowedOrigins = allowedOriginsEnv ? allowedOriginsEnv.split(',').map(s => s.trim()) : [];
-const corsOrigin = process.env.NODE_ENV === 'development' || allowedOrigins.length === 0 ? true : allowedOrigins;
 
-// CORS middleware: allow all origins in dev or when not configured
-app.use(cors({
-  origin: corsOrigin,
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin || process.env.NODE_ENV === 'development' || origin.includes('-admin') || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS blocked')); // Disallow other origins
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
-}));
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
 
 // Handle preflight requests globally
-app.options('*', cors({
-  origin: corsOrigin,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
-}));
+app.options('*', cors(corsOptions));
 
 app.use((req, res, next) => {
   const start = Date.now();
