@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Product } from "@shared/schema";
 
 export default function QRScannerManagement() {
   const { toast } = useToast();
+  const qrRef = useRef<HTMLCanvasElement>(null);
   // Use client URL from env or fallback by stripping '-admin'
   const clientOrigin = import.meta.env.VITE_CLIENT_URL || window.location.origin.replace('-admin', '');
   // Products for QR generation
@@ -32,6 +33,7 @@ export default function QRScannerManagement() {
       const res = await apiRequest("GET", "/api/scanners");
       return res.json();
     },
+    refetchInterval: 5000,
   });
 
   const createScanner = useMutation({
@@ -61,6 +63,7 @@ export default function QRScannerManagement() {
     if (!prod) return toast({ title: "Invalid product", variant: "destructive" });
     const url = `${clientOrigin}/products/${prod.slug}`;
     setQrValue(url);
+    createScanner.mutate({ data: url, productId: selectedProduct });
   };
 
   const handleShare = () => {
@@ -77,6 +80,18 @@ export default function QRScannerManagement() {
     } catch (error) {
       console.error(error);
       toast({ title: "Email send failed", variant: "destructive" });
+    }
+  };
+
+  const handleDownload = () => {
+    if (qrRef.current) {
+      const dataUrl = qrRef.current.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `${selectedProduct || "qr"}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 
@@ -109,8 +124,9 @@ export default function QRScannerManagement() {
         </div>
         {qrValue && (
           <div className="mt-4">
-            <QRCodeCanvas value={qrValue} />
+            <QRCodeCanvas value={qrValue} ref={qrRef} />
             <div className="flex items-center space-x-2 mt-2">
+              <Button onClick={handleDownload}>Download</Button>
               <Button onClick={handleShare}>Copy URL</Button>
               <Input type="email" placeholder="Email address" value={emailAddr} onChange={e => setEmailAddr(e.target.value)} />
               <Button onClick={handleEmailShare}>Email QR</Button>
