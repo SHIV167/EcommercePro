@@ -486,6 +486,67 @@ export async function registerRoutes(app: Application): Promise<Server> {
     }
   });
 
+  // Product routes
+  app.get('/api/products/featured', async (req, res) => {
+    try {
+      const limit = parseInt((req.query.limit as string) || '', 10) || undefined;
+      const products = await storage.getFeaturedProducts(limit);
+      return res.status(200).json(products);
+    } catch (error) {
+      console.error('Fetch featured products error:', error);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  app.get('/api/products/bestsellers', async (req, res) => {
+    try {
+      const limit = parseInt((req.query.limit as string) || '', 10) || undefined;
+      const products = await storage.getBestsellerProducts(limit);
+      return res.status(200).json(products);
+    } catch (error) {
+      console.error('Fetch bestseller products error:', error);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  app.get('/api/products/new', async (req, res) => {
+    try {
+      const limit = parseInt((req.query.limit as string) || '', 10) || undefined;
+      const products = await storage.getNewProducts(limit);
+      return res.status(200).json(products);
+    } catch (error) {
+      console.error('Fetch new products error:', error);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  app.get('/api/products', async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+      const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : undefined;
+      const categoryId = req.query.categoryId as string | undefined;
+      const collectionId = req.query.collectionId as string | undefined;
+      const products = await storage.getProducts({ limit, offset, categoryId, collectionId });
+      return res.status(200).json(products);
+    } catch (error) {
+      console.error('Fetch products error:', error);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  app.get('/api/products/:identifier', async (req, res) => {
+    try {
+      const { identifier } = req.params;
+      let product;
+      if (/^[0-9a-fA-F]{24}$/.test(identifier)) {
+        product = await storage.getProductById(identifier);
+      } else {
+        product = await storage.getProductBySlug(identifier);
+      }
+      if (!product) return res.status(404).json({ message: 'Product not found' });
+      return res.status(200).json(product);
+    } catch (error) {
+      console.error('Fetch product detail error:', error);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   // User routes
   app.get("/api/users/:id", async (req, res) => {
     try {
