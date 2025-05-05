@@ -1,23 +1,24 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { adminLogin, adminLogout, verifyAdminToken } from '../controllers/authController';
-import jwt from 'jsonwebtoken';
 
-// Custom interface for Request with user property
-interface AuthRequest extends express.Request {
+// Custom request interface with user property
+interface AuthRequest extends Request {
   user?: any;
 }
 
 const router = express.Router();
 
 // Middleware for authentication
-const isAuthenticated = (req: AuthRequest, res: express.Response, next: express.NextFunction) => {
+const isAuthenticated = (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const token = req.cookies.token;
     if (!token) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
     
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+    const decoded = process.env.JWT_SECRET ? 
+      require('jsonwebtoken').verify(token, process.env.JWT_SECRET) : 
+      require('jsonwebtoken').verify(token, 'default_secret');
     req.user = decoded;
     next();
   } catch (error) {
@@ -27,7 +28,7 @@ const isAuthenticated = (req: AuthRequest, res: express.Response, next: express.
 };
 
 // Middleware for admin check
-const isAdmin = (req: AuthRequest, res: express.Response, next: express.NextFunction) => {
+const isAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (!req.user || !req.user.isAdmin) {
     return res.status(403).json({ message: 'Forbidden: Admin access required' });
   }
