@@ -19,7 +19,8 @@ export default defineConfig({
         target: 'https://ecommercepro-0ukc.onrender.com',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/admin\/api/, '/api'),
+        // Keep the /admin prefix in the path
+        rewrite: (path) => path,
       },
       // Proxy static uploads to backend
       '/uploads': {
