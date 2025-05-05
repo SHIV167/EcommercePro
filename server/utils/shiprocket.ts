@@ -17,17 +17,22 @@ function handleError(error: unknown): string {
     // Handle Axios error
     const axiosError = error as AxiosError;
     if (axiosError.response) {
+      console.log(`[ERROR] API Error (${axiosError.response.status}): ${JSON.stringify(axiosError.response.data)}`);
       return `API Error (${axiosError.response.status}): ${JSON.stringify(axiosError.response.data)}`;
     } else if (axiosError.request) {
+      console.log('[ERROR] No response received from server');
       return 'No response received from server';
     } else {
+      console.log(`[ERROR] Request setup error: ${axiosError.message}`);
       return `Request setup error: ${axiosError.message}`;
     }
   } else if (error instanceof Error) {
     // Handle standard Error object
+    console.log(`[ERROR] Standard error: ${error.message}`);
     return error.message;
   } else {
     // Handle completely unknown error
+    console.log(`[ERROR] Unknown error type: ${String(error)}`);
     return String(error);
   }
 }
@@ -66,13 +71,13 @@ async function getAuthToken(): Promise<string> {
     console.log("Getting new ShipRocket token...");
     const settings = await SettingModel.findOne();
     if (!settings) {
-      console.error("ShipRocket settings not found in database");
+      console.error("[ERROR] getAuthToken: ShipRocket settings not found in database");
       throw new Error('ShipRocket settings not configured');
     }
     
     const { shiprocketApiKey: email, shiprocketApiSecret: password } = settings;
     if (!email || !password) {
-      console.error("Missing ShipRocket credentials in settings");
+      console.error("[ERROR] getAuthToken: Missing ShipRocket credentials in settings");
       throw new Error('ShipRocket credentials missing');
     }
     
@@ -86,7 +91,7 @@ async function getAuthToken(): Promise<string> {
       console.log("ShipRocket auth response status:", resp.status);
       
       if (!resp.data || !resp.data.token) {
-        console.error("No token in ShipRocket response:", resp.data);
+        console.error("[ERROR] getAuthToken: No token in ShipRocket response:", resp.data);
         throw new Error('No token returned from ShipRocket');
       }
       
@@ -97,11 +102,13 @@ async function getAuthToken(): Promise<string> {
       return token;
     } catch (error: unknown) {
       // Safely handle and log the authentication error
+      console.error("[ERROR] getAuthToken: Authentication failed");
       logErrorDetails("SHIPROCKET AUTHENTICATION", error);
       throw new Error(`ShipRocket authentication failed: ${handleError(error)}`);
     }
   } catch (error: unknown) {
     // Safely handle and log any other error in the getAuthToken function
+    console.error("[ERROR] getAuthToken: General error");
     logErrorDetails("GET AUTH TOKEN", error);
     throw new Error(`Failed to get ShipRocket token: ${handleError(error)}`);
   }
@@ -127,6 +134,7 @@ export async function getServiceability(params: ServiceabilityParams) {
     console.log("Serviceability check response status:", resp.status);
     return resp.data;
   } catch (error: unknown) {
+    console.error("[ERROR] getServiceability: Failed to check serviceability");
     logErrorDetails("SERVICEABILITY CHECK", error);
     throw new Error(`ShipRocket serviceability check failed: ${handleError(error)}`);
   }
@@ -135,15 +143,17 @@ export async function getServiceability(params: ServiceabilityParams) {
 // Create an adhoc shipment/order in Shiprocket with improved error handling
 export async function createShipment(order: any, items: any[]) {
   try {
-    console.log("Creating shipment for order:", order.id);
+    console.log("Creating shipment for order:", order.id || order._id);
     console.log("Item count:", items.length);
     
     // Validate essential inputs
-    if (!order || !order.id) {
+    if (!order || (!order.id && !order._id)) {
+      console.error("[ERROR] createShipment: Invalid order - missing order ID");
       throw new Error("Invalid order: missing order ID");
     }
     
     if (!Array.isArray(items) || items.length === 0) {
+      console.error("[ERROR] createShipment: Invalid items - empty or not an array");
       throw new Error("Invalid order items: empty or not an array");
     }
     
@@ -152,9 +162,11 @@ export async function createShipment(order: any, items: any[]) {
     try {
       settings = await SettingModel.findOne();
       if (!settings) {
+        console.error("[ERROR] createShipment: ShipRocket settings not configured");
         throw new Error('ShipRocket settings not configured');
       }
     } catch (error: unknown) {
+      console.error("[ERROR] createShipment: Failed to retrieve settings");
       logErrorDetails("SETTINGS RETRIEVAL", error);
       throw new Error(`Failed to get ShipRocket settings: ${handleError(error)}`);
     }
@@ -164,6 +176,7 @@ export async function createShipment(order: any, items: any[]) {
     try {
       token = await getAuthToken();
     } catch (error: unknown) {
+      console.error("[ERROR] createShipment: Failed to get auth token");
       // Error already logged and handled in getAuthToken
       throw error;
     }
@@ -190,7 +203,8 @@ export async function createShipment(order: any, items: any[]) {
       shipping_address: order.shippingIsBilling ? order.billingAddress : (order.shippingAddress || ''),
       shipping_city: order.shippingIsBilling ? order.billingCity : (order.shippingCity || ''),
       shipping_state: order.shippingIsBilling ? order.billingState : (order.shippingState || ''),
-      shipping_country: order.shippingIsBilling ? order.billingCountry : (order.shippingCountry || 'India'),
+      // Ensure shipping_country is always set, fallback to shippingCountry or billingCountry or default
+      shipping_country: order.shippingCountry || order.billingCountry || 'India',
       shipping_pincode: order.shippingIsBilling ? order.billingPincode : (order.shippingPincode || ''),
       payment_method: order.paymentMethod || 'Prepaid',
       sub_total: order.subtotal || items.reduce((sum, item) => sum + ((item.sellingPrice || item.price) * (item.units || item.quantity)), 0),
@@ -226,6 +240,7 @@ export async function createShipment(order: any, items: any[]) {
       .filter(([_, v]) => !v)
       .map(([k]) => k);
     if (missingFields.length) {
+      console.error(`[ERROR] createShipment: Missing required fields: ${missingFields.join(", ")}`);
       throw new Error(`ShipRocket payload missing required fields: ${missingFields.join(", ")}`);
     }
 
@@ -243,11 +258,13 @@ export async function createShipment(order: any, items: any[]) {
       
       return resp.data;
     } catch (error: unknown) {
+      console.error("[ERROR] createShipment: API call to create order failed");
       logErrorDetails("SHIPROCKET ORDER CREATION", error);
       throw new Error(`ShipRocket API error: ${handleError(error)}`);
     }
   } catch (error: unknown) {
     // Final catch-all error handler
+    console.error("[ERROR] createShipment: General error");
     logErrorDetails("CREATE SHIPMENT", error);
     throw new Error(`Failed to create ShipRocket order: ${handleError(error)}`);
   }
@@ -256,15 +273,26 @@ export async function createShipment(order: any, items: any[]) {
 // Cancel a Shipment in Shiprocket
 export async function cancelShipment(orderId: string, reason: string = 'Order cancelled'): Promise<any> {
   try {
+    if (!orderId) {
+      console.error("[ERROR] cancelShipment: Missing orderId");
+      throw new Error("Cannot cancel shipment: Order ID is required");
+    }
+    
     const token = await getAuthToken();
     const url = 'https://apiv2.shiprocket.in/v1/external/orders/cancel';
-    const payload = { order_id: orderId, cancel_reason: reason };
+    // Prepare payload as required: array of ShipRocket order IDs
+    const payload = { order_ids: [orderId] };
+    
+    console.log(`Cancelling ShipRocket order ${orderId} with reason: ${reason}`);
+    
+    // Use POST to cancel shipment as per ShipRocket API spec
     const resp = await axios.post(url, payload, {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
     });
     console.log('Shiprocket cancel response:', resp.data);
     return resp.data;
   } catch (error: unknown) {
+    console.error(`[ERROR] cancelShipment: Failed to cancel order ${orderId}`);
     logErrorDetails('SHIPROCKET CANCEL', error);
     throw new Error(`Failed to cancel Shiprocket order: ${handleError(error)}`);
   }
@@ -273,14 +301,23 @@ export async function cancelShipment(orderId: string, reason: string = 'Order ca
 // Track a Shipment in Shiprocket
 export async function trackShipment(orderId: string): Promise<any> {
   try {
+    if (!orderId) {
+      console.error("[ERROR] trackShipment: Missing orderId");
+      throw new Error("Cannot track shipment: Order ID is required");
+    }
+    
     const token = await getAuthToken();
     const url = `https://apiv2.shiprocket.in/v1/external/orders/show/${orderId}`;
+    
+    console.log(`Tracking ShipRocket order: ${orderId}`);
+    
     const resp = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` }
     });
     console.log('Shiprocket tracking info:', resp.data);
     return resp.data;
   } catch (error: unknown) {
+    console.error(`[ERROR] trackShipment: Failed to track order ${orderId}`);
     logErrorDetails('SHIPROCKET TRACK', error);
     throw new Error(`Failed to fetch Shiprocket tracking: ${handleError(error)}`);
   }
