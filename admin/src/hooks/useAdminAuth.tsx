@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { apiRequest, API_BASE_URL } from "../lib/queryClient";
 import { User } from "../../../shared/schema";
@@ -57,7 +57,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean, data?: User, error?: string }> => {
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean, data?: User, error?: string }> => {
     try {
       // Use apiRequest to ensure proxy and JSON handling
       const response = await apiRequest("POST", `${API_BASE_URL}/api/auth/login`, { email, password });
@@ -69,9 +69,9 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Login error:', error);
       return { success: false, error: error.message };
     }
-  };
+  }, [setAdmin]);
 
-  const logout = async (): Promise<void> => {
+  const logout = useCallback(async (): Promise<void> => {
     try {
       await apiRequest("POST", "/api/admin/auth/logout", {});
     } catch (error) {
@@ -81,7 +81,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       setAdmin(null);
       navigate("/admin/login");
     }
-  };
+  }, [navigate, setAdmin]);
 
   return (
     <AdminAuthContext.Provider
