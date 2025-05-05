@@ -371,7 +371,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
       if (!collection) {
         return res.status(404).json({ message: 'Collection not found' });
       }
-      const products = await storage.getCollectionProducts(collection.id);
+      const products = await storage.getCollectionProducts(collection._id!);
       return res.status(200).json(products);
     } catch (error) {
       console.error('Get collection products error:', error);
@@ -519,18 +519,35 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
   app.get('/api/products', async (req, res) => {
     try {
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
-      const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : undefined;
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
       const categoryId = req.query.categoryId as string | undefined;
       const collectionId = req.query.collectionId as string | undefined;
-      const products = await storage.getProducts({ limit, offset, categoryId, collectionId });
-      return res.status(200).json(products);
+      const searchTerm = req.query.search as string | undefined;
+
+      let products = await storage.getProducts({ categoryId, collectionId });
+
+      if (searchTerm) {
+        const lower = searchTerm.toLowerCase();
+        products = products.filter(p =>
+          p.name.toLowerCase().includes(lower) ||
+          (p.description?.toLowerCase().includes(lower))
+        );
+      }
+
+      const total = products.length;
+      const totalPages = Math.ceil(total / limit);
+      const start = (page - 1) * limit;
+      const paginated = products.slice(start, start + limit);
+
+      return res.status(200).json({ products: paginated, total, page, totalPages });
     } catch (error) {
       console.error('Fetch products error:', error);
       return res.status(500).json({ message: 'Server error' });
     }
   });
-  app.get('/api/products/:identifier', async (req, res) => {
+  
+  app.get("/api/products/:identifier", async (req, res) => {
     try {
       const { identifier } = req.params;
       let product;

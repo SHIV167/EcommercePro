@@ -84,6 +84,8 @@ export interface IStorage {
   deleteBanner(id: string): Promise<boolean>;
 }
 
+
+
 // Utility to ensure both id and _id are present as string
 function ensureId<T extends { id?: string; _id?: string }>(obj: T): T {
   if (!obj) return obj;
