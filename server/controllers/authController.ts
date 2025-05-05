@@ -55,9 +55,10 @@ export const adminLogin = async (req: Request, res: Response) => {
     // Set token as cookie
     console.log('Setting token cookie');
     res.cookie('token', token, {
+      path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       domain: getCookieDomain(req),
       maxAge: parseInt(process.env.COOKIE_MAX_AGE || '604800000') // 7 days default
     });
@@ -78,9 +79,10 @@ export const adminLogin = async (req: Request, res: Response) => {
 // Admin Logout
 export const adminLogout = (req: Request, res: Response) => {
   res.clearCookie('token', { 
+    path: '/',
     httpOnly: true, 
     secure: process.env.NODE_ENV === 'production', 
-    sameSite: 'none', 
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
     domain: getCookieDomain(req) 
   });
   return res.status(200).json({ message: 'Logged out successfully' });
@@ -103,9 +105,10 @@ export const verifyAdminToken = (req: Request, res: Response) => {
   } catch (error) {
     console.error('Token verification error:', error);
     res.clearCookie('token', { 
+      path: '/',
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'none', 
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
       domain: getCookieDomain(req) 
     });
     return res.status(401).json({ message: 'Invalid token', isAuthenticated: false });
