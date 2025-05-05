@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext, ReactNode } from
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { User } from "@shared/schema";
-
+ 
 interface AdminAuthContextType {
   admin: User | null;
   isAuthenticated: boolean;
