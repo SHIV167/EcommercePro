@@ -28,12 +28,6 @@ export async function apiRequest(
   let headers: Record<string, string> = {};
   let body: any = undefined;
 
-  // Add auth token if available
-  const adminToken = localStorage.getItem("adminToken");
-  if (adminToken) {
-    headers["Authorization"] = `Bearer ${adminToken}`;
-  }
-
   if (data instanceof FormData) {
     // For FormData (file upload), do NOT set Content-Type (browser will set it)
     body = data;

@@ -7,7 +7,7 @@ interface AdminAuthContextType {
   admin: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<{ success: boolean, data?: User, error?: string }>;
   logout: () => Promise<void>;
 }
 
@@ -57,28 +57,24 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<User> => {
+  const saveAdminToken = (token: string) => {
+    // No longer storing token in localStorage, using server-set cookie
+    // localStorage.setItem("adminToken", token);
+  };
+
+  const login = async (email: string, password: string) => {
     try {
-      // Use apiRequest to ensure proxy and JSON handling
-      const response = await apiRequest("POST", `/api/admin/auth/login`, { email, password });
+      const response = await apiRequest('POST', '/api/admin/auth/login', { email, password });
       const userData = await response.json();
-      console.log('Login successful, user data:', userData);
-      
-      if (!userData.isAdmin) {
-        throw new Error("Not authorized as admin");
-      }
-      
-      // Store both the user data and the session token
-      localStorage.setItem("admin", JSON.stringify(userData));
       if (userData.token) {
-        localStorage.setItem("adminToken", userData.token);
+        saveAdminToken(userData.token);
       }
-      
+      localStorage.setItem('admin', JSON.stringify(userData));
       setAdmin(userData);
-      return userData;
-    } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
+      return { success: true, data: userData };
+    } catch (error: any) {
+      console.error('Login error:', error);
+      return { success: false, error: error.message };
     }
   };
 
