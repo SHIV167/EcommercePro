@@ -147,7 +147,7 @@ export default function PromoCoupon() {
     setLoading(true);
     try {
       console.log('Fetching coupons...');
-      const response = await apiRequest('GET', '/admin/api/coupons');
+      const response = await apiRequest('GET', '/api/admin/coupons');
       const data = await response.json();
       console.log('Coupon API response:', data);
       
@@ -184,11 +184,11 @@ export default function PromoCoupon() {
     try {
       if (editingCoupon) {
         // Update existing coupon
-        await apiRequest('PUT', `/admin/api/coupons/${editingCoupon._id}`, data);
+        await apiRequest('PUT', `/api/admin/coupons/${editingCoupon._id}`, data);
         toast.success("Coupon updated successfully");
       } else {
         // Create new coupon
-        await apiRequest('POST', '/admin/api/coupons', data);
+        await apiRequest('POST', '/api/admin/coupons', data);
         toast.success("Coupon created successfully");
       }
       
@@ -210,7 +210,7 @@ export default function PromoCoupon() {
     if (!couponToDelete) return;
     
     try {
-      await apiRequest('DELETE', `/admin/api/coupons/${couponToDelete}`);
+      await apiRequest('DELETE', `/api/admin/coupons/${couponToDelete}`);
       toast.success("Coupon deleted successfully");
       fetchCoupons();
       setDeleteDialogOpen(false);

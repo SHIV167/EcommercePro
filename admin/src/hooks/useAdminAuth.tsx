@@ -35,7 +35,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         if (storedAdmin) {
           // Verify the stored admin with the server
           try {
-            const response = await apiRequest("GET", `/admin/api/auth/verify`);
+            const response = await apiRequest("GET", `/api/admin/auth/verify`);
             const adminData = await response.json();
             if (adminData.isAdmin) {
               setAdmin(adminData);
@@ -60,7 +60,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string): Promise<User> => {
     try {
       // Use apiRequest to ensure proxy and JSON handling
-      const response = await apiRequest("POST", `/admin/api/auth/login`, { email, password });
+      const response = await apiRequest("POST", `/api/admin/auth/login`, { email, password });
       const userData = await response.json();
       console.log('Login successful, user data:', userData);
       
@@ -84,7 +84,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async (): Promise<void> => {
     try {
-      await apiRequest("POST", "/admin/api/auth/logout", {});
+      await apiRequest("POST", "/api/admin/auth/logout", {});
     } catch (error) {
       console.error("Logout API call failed:", error);
     } finally {
