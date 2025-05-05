@@ -72,8 +72,9 @@ export default function GiftCardsManagement() {
     queryKey: ['giftcards'],
     queryFn: fetchGiftCards,
   });
-  if (isLoading) return <div className="p-6">Loading gift cards...</div>;
-  if (isError) return <div className="p-6 text-red-500">Error fetching gift cards: {error?.message}</div>;
+  // Commented out early returns to preserve hook order and fix React error #310
+  // if (isLoading) return <div className="p-6">Loading gift cards...</div>;
+  // if (isError) return <div className="p-6 text-red-500">Error fetching gift cards: {error?.message}</div>;
 
   const saveMutation = useMutation({
     mutationFn: (payload: any) => {
@@ -215,6 +216,8 @@ export default function GiftCardsManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {isLoading && <div className="p-6">Loading gift cards...</div>}
+      {isError && <div className="p-6 text-red-500">Error fetching gift cards: {error?.message}</div>}
     </div>
   );
 }
