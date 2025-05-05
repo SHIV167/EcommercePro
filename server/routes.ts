@@ -1683,7 +1683,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
 
   // Register routes
   app.use('/api', authRoutes); // Add auth routes to the application
-  app.use('/api', couponRoutes);
+  app.use('/api', couponRoutes); // Removed authentication for testing
   app.use('/api', giftCardRoutes);
   app.use('/api', giftCardTemplateRoutes);
 
