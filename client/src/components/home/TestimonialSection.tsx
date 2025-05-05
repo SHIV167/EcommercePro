@@ -1,37 +1,19 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Testimonial } from "@shared/schema";
+import { Testimonial } from "../../../../shared/schema";
+
+// Sample fallback testimonials matching Testimonial type
+const sampleTestimonials: Testimonial[] = [
+  { id: "1", name: "Priya S.", content: "The Kumkumadi face oil has transformed my skin.", rating: 5, featured: true, createdAt: new Date() },
+  { id: "2", name: "Rahul M.", content: "I was skeptical about Ayurvedic hair care but Bringadi oil has proven me wrong.", rating: 5, featured: true, createdAt: new Date() },
+  { id: "3", name: "Anita K.", content: "The Rose Jasmine face cleanser is gentle yet effective.", rating: 4, featured: true, createdAt: new Date() },
+];
 
 export default function TestimonialSection() {
   const { data: testimonials = [], isLoading } = useQuery<Testimonial[]>({
     queryKey: ['/api/testimonials/featured?limit=3'],
   });
-
-  const displayTestimonials = testimonials.length > 0 ? testimonials : [
-    {
-      id: 1,
-      name: "Priya S.",
-      location: "Mumbai",
-      rating: 5,
-      testimonial: "The Kumkumadi face oil has transformed my skin. I've been using it for 3 months now and my skin looks more radiant and even-toned. The natural fragrance is also divine!",
-      featured: true
-    },
-    {
-      id: 2,
-      name: "Rahul M.",
-      location: "Bangalore",
-      rating: 5,
-      testimonial: "I was skeptical about Ayurvedic hair care but Bringadi oil has proven me wrong. My hair fall has reduced significantly and my scalp feels healthier. The best part is that it's all natural!",
-      featured: true
-    },
-    {
-      id: 3,
-      name: "Anita K.",
-      location: "Delhi",
-      rating: 4,
-      testimonial: "The Rose Jasmine face cleanser is gentle yet effective. It removes all my makeup without drying out my skin. The scent is heavenly and leaves my face feeling fresh and clean.",
-      featured: true
-    }
-  ] as Testimonial[];
+  const displayTestimonials = testimonials.length > 0 ? testimonials : sampleTestimonials;
 
   return (
     <section className="py-12">
@@ -59,10 +41,10 @@ export default function TestimonialSection() {
                     </svg>
                   ))}
                 </div>
-                <p className="italic text-neutral-gray mb-4">"{testimonial.testimonial}"</p>
+                <p className="italic text-neutral-gray mb-4">"{testimonial.content}"</p>
                 <div>
                   <p className="font-medium text-primary">{testimonial.name}</p>
-                  <p className="text-sm text-neutral-gray">{testimonial.location}</p>
+                  <p className="text-sm text-neutral-gray">{testimonial.createdAt.toLocaleDateString()}</p>
                 </div>
               </div>
             ))

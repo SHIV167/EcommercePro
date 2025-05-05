@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card,
@@ -20,20 +21,28 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { Order, Product } from "../../../shared/schema";
+
+interface DashboardSummary {
+  totalOrders: number;
+  totalRevenue: number;
+  totalCustomers: number;
+  lowStockProducts: number;
+}
 
 export default function Dashboard() {
   // Fetch summary data
-  const { data: summaryData, isLoading: isSummaryLoading } = useQuery({
-    queryKey: ["/api/admin/dashboard/summary"],
+  const { data: summaryData, isLoading: isSummaryLoading } = useQuery<DashboardSummary>({
+    queryKey: ["/api/admin/dashboard/summary"]
   });
   
   // Fetch recent orders
-  const { data: recentOrders, isLoading: isOrdersLoading } = useQuery({
+  const { data: recentOrders = [], isLoading: isOrdersLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders?limit=5"],
   });
   
   // Fetch top products
-  const { data: topProducts, isLoading: isProductsLoading } = useQuery({
+  const { data: topProducts = [], isLoading: isProductsLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/dashboard/top-products"],
   });
   
@@ -56,7 +65,7 @@ export default function Dashboard() {
   ];
   
   // Default summary data if API hasn't returned yet
-  const summary = summaryData || {
+  const summary: DashboardSummary = summaryData || {
     totalOrders: 125,
     totalRevenue: 145000,
     totalCustomers: 248,

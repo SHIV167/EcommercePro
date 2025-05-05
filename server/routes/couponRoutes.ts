@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import {
   getAllCoupons,
   getCouponById,
@@ -13,26 +13,29 @@ import jwt from 'jsonwebtoken';
 const router = express.Router();
 
 // Middleware for authentication
-const isAuthenticated = (req, res, next) => {
+const isAuthenticated = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const token = req.cookies.token;
     if (!token) {
-      return res.status(401).json({ message: 'Not authenticated' });
+      res.status(401).json({ message: 'Not authenticated' });
+      return;
     }
     
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+    (req as any).user = decoded;
     next();
   } catch (error) {
     console.error('Authentication error:', error);
-    return res.status(401).json({ message: 'Not authenticated' });
+    res.status(401).json({ message: 'Not authenticated' });
+    return;
   }
 };
 
 // Middleware for admin check
-const isAdmin = (req, res, next) => {
-  if (!req.user?.isAdmin) {
-    return res.status(403).json({ message: 'Forbidden: Admin access required' });
+const isAdmin = (req: Request, res: Response, next: NextFunction): void => {
+  if (!(req as any).user?.isAdmin) {
+    res.status(403).json({ message: 'Forbidden: Admin access required' });
+    return;
   }
   next();
 };
