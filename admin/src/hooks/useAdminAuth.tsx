@@ -35,7 +35,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         if (storedAdmin) {
           // Verify the stored admin with the server
           try {
-            const response = await apiRequest("GET", `/api/auth/verify`);
+            const response = await apiRequest("GET", `/admin/api/auth/verify`);
             const adminData = await response.json();
             if (adminData.isAdmin) {
               setAdmin(adminData);
@@ -84,7 +84,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async (): Promise<void> => {
     try {
-      await apiRequest("POST", "/api/auth/logout", {});
+      await apiRequest("POST", "/admin/api/auth/logout", {});
     } catch (error) {
       console.error("Logout API call failed:", error);
     } finally {
