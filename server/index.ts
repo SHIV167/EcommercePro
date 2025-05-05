@@ -15,26 +15,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-const allowedOriginsEnv = process.env.CORS_ORIGINS;
-const allowedOrigins = allowedOriginsEnv ? allowedOriginsEnv.split(',').map(s => s.trim()) : [];
-
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin || process.env.NODE_ENV === 'development' || origin.includes('-admin') || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS blocked')); // Disallow other origins
-    }
-  },
+// Enable CORS with explicit configuration - temporarily allow all origins for debugging
+app.use(cors({
+  origin: '*', // Allow all origins for debugging
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-};
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+}));
 
-app.use(cors(corsOptions));
-
-// Handle preflight requests globally
-app.options('*', cors(corsOptions));
+// Handle preflight requests
+app.options('*', cors());
 
 app.use((req, res, next) => {
   const start = Date.now();

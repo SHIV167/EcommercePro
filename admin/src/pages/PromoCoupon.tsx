@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { SubmitHandler, useForm } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -50,7 +49,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Info, AlertTriangle, Pencil, Trash2 } from "lucide-react";
-import { API_BASE_URL } from "@/lib/queryClient";
+import { apiRequest } from "../lib/queryClient";
 
 interface CouponFormValues {
   code: string;
@@ -147,29 +146,28 @@ export default function PromoCoupon() {
   const fetchCoupons = async () => {
     setLoading(true);
     try {
-      const apiUrl = `${API_BASE_URL}/api/admin/coupons`;
-        
-      console.log('Fetching coupons from:', apiUrl);
-      const response = await axios.get(apiUrl, { withCredentials: true });
-      console.log('Coupon API response:', response.data);
+      console.log('Fetching coupons...');
+      const response = await apiRequest('GET', '/api/admin/coupons');
+      const data = await response.json();
+      console.log('Coupon API response:', data);
       
       // Ensure we're setting an array to the coupons state
-      if (Array.isArray(response.data)) {
-        setCoupons(response.data);
-      } else if (response.data && typeof response.data === 'object') {
+      if (Array.isArray(data)) {
+        setCoupons(data);
+      } else if (data && typeof data === 'object') {
         // If response is an object that has a coupons property or similar
-        if (Array.isArray(response.data.coupons)) {
-          setCoupons(response.data.coupons);
-        } else if (Array.isArray(response.data.data)) {
-          setCoupons(response.data.data);
+        if (Array.isArray(data.coupons)) {
+          setCoupons(data.coupons);
+        } else if (Array.isArray(data.data)) {
+          setCoupons(data.data);
         } else {
           // If we can't find an array, set empty array and log error
-          console.error("API response doesn't contain expected coupon data:", response.data);
+          console.error("API response doesn't contain expected coupon data:", data);
           setCoupons([]);
         }
       } else {
         // Default to empty array
-        console.error("Unexpected API response format:", response.data);
+        console.error("Unexpected API response format:", data);
         setCoupons([]);
       }
     } catch (error) {
@@ -186,11 +184,11 @@ export default function PromoCoupon() {
     try {
       if (editingCoupon) {
         // Update existing coupon
-        await axios.put(`${API_BASE_URL}/api/admin/coupons/${editingCoupon._id}`, data, { withCredentials: true });
+        await apiRequest('PUT', `/api/admin/coupons/${editingCoupon._id}`, data);
         toast.success("Coupon updated successfully");
       } else {
         // Create new coupon
-        await axios.post(`${API_BASE_URL}/api/admin/coupons`, data, { withCredentials: true });
+        await apiRequest('POST', '/api/admin/coupons', data);
         toast.success("Coupon created successfully");
       }
       
@@ -212,7 +210,7 @@ export default function PromoCoupon() {
     if (!couponToDelete) return;
     
     try {
-      await axios.delete(`${API_BASE_URL}/api/admin/coupons/${couponToDelete}`, { withCredentials: true });
+      await apiRequest('DELETE', `/api/admin/coupons/${couponToDelete}`);
       toast.success("Coupon deleted successfully");
       fetchCoupons();
       setDeleteDialogOpen(false);

@@ -1,13 +1,13 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
-import { apiRequest, API_BASE_URL } from "../lib/queryClient";
-import { User } from "../../../shared/schema";
+import { apiRequest, API_BASE_URL } from "@/lib/queryClient";
+import { User } from "@shared/schema";
 
 interface AdminAuthContextType {
   admin: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<{ success: boolean, data?: User, error?: string }>;
   logout: () => Promise<void>;
 }
 
@@ -33,10 +33,20 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const storedAdmin = localStorage.getItem("admin");
         if (storedAdmin) {
-          const adminData = JSON.parse(storedAdmin);
-          setAdmin(adminData);
-        } else {
-          // Skip server auth check; rely on stored admin in localStorage
+          // Verify the stored admin with the server
+          try {
+            const response = await apiRequest("GET", `/api/admin/auth/verify`);
+            const adminData = await response.json();
+            if (adminData.isAdmin) {
+              setAdmin(adminData);
+            } else {
+              throw new Error("Not authorized as admin");
+            }
+          } catch (error) {
+            console.error("Server verification failed:", error);
+            localStorage.removeItem("admin");
+            setAdmin(null);
+          }
         }
       } catch (error) {
         console.error("Authentication check failed:", error);
@@ -46,30 +56,27 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     };
     checkAuth();
   }, []);
- 
+
   const login = async (email: string, password: string): Promise<User> => {
     try {
       // Use apiRequest to ensure proxy and JSON handling
-      const response = await apiRequest("POST", `${API_BASE_URL}/api/auth/login`, { email, password });
+      const response = await apiRequest("POST", `${import.meta.env.VITE_API_URL}/api/auth/login`, { email, password });
       const userData = await response.json();
-      console.log('Login successful, user data:', userData);
-      
-      if (!userData.isAdmin) {
-        throw new Error("Not authorized as admin");
+      if (userData.token) {
+        saveAdminToken(userData.token);
       }
-      
-      localStorage.setItem("admin", JSON.stringify(userData));
+      localStorage.setItem('admin', JSON.stringify(userData));
       setAdmin(userData);
-      return userData;
-    } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
+      return { success: true, data: userData };
+    } catch (error: any) {
+      console.error('Login error:', error);
+      return { success: false, error: error.message };
     }
   };
 
   const logout = async (): Promise<void> => {
     try {
-      await apiRequest("POST", "/api/auth/logout", {});
+      await apiRequest("POST", "/api/admin/auth/logout", {});
     } catch (error) {
       console.error("Logout API call failed:", error);
     } finally {

@@ -8,18 +8,13 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // Proxy ALL /api requests to backend (for popup settings and more)
-      '/api': {
-        target: 'https://ecommercepro-0ukc.onrender.com', // Confirmed backend port
-        changeOrigin: true,
-        secure: false,
-      },
-      // --- Only proxy admin API requests ---
+      // Proxy admin API requests
       '/admin/api': {
         target: 'https://ecommercepro-0ukc.onrender.com',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/admin\/api/, '/api'),
+        // Remove /admin from the path when forwarding to backend
+        rewrite: (path) => path.replace(/^\/admin/, ''),
       },
       // Proxy static uploads to backend
       '/uploads': {

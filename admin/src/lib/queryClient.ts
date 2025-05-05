@@ -1,6 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// Base API URL; in development proxied to localhost:5000
+// Base API URL; in development proxied by vite
 export const API_BASE_URL = (() => {
   if (import.meta.env.DEV) return '';
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
@@ -21,8 +21,9 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Prepend API_BASE_URL if the URL starts with "/"
-  const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+  // In development, use the URL as-is since vite handles proxying
+  // In production, prepend API_BASE_URL if the URL starts with "/"
+  const fullUrl = import.meta.env.DEV ? url : (url.startsWith('/') ? `${API_BASE_URL}${url}` : url);
 
   let headers: Record<string, string> = {};
   let body: any = undefined;

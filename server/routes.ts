@@ -110,6 +110,7 @@ const bannerUpdateSchema = bannerObjectSchema.partial();
 import couponRoutes from './routes/couponRoutes';
 import giftCardRoutes from './routes/giftCardRoutes';
 import giftCardTemplateRoutes from './routes/giftCardTemplateRoutes';
+import authRoutes from './routes/authRoutes'; // Import auth routes
 
 // Import controllers for coupons
 
@@ -1681,7 +1682,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
   };
 
   // Register routes
-  app.use('/api', couponRoutes);
+  app.use('/api', authRoutes); // Add auth routes to the application
+  app.use('/api', couponRoutes); // Removed authentication for testing
   app.use('/api', giftCardRoutes);
   app.use('/api', giftCardTemplateRoutes);
 
