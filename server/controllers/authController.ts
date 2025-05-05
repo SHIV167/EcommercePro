@@ -61,7 +61,10 @@ export const adminLogin = async (req: Request, res: Response) => {
     return res.status(200).json(userWithoutPassword);
   } catch (error) {
     console.error('Admin login error:', error);
-    return res.status(500).json({ message: 'Server error during login' });
+    if (error instanceof Error) {
+      return res.status(500).json({ message: 'Server error during login', error: error.message });
+    }
+    return res.status(500).json({ message: 'Server error during login', error: 'Unknown error' });
   }
 };
 
