@@ -1,7 +1,7 @@
-import React, { createContext, useContext, ReactNode, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
+import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { apiRequest, API_BASE_URL } from "@/lib/queryClient";
-import { User } from "@shared/schema";
+import { apiRequest, API_BASE_URL } from "../lib/queryClient";
+import { User } from "../../../shared/schema";
 
 interface AdminAuthContextType {
   admin: User | null;
@@ -57,14 +57,11 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<User> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean, data?: User, error?: string }> => {
     try {
       // Use apiRequest to ensure proxy and JSON handling
-      const response = await apiRequest("POST", `${import.meta.env.VITE_API_URL}/api/auth/login`, { email, password });
+      const response = await apiRequest("POST", `${API_BASE_URL}/api/auth/login`, { email, password });
       const userData = await response.json();
-      if (userData.token) {
-        saveAdminToken(userData.token);
-      }
       localStorage.setItem('admin', JSON.stringify(userData));
       setAdmin(userData);
       return { success: true, data: userData };
