@@ -18,29 +18,34 @@ function getCookieDomain(req: Request): string | undefined {
 // Admin Login
 export const adminLogin = async (req: Request, res: Response) => {
   try {
+    console.log('Login attempt received with body:', req.body);
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
     // Find the admin user by email
+    console.log('Searching for user with email:', email);
     const admin = await UserModel.findOne({ email });
     if (!admin) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check if user is admin
+    console.log('User found, checking admin status:', admin.isAdmin);
     if (!admin.isAdmin) {
       return res.status(403).json({ message: 'Access denied: Admin privileges required' });
     }
 
     // Verify password
+    console.log('Verifying password');
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Generate JWT token
+    console.log('Generating JWT token');
     const token = jwt.sign(
       { id: admin._id, isAdmin: admin.isAdmin, email: admin.email },
       (process.env.JWT_SECRET as Secret) || 'default_secret',
@@ -48,6 +53,7 @@ export const adminLogin = async (req: Request, res: Response) => {
     );
 
     // Set token as cookie
+    console.log('Setting token cookie');
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -57,6 +63,7 @@ export const adminLogin = async (req: Request, res: Response) => {
     });
 
     // Return user data (excluding password)
+    console.log('Returning user data');
     const { password: _, ...userWithoutPassword } = admin.toObject();
     return res.status(200).json(userWithoutPassword);
   } catch (error) {

@@ -35,7 +35,7 @@ const isAdmin = (req: AuthRequest, res: express.Response, next: express.NextFunc
 };
 
 // Admin auth routes
-router.post('/admin/auth/login', adminLogin);
+router.post('/auth/login', adminLogin);
 router.post('/admin/auth/logout', adminLogout);
 router.get('/admin/auth/verify', verifyAdminToken);
 
