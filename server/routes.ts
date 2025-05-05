@@ -363,6 +363,22 @@ export async function registerRoutes(app: Application): Promise<Server> {
     }
   });
 
+  // Collection products route
+  app.get('/api/collections/:slug/products', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const collection = await storage.getCollectionBySlug(slug);
+      if (!collection) {
+        return res.status(404).json({ message: 'Collection not found' });
+      }
+      const products = await storage.getCollectionProducts(collection.id);
+      return res.status(200).json(products);
+    } catch (error) {
+      console.error('Get collection products error:', error);
+      return res.status(500).json({ message: 'Error fetching products for collection' });
+    }
+  });
+
   // Collection routes
   app.get('/api/collections', async (req, res) => {
     try {
