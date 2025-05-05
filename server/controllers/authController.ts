@@ -52,7 +52,7 @@ export const adminLogin = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'none',
-      domain: getCookieDomain(req),
+      domain: process.env.COOKIE_DOMAIN || undefined,
       maxAge: parseInt(process.env.COOKIE_MAX_AGE || '604800000') // 7 days default
     });
 
@@ -71,7 +71,7 @@ export const adminLogout = (req: Request, res: Response) => {
     httpOnly: true, 
     secure: process.env.NODE_ENV === 'production', 
     sameSite: 'none', 
-    domain: getCookieDomain(req) 
+    domain: process.env.COOKIE_DOMAIN || undefined
   });
   return res.status(200).json({ message: 'Logged out successfully' });
 };
@@ -96,7 +96,7 @@ export const verifyAdminToken = (req: Request, res: Response) => {
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production', 
       sameSite: 'none', 
-      domain: getCookieDomain(req) 
+      domain: process.env.COOKIE_DOMAIN || undefined
     });
     return res.status(401).json({ message: 'Invalid token', isAuthenticated: false });
   }
