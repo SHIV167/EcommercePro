@@ -32,12 +32,10 @@ export default function ThankYouPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const resOrder = await apiRequest('GET', `/api/orders/${orderId}`);
-        const o = (await resOrder.json()) as Order;
-        const resItems = await apiRequest('GET', `/api/orders/${orderId}/items`);
-        const its = (await resItems.json()) as OrderItem[];
-        setOrder(o);
-        setItems(its);
+        const res = await apiRequest('GET', `/api/orders/${orderId}`);
+        const data = (await res.json()) as { order: Order; items: OrderItem[] };
+        setOrder(data.order);
+        setItems(data.items);
       } catch (e) {
         console.error(e);
       } finally {
