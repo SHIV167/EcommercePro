@@ -1,6 +1,7 @@
 import { createServer, type Server } from "http";
 import express, { Application, Request, Response, NextFunction } from "express";
-import { storage } from "./storage";
+import { MongoDBStorage } from "./storage/MongoDBStorage";
+const storage = new MongoDBStorage();
 import UserModel from "./models/User";
 import SettingModel from "./models/Setting";
 import ContactModel from "./models/Contact";
