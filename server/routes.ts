@@ -1555,7 +1555,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
     try {
       const { order, items } = orderPayloadSchema.parse(req.body);
       // Set initial status: prepaid orders => processing, COD orders => pending
-      const initialStatus = order.paymentMethod === 'prepaid' ? 'processing' : 'pending';
+      const initialStatus = order.paymentMethod.toLowerCase() === 'cod' ? 'pending' : 'processing';
       const orderToSave = { ...order, status: initialStatus };
       const createdOrder = await storage.createOrder(orderToSave);
       if (!createdOrder.id) {

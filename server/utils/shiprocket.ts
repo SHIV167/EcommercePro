@@ -206,7 +206,7 @@ export async function createShipment(order: any, items: any[]) {
       // Ensure shipping_country is always set, fallback to shippingCountry or billingCountry or default
       shipping_country: order.shippingCountry || order.billingCountry || 'India',
       shipping_pincode: order.shippingIsBilling ? order.billingPincode : (order.shippingPincode || ''),
-      payment_method: order.paymentMethod || 'Prepaid',
+      payment_method: order.paymentMethod.toLowerCase() === 'cod' ? 'COD' : 'Prepaid',
       sub_total: order.subtotal || items.reduce((sum, item) => sum + ((item.sellingPrice || item.price) * (item.units || item.quantity)), 0),
       length: order.packageLength || 10,
       breadth: order.packageBreadth || 10,
