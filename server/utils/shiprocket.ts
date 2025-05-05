@@ -280,8 +280,8 @@ export async function cancelShipment(orderId: string, reason: string = 'Order ca
     
     const token = await getAuthToken();
     const url = 'https://apiv2.shiprocket.in/v1/external/orders/cancel';
-    // Prepare payload as object with ShipRocket order IDs
-    const payload = { order_ids: [parseInt(orderId, 10)] };
+    // Prepare payload with ShipRocket order ID and cancellation reason
+    const payload = { order_id: parseInt(orderId, 10), cancel_reason: reason };
     
     console.log(`Cancelling ShipRocket order ${orderId} with reason: ${reason}`);
     

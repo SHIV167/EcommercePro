@@ -31,6 +31,7 @@ export default function AccountPage() {
       return res.json();
     },
     enabled: !!normalizedUserId,
+    refetchInterval: 10000, // auto-refresh orders every 10 seconds
   });
   
   const [editingAddress, setEditingAddress] = useState(false);

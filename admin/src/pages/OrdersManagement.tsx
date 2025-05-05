@@ -311,6 +311,7 @@ export default function OrdersManagement() {
                 <th>Order ID</th>
                 <th>Customer</th>
                 <th>Date</th>
+                <th>Payment</th>
                 <th>Status</th>
                 <th>Total</th>
                 <th>Length</th>
@@ -337,7 +338,7 @@ export default function OrdersManagement() {
                       <div className="h-6 w-20 bg-muted animate-pulse rounded"></div>
                     </td>
                     <td>
-                      <div className="h-6 w-16 bg-muted animate-pulse rounded"></div>
+                      <div className="h-6 w-20 bg-muted animate-pulse rounded"></div>
                     </td>
                     <td>
                       <div className="h-6 w-16 bg-muted animate-pulse rounded"></div>
@@ -362,6 +363,7 @@ export default function OrdersManagement() {
                     <td>{order.id ? `#${order.id}` : ''}</td>
                     <td>{order.userId}</td>
                     <td>{formatDate(String(order.createdAt))}</td>
+                    <td>{order.paymentMethod === 'cod' ? 'COD' : 'Prepaid'}</td>
                     <td>
                       <span className={`inline-block px-2 py-1 text-xs rounded-full ${getStatusBadgeClass(order.status)}`}>
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
@@ -394,7 +396,7 @@ export default function OrdersManagement() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="text-center py-6 text-muted-foreground">
+                  <td colSpan={11} className="text-center py-6 text-muted-foreground">
                     No orders found
                   </td>
                 </tr>

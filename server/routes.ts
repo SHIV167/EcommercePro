@@ -1458,7 +1458,10 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.post('/api/orders', async (req, res) => {
     try {
       const { order, items } = orderPayloadSchema.parse(req.body);
-      const createdOrder = await storage.createOrder(order);
+      // Set initial status: prepaid orders => processing, COD orders => pending
+      const initialStatus = order.paymentMethod === 'prepaid' ? 'processing' : 'pending';
+      const orderToSave = { ...order, status: initialStatus };
+      const createdOrder = await storage.createOrder(orderToSave);
       if (!createdOrder.id) {
         return res.status(500).json({ message: 'Order created without ID' });
       }
