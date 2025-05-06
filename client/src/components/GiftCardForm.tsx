@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { useCart } from '@/hooks/useCart';
 import { apiRequest } from '@/lib/queryClient';
 import { formatCurrency } from '@/lib/utils';
@@ -24,7 +24,7 @@ export default function GiftCardForm() {
   const [receiverEmail, setReceiverEmail] = useState('');
   const [message, setMessage] = useState('');
   const { addItem } = useCart();
-  const [, navigate] = useNavigate();
+  const [, navigate] = useLocation();
 
   useEffect(() => {
     async function loadTemplates() {
@@ -61,8 +61,8 @@ export default function GiftCardForm() {
     setSelectedTemplate(nearest);
   }
 
-  const handleAddToBag = () => {
-    addItem({
+  const handleAddToBag = async () => {
+    await addItem({
       _id: selectedTemplate._id,
       name: `Gift Card ${formatCurrency(selectedTemplate.initialAmount)}`,
       price: selectedTemplate.initialAmount,
@@ -70,8 +70,8 @@ export default function GiftCardForm() {
     } as any);
   };
 
-  const handleBuyNow = () => {
-    handleAddToBag();
+  const handleBuyNow = async () => {
+    await handleAddToBag();
     navigate('/checkout');
   };
 
