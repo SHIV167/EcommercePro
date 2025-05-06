@@ -223,30 +223,29 @@ export default function ProductsManagement() {
               }}>
                 Download Sample
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <label className="w-full cursor-pointer">
-                  Import CSV
-                  <input
-                    type="file"
-                    accept=".csv"
-                    className="hidden"
-                    onChange={async e => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const formData = new FormData();
-                      formData.append('file', file);
-                      try {
-                        const response = await apiRequest('POST', '/api/products/import', formData);
-                        const responseData = await response.json();
-                        toast({ title: `Import successful: ${responseData.imported?.length || 0} products imported` });
-                        refetchProducts();
-                      } catch (error: any) {
-                        console.error('Import error:', error);
-                        toast({ title: `Import failed: ${error.message}`, variant: 'destructive' });
-                      }
-                    }}
-                  />
-                </label>
+              <DropdownMenuItem onSelect={(e) => {
+                e.preventDefault();
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.csv';
+                input.onchange = async (event) => {
+                  const file = (event.target as HTMLInputElement).files?.[0];
+                  if (!file) return;
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  try {
+                    const response = await apiRequest('POST', '/api/products/import', formData);
+                    const responseData = await response.json();
+                    toast({ title: `Import successful: ${responseData.imported?.length || 0} products imported` });
+                    refetchProducts();
+                  } catch (error: any) {
+                    console.error('Import error:', error);
+                    toast({ title: `Import failed: ${error.message}`, variant: 'destructive' });
+                  }
+                };
+                input.click();
+              }}>
+                Import CSV
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
