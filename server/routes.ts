@@ -566,23 +566,23 @@ export async function registerRoutes(app: Application): Promise<Server> {
     }
     try {
       const idOrSlug = req.params.idOrSlug;
-      let product;
+    let product;
 
-      // Try as MongoDB ObjectId first
-      if (/^[0-9a-fA-F]{24}$/.test(idOrSlug)) {
-        product = await storage.getProductById(idOrSlug);
-      }
+    // Try as MongoDB ObjectId first
+    if (/^[0-9a-fA-F]{24}$/.test(idOrSlug)) {
+      product = await storage.getProductById(idOrSlug);
+    }
 
-      // If not found, try as slug
-      if (!product) {
-        product = await storage.getProductBySlug(idOrSlug);
-      }
+    // If not found, try as slug
+    if (!product) {
+      product = await storage.getProductBySlug(idOrSlug);
+    }
 
-      if (!product) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
 
-      return res.status(200).json(product);
+    return res.status(200).json(product);
     } catch (error) {
       console.error('Fetch product detail error:', error);
       return res.status(500).json({ message: 'Server error' });
@@ -2034,20 +2034,23 @@ export async function registerRoutes(app: Application): Promise<Server> {
       
       // Clean up the temporary file
       console.log('[IMPORT] Cleanup', { file: req.file.path });
-      try {
-        if (fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-          console.log('[IMPORT] File deleted successfully', { file: req.file.path });
-        } else {
-          console.log('[IMPORT] File does not exist for deletion', { file: req.file.path });
+      const pathsToTry = [
+        req.file.path,
+        path.join(__dirname, '../public/uploads', req.file.filename)
+      ];
+      pathsToTry.forEach(filePath => {
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log('[IMPORT] File deleted successfully', { file: filePath });
+          } else {
+            console.log('[IMPORT] File does not exist for deletion', { file: filePath });
+          }
+        } catch (unlinkError: any) {
+          console.error('[IMPORT] Cleanup error for path', { file: filePath, error: unlinkError.message });
         }
-      } catch (unlinkError: any) {
-        console.error('[IMPORT] Cleanup error', { error: unlinkError.message });
-      }
-      fs.unlinkSync(path.join(__dirname, '../public/uploads', req.file.filename));
-      
-      console.log('[IMPORT] Complete', { success: results.length, failed: errors.length });
-      res.json({ 
+      });
+      return res.json({ 
         imported: results, 
         errors: errors,
         summary: {
