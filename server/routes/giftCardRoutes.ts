@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import { getAllGiftCards, getGiftCardById, createGiftCard, updateGiftCard, deleteGiftCard } from '../controllers/giftCardController';
 import jwt from 'jsonwebtoken';
+import upload from '../utils/upload';
 
 interface AuthRequest extends Request {
   user?: any;
@@ -36,8 +37,8 @@ const isAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
 // Admin routes (protected)
 router.get('/admin/giftcards', isAuthenticated, isAdmin, getAllGiftCards);
 router.get('/admin/giftcards/:id', isAuthenticated, isAdmin, getGiftCardById);
-router.post('/admin/giftcards', isAuthenticated, isAdmin, createGiftCard);
-router.put('/admin/giftcards/:id', isAuthenticated, isAdmin, updateGiftCard);
+router.post('/admin/giftcards', isAuthenticated, isAdmin, upload.single('image'), createGiftCard);
+router.put('/admin/giftcards/:id', isAuthenticated, isAdmin, upload.single('image'), updateGiftCard);
 router.delete('/admin/giftcards/:id', isAuthenticated, isAdmin, deleteGiftCard);
 
 export default router;

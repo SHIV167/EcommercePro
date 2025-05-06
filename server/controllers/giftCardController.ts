@@ -30,7 +30,18 @@ export const createGiftCard = async (req: Request, res: Response) => {
   try {
     const { initialAmount, expiryDate, isActive } = req.body;
     const code = uuidv4().split('-')[0].toUpperCase();
-    const card = new GiftCard({ code, initialAmount, balance: initialAmount, expiryDate: new Date(expiryDate), isActive });
+    // Build data object, include uploaded image if present
+    const cardData: any = {
+      code,
+      initialAmount,
+      balance: initialAmount,
+      expiryDate: new Date(expiryDate),
+      isActive
+    };
+    if ((req as any).file) {
+      cardData.imageUrl = `/uploads/${(req as any).file.filename}`;
+    }
+    const card = new GiftCard(cardData);
     await card.save();
     return res.status(201).json(card);
   } catch (error) {
@@ -45,10 +56,15 @@ export const updateGiftCard = async (req: Request, res: Response) => {
     const { initialAmount, balance, expiryDate, isActive } = req.body;
     const card = await GiftCard.findById(req.params.id);
     if (!card) return res.status(404).json({ message: 'Gift card not found' });
+    // Update fields if provided
     if (initialAmount !== undefined) card.initialAmount = initialAmount;
     if (balance !== undefined) card.balance = balance;
     if (expiryDate) card.expiryDate = new Date(expiryDate);
     if (isActive !== undefined) card.isActive = isActive;
+    // Handle new image upload
+    if ((req as any).file) {
+      card.imageUrl = `/uploads/${(req as any).file.filename}`;
+    }
     await card.save();
     return res.status(200).json(card);
   } catch (error) {
