@@ -5,12 +5,31 @@ import { useCoupon } from "@/hooks/useCoupon";
 import { CouponForm } from "@/components/coupon/CouponForm";
 import { formatCurrency } from "@/lib/utils";
 import { Helmet } from 'react-helmet';
+import { useToast } from "@/hooks/use-toast";
 
 export default function CartPage() {
   const { cartItems, removeItem, updateQuantity, subtotal, isEmpty, totalItems } = useCart();
   const { appliedCoupon, applyCoupon, removeCoupon, calculateDiscountedTotal } = useCoupon();
+  const { toast } = useToast();
   
   const finalTotal = calculateDiscountedTotal(subtotal);
+  
+  const handleRemove = async (itemId: number) => {
+    try {
+      await removeItem(itemId);
+      toast({ title: "Removed from cart", description: "Item removed successfully." });
+    } catch {
+      toast({ title: "Remove failed", description: "Could not remove item. Please try again.", variant: "destructive" });
+    }
+  };
+  const handleUpdateQuantity = async (itemId: number, qty: number) => {
+    try {
+      await updateQuantity(itemId, qty);
+      toast({ title: "Cart updated", description: `Quantity updated to ${qty}.` });
+    } catch {
+      toast({ title: "Update failed", description: "Could not update quantity. Please try again.", variant: "destructive" });
+    }
+  };
   
   return (
     <>
@@ -74,7 +93,7 @@ export default function CartPage() {
                               {item.product?.name ?? "Unknown Product"}
                             </Link>
                             <button
-                              onClick={() => removeItem(item.id)}
+                              onClick={() => handleRemove(item.id)}
                               className="text-muted-foreground hover:text-foreground"
                               aria-label="Remove item"
                             >
@@ -91,7 +110,7 @@ export default function CartPage() {
                           <div className="flex justify-between items-end mt-4">
                             <div className="flex items-center border border-neutral-sand rounded-md">
                               <button
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                                 className="w-8 h-8 flex items-center justify-center text-foreground"
                                 disabled={item.quantity <= 1}
                                 aria-label="Decrease quantity"
@@ -102,7 +121,7 @@ export default function CartPage() {
                               </button>
                               <span className="w-8 text-center text-sm">{item.quantity}</span>
                               <button
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                                 className="w-8 h-8 flex items-center justify-center text-foreground"
                                 aria-label="Increase quantity"
                               >

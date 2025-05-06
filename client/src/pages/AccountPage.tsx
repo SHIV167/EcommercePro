@@ -13,6 +13,7 @@ export default function AccountPage() {
   const { user, isAuthenticated, isLoading: authLoading, logout, updateProfile } = useAuth();
   console.log('AccountPage user context:', user);
   const [, navigate] = useLocation();
+  const { toast } = useToast();
   
   // Redirect to login after auth state resolves
   useEffect(() => {
@@ -71,7 +72,6 @@ export default function AccountPage() {
     newPassword: '',
     confirmPassword: ''
   });
-  const { toast } = useToast();
   // --- Profile Edit Handler ---
   const handleProfileEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,6 +100,15 @@ export default function AccountPage() {
       toast({ title: 'Password updated!' });
     } catch (err) {
       toast({ title: 'Failed to update password', variant: 'destructive' });
+    }
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({ title: "Logout successful", description: "You have been logged out." });
+    } catch {
+      toast({ title: "Logout failed", description: "Could not log out. Please try again.", variant: "destructive" });
     }
   };
   
@@ -250,7 +259,7 @@ export default function AccountPage() {
                   </div>
                   <div className="p-6">
                     <Button 
-                      onClick={logout}
+                      onClick={handleLogout}
                       variant="outline"
                       className="w-full border-red-500 text-red-500 hover:bg-red-500 hover:text-white mb-4"
                     >
