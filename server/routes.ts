@@ -26,6 +26,7 @@ import fs from "fs";
 import path, { dirname } from "path";
 import multer from "multer";
 import { fileURLToPath } from "url";
+import PDFDocument from 'pdfkit';
 // Define __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1081,12 +1082,29 @@ export async function registerRoutes(app: Application): Promise<Server> {
       const user = await storage.getUser(orderData.userId);
       const toEmail = orderData.billingEmail || user?.email;
       if (toEmail) {
-        const itemsHtml = items.map(it => `<li>Product ID: ${it.productId}, Quantity: ${it.quantity}, Price: ${it.price}</li>`).join("");
+        // Build HTML table for order details
+        const rowsHtml = items.map(it => `
+          <tr>
+            <td>${it.productId}</td>
+            <td>${it.quantity}</td>
+            <td>₹${it.price.toFixed(2)}</td>
+            <td>₹${(it.price * it.quantity).toFixed(2)}</td>
+          </tr>
+        `).join("");
         const html = `
           <h1>Order Confirmation - ${orderId}</h1>
-          <p>Thank you for your purchase! Here are your order details:</p>
-          <ul>${itemsHtml}</ul>
-          <p>Total Amount: ${createdOrder.totalAmount}</p>
+          <p>Thank you for your purchase!</p>
+          <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width:100%;">
+            <thead>
+              <tr><th>Product ID</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+            <tfoot>
+              <tr><td colspan="3" align="right">Total Amount</td><td>₹${createdOrder.totalAmount.toFixed(2)}</td></tr>
+            </tfoot>
+          </table>
           <p>Shipping Address: ${createdOrder.shippingAddress}</p>
         `;
         sendMail({ to: toEmail, subject: `Order Confirmation - ${orderId}`, html }).catch(err => console.error("Invoice email error:", err));
@@ -1781,6 +1799,47 @@ export async function registerRoutes(app: Application): Promise<Server> {
     } catch (error) {
       console.error("Fetch orders error:", error);
       return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Invoice download route
+  app.get("/api/orders/:id/invoice", async (req, res) => {
+    const id = req.params.id;
+    const order = await storage.getOrderById(id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    const items = await storage.getOrderItems(id);
+    const doc = new PDFDocument({ margin: 30 });
+    res.setHeader("Content-Disposition", `attachment; filename=invoice_${id}.pdf`);
+    res.setHeader("Content-Type", "application/pdf");
+    doc.pipe(res);
+    doc.fontSize(20).text("Invoice", { align: "center" });
+    doc.moveDown();
+    doc.fontSize(12).text(`Order ID: ${order.id}`);
+    doc.text(`Date: ${order.createdAt.toISOString()}`);
+    doc.text(`Status: ${order.status}`);
+    doc.moveDown();
+    doc.fontSize(14).text("Items:");
+    items.forEach(item => {
+      doc.fontSize(12).text(`${item.productId} x ${item.quantity} @ ₹${item.price.toFixed(2)} = ₹${(item.price * item.quantity).toFixed(2)}`);
+    });
+    doc.moveDown();
+    doc.fontSize(12).text(`Total Amount: ₹${order.totalAmount.toFixed(2)}`);
+    doc.end();
+  });
+
+  // Serviceability route
+  app.get("/api/serviceability", async (req, res) => {
+    try {
+      const deliveryPincode = req.query.deliveryPincode as string;
+      if (!deliveryPincode) return res.status(400).json({ message: "deliveryPincode is required" });
+      const setting = await SettingModel.findOne();
+      if (!setting) return res.status(500).json({ message: "Settings not found" });
+      const pickup = setting.shiprocketSourcePincode;
+      const data = await getServiceability({ pickup_pincode: pickup, delivery_pincode: deliveryPincode, weight: 1, cod: 1 });
+      return res.json(data);
+    } catch (error) {
+      console.error("Serviceability check failed:", error);
+      return res.status(500).json({ message: "Serviceability check failed" });
     }
   });
 

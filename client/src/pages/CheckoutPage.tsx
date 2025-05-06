@@ -154,10 +154,11 @@ export default function CheckoutPage() {
       try {
         // Dev: skip serviceability; place COD order directly
         const res = await apiRequest('POST', '/api/orders', payload);
-        const created = await res.json() as { id: string };
-        toast({ title: 'Order placed!' });
+        const data = await res.json() as { order: { id: string }; items: any[] };
+        const orderId = data.order.id;
+        toast({ title: 'Order placed!', description: `Your order #${orderId} has been placed.` });
         clearCart();
-        navigate(`/thank-you/${created.id}`);
+        navigate(`/thank-you/${orderId}`);
       } catch (error) {
         console.error('Checkout error:', error);
         toast({ title: 'Order failed', variant: 'destructive' });
@@ -206,9 +207,11 @@ export default function CheckoutPage() {
               if (!valid.valid) throw new Error('Invalid');
               pendingOrderPayload.order.paymentStatus = 'paid';
               pendingOrderPayload.order.paymentId = res.razorpay_payment_id;
-              const created = await apiRequest('POST','/api/orders',pendingOrderPayload).then(r=>r.json());
-              toast({ title: 'Payment successful!' });
-              clearCart(); navigate(`/thank-you/${created.id}`);
+              const data = await apiRequest('POST','/api/orders',pendingOrderPayload).then(r=>r.json());
+              const orderId = data.order.id;
+              toast({ title: 'Payment successful!', description: `Your order #${orderId} has been placed.` });
+              clearCart();
+              navigate(`/thank-you/${orderId}`);
             } catch {
               toast({ title: 'Payment failed', variant: 'destructive' });
             } finally { setIsSubmitting(false); }

@@ -341,6 +341,14 @@ export default function AccountPage() {
                           >
                             Track Order
                           </Button>
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="border-primary text-primary hover:bg-primary hover:text-white"
+                          >
+                            <a href={`/api/orders/${order.id}/invoice`}>Download Invoice</a>
+                          </Button>
                         </div>
                       </div>
                     ))}

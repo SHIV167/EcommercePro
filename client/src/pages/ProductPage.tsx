@@ -24,6 +24,10 @@ export default function ProductPage() {
   const { addItem } = useCart();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const [pincode, setPincode] = useState('');
+  const [serviceData, setServiceData] = useState<any[] | null>(null);
+  const [serviceLoading, setServiceLoading] = useState(false);
+  const [serviceError, setServiceError] = useState('');
   
   const { data: product, isLoading: productLoading, error } = useQuery<Product>({
     queryKey: [`/api/products/${slug}`],
@@ -101,6 +105,27 @@ export default function ProductPage() {
       title: "Added to cart",
       description: `${quantity} ${quantity === 1 ? 'item' : 'items'} of ${product.name} added to your cart.`
     });
+  };
+
+  const handleCheckPincode = async () => {
+    if (!pincode) return;
+    setServiceLoading(true);
+    setServiceError('');
+    try {
+      const res = await apiRequest('GET', `/api/serviceability?deliveryPincode=${pincode}`);
+      const json = await res.json();
+      if (!json.status) {
+        setServiceError(json.message || 'Service not available');
+        setServiceData(null);
+      } else {
+        setServiceData(json.data);
+      }
+    } catch (err: any) {
+      setServiceError(err.message || 'Error checking serviceability');
+      setServiceData(null);
+    } finally {
+      setServiceLoading(false);
+    }
   };
 
   return (
@@ -321,6 +346,54 @@ export default function ProductPage() {
               </div>
             </TabsContent>
           </Tabs>
+        </div>
+        
+        {/* Serviceability Check */}
+        <div className="mt-4 border-t pt-4">
+          <h3 className="font-heading text-lg text-primary mb-2">Check Estimated Delivery</h3>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={pincode}
+              onChange={e => setPincode(e.target.value)}
+              placeholder="Enter your pincode"
+              maxLength={6}
+              className="border p-2 rounded w-32"
+            />
+            <button
+              onClick={handleCheckPincode}
+              disabled={serviceLoading}
+              className="bg-primary text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+              {serviceLoading ? 'Checking...' : 'Check'}
+            </button>
+          </div>
+          {serviceError && <p className="text-red-500 mt-2">{serviceError}</p>}
+          {serviceData && serviceData.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {serviceData[0].rate === 0 && <p className="text-green-600">Free Delivery Available</p>}
+              <p>Estimated Delivery by {new Date(serviceData[0].estimated_delivery_date).toLocaleDateString()}</p>
+              {(() => {
+                const estDate = new Date(serviceData[0].estimated_delivery_date);
+                const now = new Date();
+                if ((estDate.getTime() - now.getTime()) <= 24 * 60 * 60 * 1000) {
+                  return <p className="text-green-600">Guaranteed Shipping Within 24 hours</p>;
+                }
+                return null;
+              })()}
+              {(() => {
+                const now = new Date();
+                const cutoff = new Date();
+                cutoff.setHours(14, 0, 0, 0);
+                const estDate = new Date(serviceData[0].estimated_delivery_date);
+                const estDateStr = estDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+                if (now < cutoff) {
+                  return <p>Order before 2 PM for Delivery by {estDateStr}</p>;
+                }
+                return <p>Order now for Delivery by {estDateStr} (orders placed after 2 PM ship next day)</p>;
+              })()}
+            </div>
+          )}
         </div>
         
         {/* Related Products */}
