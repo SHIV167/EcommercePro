@@ -50,9 +50,6 @@ export default function GiftCardForm() {
     loadTemplates();
   }, []);
 
-  if (loading) return <div className="text-center">Loading...</div>;
-  if (!selectedTemplate) return <div className="text-center">No gift cards available.</div>;
-
   // Fixed gift card amounts: 500 then increments of 1000 up to 15000
   const allowedAmounts = useMemo(() => {
     return Array.from({ length: 16 }, (_, i) => (i === 0 ? 500 : i * 1000));
@@ -64,6 +61,9 @@ export default function GiftCardForm() {
     const found = templates.find((t) => t.initialAmount === newAmount);
     if (found) setSelectedTemplate(found);
   }
+
+  if (loading) return <div className="text-center">Loading...</div>;
+  if (!selectedTemplate) return <div className="text-center">No gift cards available.</div>;
 
   const handleAddToBag = async () => {
     await addItem({
