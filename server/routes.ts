@@ -525,24 +525,26 @@ export async function registerRoutes(app: Application): Promise<Server> {
     try {
       const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+      const offset = (page - 1) * limit;
+      const search = (req.query.search as string) || "";
       const categoryId = req.query.categoryId as string | undefined;
       const collectionId = req.query.collectionId as string | undefined;
-      const searchTerm = req.query.search as string | undefined;
 
-      let products = await storage.getProducts({ categoryId, collectionId });
-
-      if (searchTerm) {
-        const lower = searchTerm.toLowerCase();
-        products = products.filter(p =>
+      // Fetch all matching products for accurate count and search
+      const allProducts = await storage.getProducts({ categoryId, collectionId });
+      let filteredProducts = allProducts;
+      if (search) {
+        const lower = search.toLowerCase();
+        filteredProducts = allProducts.filter(p =>
           p.name.toLowerCase().includes(lower) ||
           (p.description?.toLowerCase().includes(lower))
         );
       }
 
-      const total = products.length;
+      const total = filteredProducts.length;
       const totalPages = Math.ceil(total / limit);
       const start = (page - 1) * limit;
-      const paginated = products.slice(start, start + limit);
+      const paginated = filteredProducts.slice(start, start + limit);
 
       return res.status(200).json({
         products: paginated,
@@ -2032,7 +2034,16 @@ export async function registerRoutes(app: Application): Promise<Server> {
       
       // Clean up the temporary file
       console.log('[IMPORT] Cleanup', { file: req.file.path });
-      fs.unlinkSync(req.file.path);
+      try {
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+          console.log('[IMPORT] File deleted successfully', { file: req.file.path });
+        } else {
+          console.log('[IMPORT] File does not exist for deletion', { file: req.file.path });
+        }
+      } catch (unlinkError: any) {
+        console.error('[IMPORT] Cleanup error', { error: unlinkError.message });
+      }
       fs.unlinkSync(path.join(__dirname, '../public/uploads', req.file.filename));
       
       console.log('[IMPORT] Complete', { success: results.length, failed: errors.length });
