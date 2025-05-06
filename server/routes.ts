@@ -1902,7 +1902,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
     try {
       if (!req.file) return res.status(400).json({ message: 'CSV file is required' });
       
-      const content = fs.readFileSync(req.file.path, 'utf8');
+      const content = fs.readFileSync(path.join(__dirname, '../public/uploads', req.file.filename), 'utf8');
       const lines = content.split(/\r?\n/).filter(line => line.trim());
       
       if (lines.length < 2) {
