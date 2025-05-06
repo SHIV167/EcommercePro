@@ -179,27 +179,61 @@ export default function ProductsManagement() {
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
         
-        <Button 
-          onClick={() => setIsAddProductDialogOpen(true)}
-          className="bg-primary hover:bg-primary/90 text-white"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-2"
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">Bulk Products+</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => window.open('/api/products/export')}>Export CSV</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => window.open('/uploads/sample-products.csv')}>Download Sample</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <label className="w-full cursor-pointer">
+                  Import CSV
+                  <input
+                    type="file"
+                    accept=".csv"
+                    className="hidden"
+                    onChange={async e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      try {
+                        await apiRequest('POST', '/api/products/import', formData);
+                        toast({ title: 'Import successful' });
+                        refetchProducts();
+                      } catch {
+                        toast({ title: 'Import failed', variant: 'destructive' });
+                      }
+                    }}
+                  />
+                </label>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button 
+            onClick={() => setIsAddProductDialogOpen(true)}
+            className="bg-primary hover:bg-primary/90 text-white"
           >
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Add Product
-        </Button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mr-2"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Product
+          </Button>
+        </div>
       </div>
       
       <div className="flex flex-col md:flex-row gap-4 md:items-end">
@@ -233,24 +267,6 @@ export default function ProductsManagement() {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => window.open('/api/products/export')}>Export CSV</Button>
-          <Button variant="outline" onClick={() => window.open('/api/products/sample-csv')}>Download Sample</Button>
-          <label className="btn btn-outline">
-            Import CSV
-            <input type="file" accept=".csv" className="hidden" onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              const form = new FormData();
-              form.append('file', file);
-              const res = await apiRequest('POST', '/api/products/import', form);
-              if (res.ok) {
-                toast({ title: 'Import successful' });
-                refetchProducts();
-              } else {
-                toast({ title: 'Import failed', variant: 'destructive' });
-              }
-            }} />
-          </label>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Categories" />

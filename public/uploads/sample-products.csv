@@ -1,0 +1,2 @@
+sku,name,description,shortDescription,price,discountedPrice,stock,slug,featured,bestseller,isNew,videoUrl,imageUrl,images,categoryId
+EXAMPLE-SKU,Example Product,A sample description,,9.99,,100,example-product,false,false,true,,,,
