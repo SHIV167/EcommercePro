@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { useCart } from '@/hooks/useCart';
 import { apiRequest } from '@/lib/queryClient';
@@ -49,16 +49,16 @@ export default function GiftCardForm() {
   if (loading) return <div className="text-center">Loading...</div>;
   if (!selectedTemplate) return <div className="text-center">No gift cards available.</div>;
 
-  const amounts = templates.map((t) => t.initialAmount);
-  const min = Math.min(...amounts);
-  const max = Math.max(...amounts);
+  // Fixed gift card amounts: 500 then increments of 1000 up to 15000
+  const allowedAmounts = useMemo(() => {
+    return Array.from({ length: 16 }, (_, i) => (i === 0 ? 500 : i * 1000));
+  }, []);
 
-  function handleAmountChange(val: number) {
-    setAmount(val);
-    const nearest = templates.reduce((prev, curr) =>
-      Math.abs(curr.initialAmount - val) < Math.abs(prev.initialAmount - val) ? curr : prev
-    );
-    setSelectedTemplate(nearest);
+  function handleSliderChange(index: number) {
+    const newAmount = allowedAmounts[index];
+    setAmount(newAmount);
+    const found = templates.find((t) => t.initialAmount === newAmount);
+    if (found) setSelectedTemplate(found);
   }
 
   const handleAddToBag = async () => {
@@ -105,14 +105,14 @@ export default function GiftCardForm() {
         <label className="block font-medium mb-1">Select Gift Card Amount *</label>
         <input
           type="range"
-          min={min}
-          max={max}
+          min={0}
+          max={allowedAmounts.length - 1}
           step={1}
-          value={amount}
-          onChange={(e) => handleAmountChange(Number(e.target.value))}
+          value={allowedAmounts.indexOf(amount)}
+          onChange={(e) => handleSliderChange(Number(e.target.value))}
           className="w-full mb-2 accent-primary"
         />
-        <div className="mb-4 font-bold">₹ {formatCurrency(amount)}</div>
+        <div className="mb-4 font-bold">₹{formatCurrency(amount)}</div>
         <div className="grid grid-cols-2 gap-2 mb-2">
           <input
             className="border p-2 rounded"
