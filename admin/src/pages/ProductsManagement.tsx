@@ -206,7 +206,8 @@ export default function ProductsManagement() {
               }}>Export CSV</DropdownMenuItem>
               <DropdownMenuItem onSelect={async () => {
                 try {
-                  const response = await fetch('/api/products/sample-csv', {
+                  // Direct download from the uploads directory instead of using the API
+                  const response = await fetch('/uploads/sample-products.csv', {
                     credentials: 'include'
                   });
                   if (!response.ok) throw new Error('Download sample failed');
