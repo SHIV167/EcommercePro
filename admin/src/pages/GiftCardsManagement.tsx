@@ -52,6 +52,7 @@ export default function GiftCardsManagement() {
   const [balance, setBalance] = useState<number>(0);
   const [expiryDate, setExpiryDate] = useState<Date>(new Date());
   const [isActive, setIsActive] = useState<boolean>(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   // Fetch gift cards with auth-check and data-sanity
   const fetchGiftCards = async (): Promise<GiftCard[]> => {
@@ -77,16 +78,21 @@ export default function GiftCardsManagement() {
   // if (isError) return <div className="p-6 text-red-500">Error fetching gift cards: {error?.message}</div>;
 
   const saveMutation = useMutation({
-    mutationFn: (payload: any) => {
+    mutationFn: () => {
       const url = editing
         ? `/api/admin/giftcards/${editing._id}`
         : '/api/admin/giftcards';
       const method = editing ? 'PUT' : 'POST';
+      const formData = new FormData();
+      formData.append('initialAmount', initialAmount.toString());
+      if (editing) formData.append('balance', balance.toString());
+      formData.append('expiryDate', expiryDate.toISOString());
+      formData.append('isActive', isActive.toString());
+      if (imageFile) formData.append('image', imageFile);
       return fetch(`${apiBase}${url}`, {
         method,
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: formData,
       }).then(res => {
         if (!res.ok) throw new Error('Failed');
         return res.json();
@@ -129,13 +135,12 @@ export default function GiftCardsManagement() {
       setExpiryDate(new Date());
       setIsActive(true);
     }
+    setImageFile(null);
     setFormOpen(true);
   }
 
   function handleSubmit() {
-    const payload: any = { initialAmount, expiryDate: expiryDate.toISOString(), isActive };
-    if (editing) payload.balance = balance;
-    saveMutation.mutate(payload);
+    saveMutation.mutate();
   }
 
   return (
@@ -147,6 +152,7 @@ export default function GiftCardsManagement() {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Image</TableHead>
             <TableHead>Code</TableHead>
             <TableHead>Initial</TableHead>
             <TableHead>Balance</TableHead>
@@ -160,6 +166,9 @@ export default function GiftCardsManagement() {
             const id = c._id;
             return (
               <TableRow key={id}>
+                <TableCell>
+                  {c.imageUrl && <img src={c.imageUrl} alt="" className="w-10 h-6 object-cover rounded" />}
+                </TableCell>
                 <TableCell>{c.code}</TableCell>
                 <TableCell>{c.initialAmount}</TableCell>
                 <TableCell>{c.balance}</TableCell>
@@ -202,6 +211,10 @@ export default function GiftCardsManagement() {
                 onChange={(date: Date | null) => { if (date) setExpiryDate(date); }}
                 className="w-full"
               />
+            </div>
+            <div>
+              <Label>Image</Label>
+              <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] ?? null)} />
             </div>
             <div className="flex items-center space-x-2">
               <Switch checked={isActive} onCheckedChange={setIsActive} />
