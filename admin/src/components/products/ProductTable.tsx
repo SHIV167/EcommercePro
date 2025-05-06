@@ -110,7 +110,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onDele
               <th scope="col" className="px-4 py-3.5 text-left text-sm font-medium text-muted-foreground">
                 <span className="sr-only">Select</span>
               </th>
-              <th scope="col" className="px-4 py-3.5 text-left text-sm font-medium text-muted-foreground">ID</th>
+              <th scope="col" className="px-4 py-3.5 text-left text-sm font-medium text-muted-foreground">SKU</th>
               <th scope="col" className="px-4 py-3.5 text-left text-sm font-medium text-muted-foreground">
                 Product
               </th>
@@ -140,7 +140,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onDele
                 <td className="whitespace-nowrap px-4 py-4">
                   <Checkbox />
                 </td>
-                <td className="whitespace-nowrap px-4 py-4 text-sm">{product._id?.toString() || product.id?.toString()}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-sm">{product.sku}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md border bg-gray-100">

@@ -233,6 +233,24 @@ export default function ProductsManagement() {
         </div>
         
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.open('/api/products/export')}>Export CSV</Button>
+          <Button variant="outline" onClick={() => window.open('/api/products/sample-csv')}>Download Sample</Button>
+          <label className="btn btn-outline">
+            Import CSV
+            <input type="file" accept=".csv" className="hidden" onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const form = new FormData();
+              form.append('file', file);
+              const res = await apiRequest('POST', '/api/products/import', form);
+              if (res.ok) {
+                toast({ title: 'Import successful' });
+                refetchProducts();
+              } else {
+                toast({ title: 'Import failed', variant: 'destructive' });
+              }
+            }} />
+          </label>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Categories" />

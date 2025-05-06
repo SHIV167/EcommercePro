@@ -50,6 +50,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
     resolver: zodResolver(productSchema),
     defaultValues: product
       ? {
+          sku: product.sku,
           name: product.name,
           description: product.description,
           shortDescription: product.shortDescription || "",
@@ -66,6 +67,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           images: product.images || [],
         }
       : {
+          sku: "",
           name: "",
           description: "",
           shortDescription: "",
@@ -91,6 +93,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       try {
         const formData = new FormData();
         // Append all product fields, ensuring correct types
+        formData.append('sku', data.sku);
         formData.append('name', data.name);
         formData.append('description', data.description);
         formData.append('shortDescription', data.shortDescription || '');
@@ -194,6 +197,20 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
     <Form {...form}>
       <form onSubmit={handleSubmitWithImages} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* SKU field */}
+          <FormField
+            control={form.control}
+            name="sku"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>SKU*</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           {/* Name field */}
           <FormField
             control={form.control}

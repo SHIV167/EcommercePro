@@ -3,6 +3,7 @@ import { z } from "zod";
 // Product Zod schema and TypeScript type
 export const productSchema = z.object({
   _id: z.string().optional(), // MongoDB ObjectId as string
+  sku: z.string(),
   name: z.string(),
   description: z.string(),
   shortDescription: z.string().optional(),

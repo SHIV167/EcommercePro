@@ -13,7 +13,7 @@ import ScannerModel from "./models/Scanner"; // Import ScannerModel
 
 import { v4 as uuidv4 } from "uuid"; // Import uuid
 import { z } from "zod";
-import { categorySchema, collectionSchema } from "@shared/schema";
+import { categorySchema, collectionSchema, productSchema } from "@shared/schema";
 import { sendMail } from "./utils/mailer";
 import upload from "./utils/upload";
 import crypto from "crypto";
@@ -541,7 +541,13 @@ export async function registerRoutes(app: Application): Promise<Server> {
       const start = (page - 1) * limit;
       const paginated = products.slice(start, start + limit);
 
-      return res.status(200).json({ products: paginated, total, page, totalPages });
+      return res.status(200).json({
+        products: paginated,
+        total,
+        page,
+        totalPages,
+        totalItems: total
+      });
     } catch (error) {
       console.error('Fetch products error:', error);
       return res.status(500).json({ message: 'Server error' });
@@ -1840,6 +1846,78 @@ export async function registerRoutes(app: Application): Promise<Server> {
     } catch (error) {
       console.error("Serviceability check failed:", error);
       return res.status(500).json({ message: "Serviceability check failed" });
+    }
+  });
+
+  // Export products as CSV
+  app.get('/api/products/export', async (req, res) => {
+    try {
+      const products = await storage.getProducts();
+      const header = ['sku','name','description','shortDescription','price','discountedPrice','stock','slug','featured','bestseller','isNew','videoUrl','imageUrl','images','categoryId'].join(',');
+      const rows = products.map(p => [
+        p.sku,
+        `"${p.name.replace(/"/g,'"\"')}"`,
+        `"${p.description.replace(/"/g,'"\"')}"`,
+        `"${(p.shortDescription||'').replace(/"/g,'"\"')}"`,
+        p.price,
+        p.discountedPrice||'',
+        p.stock,
+        p.slug,
+        p.featured,
+        p.bestseller,
+        p.isNew,
+        p.videoUrl||'',
+        p.imageUrl||'',
+        `"${(p.images||[]).join('|')}"`,
+        p.categoryId
+      ].join(',')).join('\n');
+      const csv = header + '\n' + rows;
+      res.setHeader('Content-Type','text/csv');
+      res.setHeader('Content-Disposition','attachment; filename="products.csv"');
+      res.send(csv);
+    } catch (err) {
+      console.error('Export error:', err);
+      res.status(500).json({ message: 'Export failed' });
+    }
+  });
+
+  // Sample CSV for product import
+  app.get('/api/products/sample-csv', (req, res) => {
+    const header = ['sku','name','description','shortDescription','price','discountedPrice','stock','slug','featured','bestseller','isNew','videoUrl','imageUrl','images','categoryId'].join(',');
+    const example = ['EXAMPLE-SKU','Example Product','A sample description','', '9.99', '', '100', 'example-product', 'false', 'false', 'true', '', '', '', ''];
+    const csv = header + '\n' + example.join(',');
+    res.setHeader('Content-Type','text/csv');
+    res.setHeader('Content-Disposition','attachment; filename="sample-products.csv"');
+    res.send(csv);
+  });
+
+  // Import products from CSV
+  app.post('/api/products/import', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: 'CSV file is required' });
+      const content = fs.readFileSync(req.file.path, 'utf8');
+      const lines = content.split(/\r?\n/).filter(line => line.trim());
+      const [headerLine, ...dataLines] = lines;
+      const headers = headerLine.split(',');
+      const results: any[] = [];
+      for (const line of dataLines) {
+        const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+        const obj: any = {};
+        headers.forEach((h, i) => { obj[h] = values[i]?.replace(/^"|"$/g, ''); });
+        try {
+          productSchema.parse(obj);
+          const existing = await storage.getProductBySlug(obj.slug);
+          if (existing) continue;
+          await storage.createProduct(obj);
+          results.push({ sku: obj.sku, status: 'created' });
+        } catch (e) {
+          console.error('Import row error:', e);
+        }
+      }
+      res.json({ imported: results });
+    } catch (err) {
+      console.error('Import error:', err);
+      res.status(500).json({ message: 'Import failed' });
     }
   });
 
