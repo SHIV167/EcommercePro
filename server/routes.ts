@@ -587,6 +587,51 @@ export async function registerRoutes(app: Application): Promise<Server> {
     }
   });
 
+  // Export products as CSV
+  app.get('/api/products/export', async (req, res) => {
+    try {
+      const products = await storage.getProducts();
+      const header = ['sku','name','description','shortDescription','price','discountedPrice','stock','slug','featured','bestseller','isNew','videoUrl','imageUrl','images','categoryId','_id','rating','totalReviews'].join(',');
+      const rows = products.map(p => [
+        p.sku || '',
+        `"${(p.name || '').replace(/"/g,'"\"')}"`,
+        `"${(p.description || '').replace(/"/g,'"\"')}"`,
+        `"${(p.shortDescription || '').replace(/"/g,'"\"')}"`,
+        p.price || 0,
+        p.discountedPrice || '',
+        p.stock || 0,
+        p.slug || '',
+        p.featured || false,
+        p.bestseller || false,
+        p.isNew || false,
+        p.videoUrl || '',
+        p.imageUrl || '',
+        `"${(p.images || []).join('|')}"`,
+        p.categoryId || '',
+        p._id || '',
+        p.rating || 0,
+        p.totalReviews || 0
+      ].join(',')).join('\n');
+      const csv = header + '\n' + rows;
+      res.setHeader('Content-Type','text/csv');
+      res.setHeader('Content-Disposition','attachment; filename="products.csv"');
+      res.send(csv);
+    } catch (err) {
+      console.error('Export error:', err);
+      res.status(500).json({ message: 'Export failed' });
+    }
+  });
+
+  // Sample CSV for product import
+  app.get('/api/products/sample-csv', (req, res) => {
+    const header = ['sku','name','description','shortDescription','price','discountedPrice','stock','slug','featured','bestseller','isNew','videoUrl','imageUrl','images','categoryId','rating','totalReviews'].join(',');
+    const example = ['EXAMPLE-SKU','Example Product','A sample description','Short desc','9.99','7.99','100','example-product','false','false','true','https://example.com/video.mp4','https://example.com/image.jpg','https://example.com/image1.jpg|https://example.com/image2.jpg','60f6e5b3c7c9126b8e3c1234','4.5','10'];
+    const csv = header + '\n' + example.join(',');
+    res.setHeader('Content-Type','text/csv');
+    res.setHeader('Content-Disposition','attachment; filename="sample-products.csv"');
+    res.send(csv);
+  });
+
   // User routes
   app.get("/api/users/:id", async (req, res) => {
     try {
@@ -1863,51 +1908,6 @@ export async function registerRoutes(app: Application): Promise<Server> {
       console.error("Serviceability check failed:", error);
       return res.status(500).json({ message: "Serviceability check failed" });
     }
-  });
-
-  // Export products as CSV
-  app.get('/api/products/export', async (req, res) => {
-    try {
-      const products = await storage.getProducts();
-      const header = ['sku','name','description','shortDescription','price','discountedPrice','stock','slug','featured','bestseller','isNew','videoUrl','imageUrl','images','categoryId','_id','rating','totalReviews'].join(',');
-      const rows = products.map(p => [
-        p.sku || '',
-        `"${(p.name || '').replace(/"/g,'"\"')}"`,
-        `"${(p.description || '').replace(/"/g,'"\"')}"`,
-        `"${(p.shortDescription || '').replace(/"/g,'"\"')}"`,
-        p.price || 0,
-        p.discountedPrice || '',
-        p.stock || 0,
-        p.slug || '',
-        p.featured || false,
-        p.bestseller || false,
-        p.isNew || false,
-        p.videoUrl || '',
-        p.imageUrl || '',
-        `"${(p.images || []).join('|')}"`,
-        p.categoryId || '',
-        p._id || '',
-        p.rating || 0,
-        p.totalReviews || 0
-      ].join(',')).join('\n');
-      const csv = header + '\n' + rows;
-      res.setHeader('Content-Type','text/csv');
-      res.setHeader('Content-Disposition','attachment; filename="products.csv"');
-      res.send(csv);
-    } catch (err) {
-      console.error('Export error:', err);
-      res.status(500).json({ message: 'Export failed' });
-    }
-  });
-
-  // Sample CSV for product import
-  app.get('/api/products/sample-csv', (req, res) => {
-    const header = ['sku','name','description','shortDescription','price','discountedPrice','stock','slug','featured','bestseller','isNew','videoUrl','imageUrl','images','categoryId','rating','totalReviews'].join(',');
-    const example = ['EXAMPLE-SKU','Example Product','A sample description','Short desc', '9.99', '7.99', '100', 'example-product', 'false', 'false', 'true', 'https://example.com/video.mp4', 'https://example.com/image.jpg', 'https://example.com/image1.jpg|https://example.com/image2.jpg', '60f6e5b3c7c9126b8e3c1234', '4.5', '10'];
-    const csv = header + '\n' + example.join(',');
-    res.setHeader('Content-Type','text/csv');
-    res.setHeader('Content-Disposition','attachment; filename="sample-products.csv"');
-    res.send(csv);
   });
 
   // Import products from CSV
