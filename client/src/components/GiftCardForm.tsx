@@ -34,8 +34,12 @@ export default function GiftCardForm() {
         const sorted = data.sort((a, b) => a.initialAmount - b.initialAmount);
         setTemplates(sorted);
         if (sorted.length) {
-          setAmount(sorted[0].initialAmount);
-          setSelectedTemplate(sorted[0]);
+          // Initialize slider at 500
+          const defaultAmount = 500;
+          setAmount(defaultAmount);
+          // Find matching template or fallback to first
+          const defaultTemplate = sorted.find(t => t.initialAmount === defaultAmount) ?? sorted[0];
+          setSelectedTemplate(defaultTemplate);
         }
       } catch (err) {
         console.error('Failed to load gift card templates:', err);
