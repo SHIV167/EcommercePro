@@ -10,6 +10,7 @@ import { Transition } from '@headlessui/react';
 import { apiRequest } from "@/lib/queryClient";
 import SearchBar from "@/components/home/SearchBar";
 import MegaMenu from "../MegaMenu";
+import { Helmet } from 'react-helmet';
 
 export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -44,6 +45,13 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white">
+      <Helmet>
+        <meta property="og:site_name" content="Kama Ayurveda" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+        <meta property="og:image" content={window.location.origin + '/generated-icon.png'} />
+        <meta property="og:description" content="Discover our authentic Ayurvedic wellness and beauty products. Shop now for free shipping & exclusive offers." />
+      </Helmet>
       {/* Announcement bar */}
       <div className="bg-[#444444] py-2 text-center text-white">
         <p className="text-sm tracking-wide">

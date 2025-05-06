@@ -13,6 +13,7 @@ import { Helmet } from 'react-helmet';
 import { useEffect } from "react";
 import StickyAddToCart from "@/components/products/StickyAddToCart";
 import { apiRequest } from "@/lib/queryClient";
+import SocialShare from "@/components/products/SocialShare";
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -107,6 +108,11 @@ export default function ProductPage() {
       <Helmet>
         <title>{product.name} | Kama Ayurveda</title>
         <meta name="description" content={product.shortDescription || product.description.substring(0, 160)} />
+        <meta property="og:title" content={product.name} />
+        <meta property="og:description" content={product.shortDescription || product.description.substring(0, 160)} />
+        <meta property="og:image" content={product.images?.[selectedImageIndex] || product.imageUrl} />
+        <meta property="og:url" content={window.location.href} />
+        <meta property="og:type" content="product" />
       </Helmet>
       {scannerEntry?.couponCode && (
         <div className="container mx-auto px-4 py-4">
@@ -209,6 +215,12 @@ export default function ProductPage() {
               >
                 {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
               </Button>
+              <SocialShare
+                url={window.location.href}
+                title={product.name}
+                description={product.shortDescription || product.description}
+                image={product.images?.[selectedImageIndex] || product.imageUrl}
+              />
             </div>
             
             <div className="prose prose-sm max-w-none text-neutral-gray mt-6">
