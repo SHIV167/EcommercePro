@@ -187,10 +187,8 @@ export default function ProductsManagement() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={async () => {
                 try {
-                  const response = await fetch('/api/products/export', {
-                    credentials: 'include'
-                  });
-                  if (!response.ok) throw new Error('Export failed');
+                  // Export CSV via API
+                  const response = await apiRequest('GET', '/api/products/export');
                   const blob = await response.blob();
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
@@ -203,14 +201,13 @@ export default function ProductsManagement() {
                   console.error('Export error:', error);
                   toast({ title: 'Export failed', variant: 'destructive' });
                 }
-              }}>Export CSV</DropdownMenuItem>
+              }}>
+                Export CSV
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={async () => {
                 try {
-                  // Direct download from the uploads directory instead of using the API
-                  const response = await fetch('/uploads/sample-products.csv', {
-                    credentials: 'include'
-                  });
-                  if (!response.ok) throw new Error('Download sample failed');
+                  // Download sample CSV via API
+                  const response = await apiRequest('GET', '/api/products/sample-csv');
                   const blob = await response.blob();
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
@@ -223,7 +220,9 @@ export default function ProductsManagement() {
                   console.error('Download sample error:', error);
                   toast({ title: 'Download sample failed', variant: 'destructive' });
                 }
-              }}>Download Sample</DropdownMenuItem>
+              }}>
+                Download Sample
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <label className="w-full cursor-pointer">
                   Import CSV
@@ -241,9 +240,9 @@ export default function ProductsManagement() {
                         const responseData = await response.json();
                         toast({ title: `Import successful: ${responseData.imported?.length || 0} products imported` });
                         refetchProducts();
-                      } catch (error) {
+                      } catch (error: any) {
                         console.error('Import error:', error);
-                        toast({ title: 'Import failed', variant: 'destructive' });
+                        toast({ title: `Import failed: ${error.message}`, variant: 'destructive' });
                       }
                     }}
                   />

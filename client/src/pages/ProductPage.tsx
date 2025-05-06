@@ -131,7 +131,7 @@ export default function ProductPage() {
   return (
     <>
       <Helmet>
-        <title>{product.name} | Kama Ayurveda</title>
+        <title>{product.name} | Shiv Kumar jha</title>
         <meta name="description" content={product.shortDescription || product.description.substring(0, 160)} />
         <meta property="og:title" content={product.name} />
         <meta property="og:description" content={product.shortDescription || product.description.substring(0, 160)} />
@@ -247,7 +247,53 @@ export default function ProductPage() {
                 image={product.images?.[selectedImageIndex] || product.imageUrl}
               />
             </div>
-            
+            {/* Serviceability Check */}
+        <div className="mt-4 border-t pt-4">
+          <h3 className="font-heading text-lg text-primary mb-2">Check Estimated Delivery</h3>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={pincode}
+              onChange={e => setPincode(e.target.value)}
+              placeholder="Enter your pincode"
+              maxLength={6}
+              className="border p-2 rounded w-32"
+            />
+            <button
+              onClick={handleCheckPincode}
+              disabled={serviceLoading}
+              className="bg-primary text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+              {serviceLoading ? 'Checking...' : 'Check'}
+            </button>
+          </div>
+          {serviceError && <p className="text-red-500 mt-2">{serviceError}</p>}
+          {serviceData && serviceData.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {serviceData[0].rate === 0 && <p className="text-green-600">Free Delivery Available</p>}
+              <p>Estimated Delivery by {new Date(serviceData[0].estimated_delivery_date).toLocaleDateString()}</p>
+              {(() => {
+                const estDate = new Date(serviceData[0].estimated_delivery_date);
+                const now = new Date();
+                if ((estDate.getTime() - now.getTime()) <= 24 * 60 * 60 * 1000) {
+                  return <p className="text-green-600">Guaranteed Shipping Within 24 hours</p>;
+                }
+                return null;
+              })()}
+              {(() => {
+                const now = new Date();
+                const cutoff = new Date();
+                cutoff.setHours(14, 0, 0, 0);
+                const estDate = new Date(serviceData[0].estimated_delivery_date);
+                const estDateStr = estDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+                if (now < cutoff) {
+                  return <p>Order before 2 PM for Delivery by {estDateStr}</p>;
+                }
+                return <p>Order now for Delivery by {estDateStr} (orders placed after 2 PM ship next day)</p>;
+              })()}
+            </div>
+          )}
+        </div>
             <div className="prose prose-sm max-w-none text-neutral-gray mt-6">
               <h3 className="text-primary font-heading text-lg">Product Description</h3>
               <p>{product.description}</p>
@@ -348,53 +394,7 @@ export default function ProductPage() {
           </Tabs>
         </div>
         
-        {/* Serviceability Check */}
-        <div className="mt-4 border-t pt-4">
-          <h3 className="font-heading text-lg text-primary mb-2">Check Estimated Delivery</h3>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={pincode}
-              onChange={e => setPincode(e.target.value)}
-              placeholder="Enter your pincode"
-              maxLength={6}
-              className="border p-2 rounded w-32"
-            />
-            <button
-              onClick={handleCheckPincode}
-              disabled={serviceLoading}
-              className="bg-primary text-white px-4 py-2 rounded disabled:opacity-50"
-            >
-              {serviceLoading ? 'Checking...' : 'Check'}
-            </button>
-          </div>
-          {serviceError && <p className="text-red-500 mt-2">{serviceError}</p>}
-          {serviceData && serviceData.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {serviceData[0].rate === 0 && <p className="text-green-600">Free Delivery Available</p>}
-              <p>Estimated Delivery by {new Date(serviceData[0].estimated_delivery_date).toLocaleDateString()}</p>
-              {(() => {
-                const estDate = new Date(serviceData[0].estimated_delivery_date);
-                const now = new Date();
-                if ((estDate.getTime() - now.getTime()) <= 24 * 60 * 60 * 1000) {
-                  return <p className="text-green-600">Guaranteed Shipping Within 24 hours</p>;
-                }
-                return null;
-              })()}
-              {(() => {
-                const now = new Date();
-                const cutoff = new Date();
-                cutoff.setHours(14, 0, 0, 0);
-                const estDate = new Date(serviceData[0].estimated_delivery_date);
-                const estDateStr = estDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-                if (now < cutoff) {
-                  return <p>Order before 2 PM for Delivery by {estDateStr}</p>;
-                }
-                return <p>Order now for Delivery by {estDateStr} (orders placed after 2 PM ship next day)</p>;
-              })()}
-            </div>
-          )}
-        </div>
+        
         
         {/* Related Products */}
         <div className="mt-16">
