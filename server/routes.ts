@@ -1068,6 +1068,38 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
   
   // Order routes
+  app.post("/api/orders", async (req, res) => {
+    try {
+      const { order: orderData, items } = orderPayloadSchema.parse(req.body);
+      const createdOrder = await storage.createOrder(orderData);
+      const orderId = createdOrder.id;
+      if (!orderId) return res.status(500).json({ message: "Order creation failed: missing ID" });
+      for (const item of items) {
+        await storage.addOrderItem({ orderId, productId: item.productId, quantity: item.quantity, price: item.price });
+      }
+      const createdItems = await storage.getOrderItems(orderId);
+      const user = await storage.getUser(orderData.userId);
+      const toEmail = orderData.billingEmail || user?.email;
+      if (toEmail) {
+        const itemsHtml = items.map(it => `<li>Product ID: ${it.productId}, Quantity: ${it.quantity}, Price: ${it.price}</li>`).join("");
+        const html = `
+          <h1>Order Confirmation - ${orderId}</h1>
+          <p>Thank you for your purchase! Here are your order details:</p>
+          <ul>${itemsHtml}</ul>
+          <p>Total Amount: ${createdOrder.totalAmount}</p>
+          <p>Shipping Address: ${createdOrder.shippingAddress}</p>
+        `;
+        sendMail({ to: toEmail, subject: `Order Confirmation - ${orderId}`, html }).catch(err => console.error("Invoice email error:", err));
+      }
+      return res.status(201).json({ order: createdOrder, items: createdItems });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      console.error("Create order error:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
   app.get("/api/orders", async (req, res) => {
     try {
       const { userId, page, limit, status, search, date } = req.query;
