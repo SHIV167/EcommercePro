@@ -557,16 +557,29 @@ export async function registerRoutes(app: Application): Promise<Server> {
     }
   });
   
-  app.get("/api/products/:identifier", async (req, res) => {
+  app.get("/api/products/:idOrSlug", async (req, res, next) => {
+    // Skip CSV endpoints to allow dedicated handlers
+    if (req.params.idOrSlug === 'export' || req.params.idOrSlug === 'sample-csv') {
+      return next();
+    }
     try {
-      const { identifier } = req.params;
+      const idOrSlug = req.params.idOrSlug;
       let product;
-      if (/^[0-9a-fA-F]{24}$/.test(identifier)) {
-        product = await storage.getProductById(identifier);
-      } else {
-        product = await storage.getProductBySlug(identifier);
+
+      // Try as MongoDB ObjectId first
+      if (/^[0-9a-fA-F]{24}$/.test(idOrSlug)) {
+        product = await storage.getProductById(idOrSlug);
       }
-      if (!product) return res.status(404).json({ message: 'Product not found' });
+
+      // If not found, try as slug
+      if (!product) {
+        product = await storage.getProductBySlug(idOrSlug);
+      }
+
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+
       return res.status(200).json(product);
     } catch (error) {
       console.error('Fetch product detail error:', error);
@@ -699,23 +712,23 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.get("/api/products/:idOrSlug", async (req, res) => {
     try {
       const idOrSlug = req.params.idOrSlug;
-    let product;
+      let product;
 
-    // Try as MongoDB ObjectId first
-    if (/^[0-9a-fA-F]{24}$/.test(idOrSlug)) {
-      product = await storage.getProductById(idOrSlug);
-    }
+      // Try as MongoDB ObjectId first
+      if (/^[0-9a-fA-F]{24}$/.test(idOrSlug)) {
+        product = await storage.getProductById(idOrSlug);
+      }
 
-    // If not found, try as slug
-    if (!product) {
-      product = await storage.getProductBySlug(idOrSlug);
-    }
+      // If not found, try as slug
+      if (!product) {
+        product = await storage.getProductBySlug(idOrSlug);
+      }
 
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
 
-    return res.status(200).json(product);
+      return res.status(200).json(product);
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
     }
