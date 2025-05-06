@@ -14,6 +14,9 @@ import ScannerModel from "./models/Scanner"; // Import ScannerModel
 import { v4 as uuidv4 } from "uuid"; // Import uuid
 import { z } from "zod";
 import { categorySchema, collectionSchema, productSchema } from "@shared/schema";
+import type { Product } from "../shared/schema";
+
+type InsertProduct = Omit<Product, 'id' | '_id' | 'createdAt'>;
 import { sendMail } from "./utils/mailer";
 import upload from "./utils/upload";
 import crypto from "crypto";
@@ -1855,21 +1858,21 @@ export async function registerRoutes(app: Application): Promise<Server> {
       const products = await storage.getProducts();
       const header = ['sku','name','description','shortDescription','price','discountedPrice','stock','slug','featured','bestseller','isNew','videoUrl','imageUrl','images','categoryId'].join(',');
       const rows = products.map(p => [
-        p.sku,
-        `"${p.name.replace(/"/g,'"\"')}"`,
-        `"${p.description.replace(/"/g,'"\"')}"`,
-        `"${(p.shortDescription||'').replace(/"/g,'"\"')}"`,
-        p.price,
-        p.discountedPrice||'',
-        p.stock,
-        p.slug,
-        p.featured,
-        p.bestseller,
-        p.isNew,
-        p.videoUrl||'',
-        p.imageUrl||'',
-        `"${(p.images||[]).join('|')}"`,
-        p.categoryId
+        p.sku || '',
+        `"${(p.name || '').replace(/"/g,'"\"')}"`,
+        `"${(p.description || '').replace(/"/g,'"\"')}"`,
+        `"${(p.shortDescription || '').replace(/"/g,'"\"')}"`,
+        p.price || '',
+        p.discountedPrice || '',
+        p.stock || '',
+        p.slug || '',
+        p.featured || false,
+        p.bestseller || false,
+        p.isNew || false,
+        p.videoUrl || '',
+        p.imageUrl || '',
+        `"${(p.images || []).join('|')}"`,
+        p.categoryId || ''
       ].join(',')).join('\n');
       const csv = header + '\n' + rows;
       res.setHeader('Content-Type','text/csv');
@@ -1884,7 +1887,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Sample CSV for product import
   app.get('/api/products/sample-csv', (req, res) => {
     const header = ['sku','name','description','shortDescription','price','discountedPrice','stock','slug','featured','bestseller','isNew','videoUrl','imageUrl','images','categoryId'].join(',');
-    const example = ['EXAMPLE-SKU','Example Product','A sample description','', '9.99', '', '100', 'example-product', 'false', 'false', 'true', '', '', '', ''];
+    const example = ['EXAMPLE-SKU','Example Product','A sample description','Short desc', '9.99', '7.99', '100', 'example-product', 'false', 'false', 'true', '', '', '', ''];
     const csv = header + '\n' + example.join(',');
     res.setHeader('Content-Type','text/csv');
     res.setHeader('Content-Disposition','attachment; filename="sample-products.csv"');
@@ -1895,29 +1898,131 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.post('/api/products/import', upload.single('file'), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: 'CSV file is required' });
+      
       const content = fs.readFileSync(req.file.path, 'utf8');
       const lines = content.split(/\r?\n/).filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        return res.status(400).json({ message: 'CSV file must contain header and at least one data row' });
+      }
+      
       const [headerLine, ...dataLines] = lines;
       const headers = headerLine.split(',');
-      const results: any[] = [];
-      for (const line of dataLines) {
-        const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
-        const obj: any = {};
-        headers.forEach((h, i) => { obj[h] = values[i]?.replace(/^"|"$/g, ''); });
+      const requiredFields = ['sku', 'name', 'price', 'stock', 'slug'];
+      
+      // Validate headers
+      const missingFields = requiredFields.filter(field => !headers.includes(field));
+      if (missingFields.length > 0) {
+        return res.status(400).json({ 
+          message: `Missing required fields in CSV: ${missingFields.join(', ')}` 
+        });
+      }
+      
+      interface ProductRow {
+        sku: string;
+        status: string;
+      }
+      
+      const results: ProductRow[] = [];
+      const errors: {row: number; sku: string; error: string}[] = [];
+      
+      for (let i = 0; i < dataLines.length; i++) {
+        const line = dataLines[i];
+        // Handle CSV values that may contain commas inside quotes
+        const values: string[] = [];
+        let currentValue = '';
+        let inQuotes = false;
+        
+        for (let j = 0; j < line.length; j++) {
+          const char = line[j];
+          
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            values.push(currentValue);
+            currentValue = '';
+          } else {
+            currentValue += char;
+          }
+        }
+        
+        // Add the last value
+        values.push(currentValue);
+        
         try {
-          productSchema.parse(obj);
-          const existing = await storage.getProductBySlug(obj.slug);
-          if (existing) continue;
-          await storage.createProduct(obj);
-          results.push({ sku: obj.sku, status: 'created' });
-        } catch (e) {
-          console.error('Import row error:', e);
+          // Build product data from CSV values
+          const data: Record<string, any> = {};
+          
+          headers.forEach((header, index) => {
+            let value = values[index] || '';
+            // Remove quotes
+            if (value.startsWith('"') && value.endsWith('"')) {
+              value = value.substring(1, value.length - 1);
+            }
+            data[header] = value;
+          });
+          
+          // Apply conversions for all fields
+          const product = {
+            sku: String(data.sku || '').trim(),
+            name: String(data.name || '').trim(),
+            description: String(data.description || '').trim(),
+            shortDescription: data.shortDescription,
+            price: Number(data.price || 0),
+            discountedPrice: data.discountedPrice ? Number(data.discountedPrice) : undefined,
+            imageUrl: String(data.imageUrl || '').trim(),
+            stock: Number(data.stock || 0),
+            slug: String(data.slug || '').trim(),
+            categoryId: String(data.categoryId || '').trim(),
+            featured: data.featured === 'true',
+            bestseller: data.bestseller === 'true',
+            isNew: data.isNew === 'true',
+            images: data.images ? String(data.images).split('|').filter(Boolean) : [],
+            videoUrl: data.videoUrl
+          };
+          
+          // Validate required fields
+          if (!product.sku) throw new Error('SKU is required');
+          if (!product.name) throw new Error('Name is required');
+          if (!product.slug) throw new Error('Slug is required');
+          if (!product.imageUrl) throw new Error('Image URL is required');
+          if (!product.categoryId) throw new Error('Category ID is required');
+          if (isNaN(product.price)) throw new Error('Price must be a number');
+          
+          // Check if product exists
+          const existing = await storage.getProductBySlug(product.slug);
+          
+          if (existing && existing._id) {
+            // Update existing product
+            await storage.updateProduct(existing._id.toString(), product);
+            results.push({ sku: product.sku, status: 'updated' });
+          } else {
+            // Create new product
+            await storage.createProduct(product as any);
+            results.push({ sku: product.sku, status: 'created' });
+          }
+        } catch (error: any) {
+          console.error(`Error processing row ${i+1}:`, error);
+          const sku = values[headers.indexOf('sku')] || 'unknown';
+          errors.push({ row: i + 2, sku, error: error.message });
         }
       }
-      res.json({ imported: results });
-    } catch (err) {
+      
+      // Clean up the temporary file
+      fs.unlinkSync(req.file.path);
+      
+      res.json({ 
+        imported: results, 
+        errors: errors,
+        summary: {
+          total: dataLines.length,
+          success: results.length,
+          failed: errors.length
+        }
+      });
+    } catch (err: any) {
       console.error('Import error:', err);
-      res.status(500).json({ message: 'Import failed' });
+      res.status(500).json({ message: `Import failed: ${err.message}` });
     }
   });
 

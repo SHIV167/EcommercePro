@@ -185,8 +185,44 @@ export default function ProductsManagement() {
               <Button variant="outline">Bulk Products+</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => window.open('/api/products/export')}>Export CSV</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => window.open('/uploads/sample-products.csv')}>Download Sample</DropdownMenuItem>
+              <DropdownMenuItem onSelect={async () => {
+                try {
+                  const response = await fetch('/api/products/export', {
+                    credentials: 'include'
+                  });
+                  if (!response.ok) throw new Error('Export failed');
+                  const blob = await response.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `products_export_${Date.now()}.csv`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                } catch (error) {
+                  console.error('Export error:', error);
+                  toast({ title: 'Export failed', variant: 'destructive' });
+                }
+              }}>Export CSV</DropdownMenuItem>
+              <DropdownMenuItem onSelect={async () => {
+                try {
+                  const response = await fetch('/api/products/sample-csv', {
+                    credentials: 'include'
+                  });
+                  if (!response.ok) throw new Error('Download sample failed');
+                  const blob = await response.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'sample-products.csv';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                } catch (error) {
+                  console.error('Download sample error:', error);
+                  toast({ title: 'Download sample failed', variant: 'destructive' });
+                }
+              }}>Download Sample</DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <label className="w-full cursor-pointer">
                   Import CSV
@@ -200,10 +236,12 @@ export default function ProductsManagement() {
                       const formData = new FormData();
                       formData.append('file', file);
                       try {
-                        await apiRequest('POST', '/api/products/import', formData);
-                        toast({ title: 'Import successful' });
+                        const response = await apiRequest('POST', '/api/products/import', formData);
+                        const responseData = await response.json();
+                        toast({ title: `Import successful: ${responseData.imported?.length || 0} products imported` });
                         refetchProducts();
-                      } catch {
+                      } catch (error) {
+                        console.error('Import error:', error);
                         toast({ title: 'Import failed', variant: 'destructive' });
                       }
                     }}
