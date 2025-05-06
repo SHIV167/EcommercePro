@@ -1913,10 +1913,13 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Import products from CSV
   app.post('/api/products/import', upload.single('file'), async (req, res) => {
     try {
+      console.log('[IMPORT] Starting CSV import', { file: req.file });
       if (!req.file) return res.status(400).json({ message: 'CSV file is required' });
       
       const content = fs.readFileSync(path.join(__dirname, '../public/uploads', req.file.filename), 'utf8');
+      console.log('[IMPORT] File read complete', { size: content.length });
       const lines = content.split(/\r?\n/).filter(line => line.trim());
+      console.log('[IMPORT] Lines parsed', { count: lines.length });
       
       if (lines.length < 2) {
         return res.status(400).json({ message: 'CSV file must contain header and at least one data row' });
@@ -1924,11 +1927,13 @@ export async function registerRoutes(app: Application): Promise<Server> {
       
       const [headerLine, ...dataLines] = lines;
       const headers = headerLine.split(',');
+      console.log('[IMPORT] Headers', { headers: headers });
       const requiredFields = ['sku', 'name', 'price', 'stock', 'slug'];
       
       // Validate headers
       const missingFields = requiredFields.filter(field => !headers.includes(field));
       if (missingFields.length > 0) {
+        console.log('[IMPORT] Validation failed', { missing: missingFields });
         return res.status(400).json({ 
           message: `Missing required fields in CSV: ${missingFields.join(', ')}` 
         });
@@ -1943,6 +1948,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
       const errors: {row: number; sku: string; error: string}[] = [];
       
       for (let i = 0; i < dataLines.length; i++) {
+        console.log('[IMPORT] Processing row', { row: i+2, total: dataLines.length });
         const line = dataLines[i];
         // Handle CSV values that may contain commas inside quotes
         const values: string[] = [];
@@ -1996,7 +2002,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
             images: data.images ? String(data.images).split('|').filter(Boolean) : [],
             videoUrl: data.videoUrl
           };
-          
+          console.log('[IMPORT] Converted data', { sku: product.sku, name: product.name });
           // Validate required fields
           if (!product.sku) throw new Error('SKU is required');
           if (!product.name) throw new Error('Name is required');
@@ -2007,7 +2013,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
           
           // Check if product exists
           const existing = await storage.getProductBySlug(product.slug);
-          
+          console.log('[IMPORT] Checking existing', { slug: product.slug, exists: !!existing });
           if (existing && existing._id) {
             // Update existing product
             await storage.updateProduct(existing._id.toString(), product);
@@ -2018,15 +2024,18 @@ export async function registerRoutes(app: Application): Promise<Server> {
             results.push({ sku: product.sku, status: 'created' });
           }
         } catch (error: any) {
-          console.error(`Error processing row ${i+1}:`, error);
+          console.error('[IMPORT] Row error', { row: i+2, error: error.message });
           const sku = values[headers.indexOf('sku')] || 'unknown';
           errors.push({ row: i + 2, sku, error: error.message });
         }
       }
       
       // Clean up the temporary file
+      console.log('[IMPORT] Cleanup', { file: req.file.path });
       fs.unlinkSync(req.file.path);
+      fs.unlinkSync(path.join(__dirname, '../public/uploads', req.file.filename));
       
+      console.log('[IMPORT] Complete', { success: results.length, failed: errors.length });
       res.json({ 
         imported: results, 
         errors: errors,
@@ -2037,7 +2046,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
         }
       });
     } catch (err: any) {
-      console.error('Import error:', err);
+      console.error('[IMPORT] Fatal error', err);
       res.status(500).json({ message: `Import failed: ${err.message}` });
     }
   });
