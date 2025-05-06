@@ -1,66 +1,27 @@
-import { useEffect, useState } from 'react';
-import { useCart } from '@/hooks/useCart';
-import { Button } from '@/components/ui/button';
-import { apiRequest } from '@/lib/queryClient';
-import { formatCurrency } from '@/lib/utils';
+import GiftCardForm from '@/components/GiftCardForm';
 import { Helmet } from 'react-helmet';
-import { Link } from 'wouter';
-
-// Define a local interface for gift card templates
-interface GiftCardTemplate { _id: string; initialAmount: number; expiryDate: string; isActive: boolean; }
 
 export default function GiftCardsPage() {
-  const [templates, setTemplates] = useState<GiftCardTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { addItem } = useCart();
-
-  useEffect(() => {
-    async function fetchTemplates() {
-      try {
-        const res = await apiRequest('GET', '/api/giftcards');
-        const data = (await res.json()) as GiftCardTemplate[];
-        setTemplates(data);
-      } catch (err) {
-        console.error('Failed to load gift card templates:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchTemplates();
-  }, []);
-
-  if (loading) return <div className="container p-8 text-center">Loading gift cards...</div>;
-
-  const sorted = templates.sort((a, b) => a.initialAmount - b.initialAmount);
-  const defaultTemplate = sorted[0];
-
   return (
     <>
       <Helmet>
-        <title>Gift Cards | Kama Ayurveda</title>
+        <title>eGift Card | Kama Ayurveda</title>
       </Helmet>
-      <div className="container mx-auto p-8">
-        <h1 className="text-2xl font-heading mb-6">Gift Cards</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {sorted.map((tpl) => (
-            <div key={tpl._id} className="border rounded-lg p-4 flex flex-col justify-between">
-              <div>
-                <p className="font-medium text-lg">{formatCurrency(tpl.initialAmount)}</p>
-                <p className="text-sm text-neutral-gray mt-1">Valid until: {new Date(tpl.expiryDate).toLocaleDateString()}</p>
-              </div>
-              <Button
-                onClick={() => addItem({
-                  _id: tpl._id,
-                  name: `Gift Card ${formatCurrency(tpl.initialAmount)}`,
-                  price: tpl.initialAmount,
-                } as any)}
-                variant={tpl._id === defaultTemplate._id ? 'default' : 'outline'}
-                className="mt-4"
-              >
-                Add to Cart
-              </Button>
-            </div>
-          ))}
+      <div className="container mx-auto py-12 px-4">
+        <GiftCardForm />
+        {/* Benefits Section */}
+        <div className="mt-16 max-w-3xl mx-auto">
+          <h2 className="font-heading text-xl mb-4">Benefits</h2>
+          <ul className="list-disc pl-6 text-neutral-gray space-y-2">
+            <li>Seamless gifting solution, perfect for last-minute celebrations.</li>
+            <li>eGift Card is sent directly via email for quick and easy gifting.</li>
+            <li>Usable for purchasing from a wide selection of skincare, haircare, and wellness products.</li>
+            <li>A sophisticated and thoughtful gift that offers a memorable indulgent experience.</li>
+            <li>The Gift Card is valid for a period of 12 months from the date of issuance.</li>
+          </ul>
+          <div className="mt-4 text-xs text-neutral-gray">
+            <span className="underline">Terms &amp; Conditions</span>
+          </div>
         </div>
       </div>
     </>
