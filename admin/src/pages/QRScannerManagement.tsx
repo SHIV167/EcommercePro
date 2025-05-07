@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,43 @@ export default function QRScannerManagement() {
   const [qrValue, setQrValue] = useState<string>("");
   const [emailAddr, setEmailAddr] = useState<string>("");
 
+  // Fetch available coupons for QR codes
+  const { data: couponsData } = useQuery({
+    queryKey: ["coupons"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/coupons");
+      return await res.json();
+    },
+  });
+  const coupons = couponsData || [];
+
+  // Function to create a QR-specific coupon if none exist
+  const createQrCoupon = useMutation({
+    mutationFn: async () => {
+      const couponData = {
+        code: `QR-SCAN-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+        description: "Auto-generated QR Scan Discount",
+        discountType: "percentage",
+        discountAmount: 10, // 10% discount
+        minimumOrderValue: 0,
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
+        usageLimit: 1000,
+        usageLimitPerUser: 1,
+        isActive: true,
+      };
+      const res = await apiRequest("POST", "/api/admin/coupons", couponData);
+      return res.json();
+    },
+    onSuccess: (newCoupon) => {
+      toast({ title: "QR Coupon Created", description: `Coupon ${newCoupon.code} created for QR scans.` });
+    },
+    onError: (error) => {
+      console.error("Failed to create QR coupon", error);
+      toast({ title: "Failed to create QR coupon", variant: "destructive" });
+    },
+  });
+
   // Scanner data
   const { data: scanners, refetch } = useQuery({
     queryKey: ["scanners"],
@@ -56,6 +93,21 @@ export default function QRScannerManagement() {
     onSuccess: () => {
       toast({ title: "Scanner entry deleted" });
       refetch();
+    },
+  });
+
+  const updateCouponCode = useMutation({
+    mutationFn: async ({ scannerId, couponCode }: { scannerId: string; couponCode: string }) => {
+      const res = await apiRequest("PATCH", `/api/admin/qr-scanner/${scannerId}`, { couponCode });
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      toast({ title: "Coupon Code Updated", description: `Coupon code updated for scanner ${variables.scannerId}.` });
+      refetch(); // Refresh the scanner list
+    },
+    onError: (error) => {
+      console.error("Failed to update coupon code", error);
+      toast({ title: "Failed to update coupon code", variant: "destructive" });
     },
   });
 
@@ -135,6 +187,10 @@ export default function QRScannerManagement() {
     }
   };
 
+  const handleCouponCodeChange = (scannerId: string, newCouponCode: string) => {
+    updateCouponCode.mutate({ scannerId, couponCode: newCouponCode });
+  };
+
   return (
     <div className="space-y-6 p-6">
       <h1 className="text-2xl font-heading">QR Scanner Management</h1>
@@ -170,35 +226,44 @@ export default function QRScannerManagement() {
       <section className="border p-4 rounded">
         <h2 className="text-lg mb-2">Scanned Entries</h2>
         <div className="overflow-auto">
-          <table className="w-full border-collapse border">
+          <table className="w-full border-collapse border border-gray-300 text-sm">
             <thead>
               <tr>
-                <th className="border p-2">ID</th>
-                <th className="border p-2">Data</th>
-                <th className="border p-2">Product ID</th>
-                <th className="border p-2">Scanned At</th>
-                <th className="border p-2">QR Code</th>
-                <th className="border p-2">Email</th>
-                <th className="border p-2">Actions</th>
+                <th className="border border-gray-400 p-1">ID</th>
+                <th className="border border-gray-400 p-1">Data</th>
+                <th className="border border-gray-400 p-1">Product ID</th>
+                <th className="border border-gray-400 p-1">Scanned At</th>
+                <th className="border border-gray-400 p-1">QR Code</th>
+                <th className="border border-gray-400 p-1">Email</th>
+                <th className="border border-gray-400 p-1">Coupon Code</th>
+                <th className="border border-gray-400 p-1">Actions</th>
               </tr>
             </thead>
             <tbody>
               {scanners?.map((s: any) => (
                 <tr key={s._id}>
-                  <td className="border p-2">{s._id}</td>
-                  <td className="border p-2">{s.data}</td>
-                  <td className="border p-2">{s.productId || '-'}</td>
-                  <td className="border p-2">{new Date(s.scannedAt).toLocaleString()}</td>
-                  <td className="border p-2">
+                  <td className="border border-gray-400 p-1">{s._id}</td>
+                  <td className="border border-gray-400 p-1">{s.data}</td>
+                  <td className="border border-gray-400 p-1">{s.productId || '-'}</td>
+                  <td className="border border-gray-400 p-1">{new Date(s.scannedAt).toLocaleString()}</td>
+                  <td className="border border-gray-400 p-1">
                     <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(s.data)}&size=100x100`} alt="QR Code" />
                   </td>
-                  <td className="border p-2">
+                  <td className="border border-gray-400 p-1">
                     <div className="flex items-center space-x-2">
                       <Input type="email" placeholder="Email" value={rowEmails[s._id] || ""} onChange={e => handleRowEmailChange(s._id, e.target.value)} />
                       <Button size="sm" onClick={() => handleRowEmailShare(s._id, s.data, products.find(p => p._id === s.productId)?.name)}>Send</Button>
                     </div>
                   </td>
-                  <td className="border p-2">
+                  <td className="border border-gray-400 p-1">
+                    <Input 
+                      value={s.couponCode || ""} 
+                      onChange={(e) => handleCouponCodeChange(s._id, e.target.value)} 
+                      placeholder="Enter Coupon Code"
+                      className="w-full"
+                    />
+                  </td>
+                  <td className="border border-gray-400 p-1">
                     <Button
                       size="sm"
                       variant="destructive"
