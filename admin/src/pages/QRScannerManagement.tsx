@@ -123,7 +123,7 @@ export default function QRScannerManagement() {
       });
     },
     onSuccess: () => {
-      refetch();
+      refetch(); // Refresh the scanner list to update the UI with the latest data
     },
   });
 
