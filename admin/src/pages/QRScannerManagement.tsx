@@ -66,7 +66,7 @@ export default function QRScannerManagement() {
   });
 
   // Scanner data
-  const { data: scanners, refetch } = useQuery({
+  const { data: scanners, refetch, isLoading, error } = useQuery({
     queryKey: ["scanners"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/scanners");
@@ -74,6 +74,15 @@ export default function QRScannerManagement() {
     },
     refetchInterval: 5000,
   });
+
+  interface Scanner {
+    _id: string;
+    data: string;
+    productId?: string;
+    couponCode?: string;
+    scanCount: number;
+    scannedAt?: string;
+  }
 
   const createScanner = useMutation({
     mutationFn: async (body: any) => {
@@ -191,6 +200,9 @@ export default function QRScannerManagement() {
     updateCouponCode.mutate({ scannerId, couponCode: newCouponCode });
   };
 
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {(error as Error).message}</div>;
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">QR Scanner Management</h1>
@@ -267,54 +279,35 @@ export default function QRScannerManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Share</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scan Count</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scanned At</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coupon Code</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {scanners?.map(s => (
+              {scanners?.map((s: Scanner) => (
                 <tr key={s._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{s._id?.slice(-6)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {products.find(p => p._id === s.productId)?.name || 'Unknown'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(s.createdAt).toLocaleString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{s._id.slice(-6)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.data.slice(0, 30)}...</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.scanCount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.scannedAt ? new Date(s.scannedAt).toLocaleString() : 'Not scanned'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
+                    <Input
+                      value={s.couponCode || ''}
+                      onChange={(e) => handleCouponCodeChange(s._id, e.target.value)}
+                      placeholder="Enter coupon code"
+                      className="w-40"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <Button
+                      variant="destructive"
                       onClick={() => deleteScanner.mutate(s._id)}
-                      className="text-red-600 hover:text-red-900"
                     >
                       Delete
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="email"
-                        value={rowEmails[s._id] || ""}
-                        onChange={e => setRowEmails(prev => ({ ...prev, [s._id]: e.target.value }))}
-                        placeholder="Email"
-                        className="p-1 border rounded w-32"
-                      />
-                      <button
-                        onClick={() => handleRowEmailShare(s._id, s.data, products.find(p => p._id === s.productId)?.name)}
-                        className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm"
-                      >
-                        Send
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <input
-                      type="text"
-                      value={s.couponCode || ""}
-                      onChange={e => handleCouponCodeChange(s._id, e.target.value)}
-                      placeholder="Coupon Code"
-                      className="p-1 border rounded w-24"
-                    />
+                    </Button>
                   </td>
                 </tr>
               ))}

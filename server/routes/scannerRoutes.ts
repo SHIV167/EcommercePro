@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { sendMail } from '../utils/mailer';
+import ScannerModel from '../models/Scanner'; 
 
 const router = express.Router();
 
@@ -29,6 +30,33 @@ router.post('/share', async (req: Request, res: Response) => {
   } catch (error: unknown) {
     console.error('Error sharing QR code:', error);
     return res.status(500).json({ message: 'Failed to share QR code via email', error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+// Endpoint to update coupon code for a scanner
+router.patch('/admin/qr-scanner/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { couponCode } = req.body;
+
+    if (!couponCode) {
+      return res.status(400).json({ message: 'Coupon code is required' });
+    }
+
+    const scanner = await ScannerModel.findByIdAndUpdate(
+      id,
+      { couponCode },
+      { new: true }
+    );
+
+    if (!scanner) {
+      return res.status(404).json({ message: 'Scanner not found' });
+    }
+
+    return res.status(200).json({ message: 'Coupon code updated successfully', scanner });
+  } catch (error: unknown) {
+    console.error('Error updating coupon code:', error);
+    return res.status(500).json({ message: 'Failed to update coupon code', error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 

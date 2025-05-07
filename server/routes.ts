@@ -2095,7 +2095,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', couponRoutes); // Removed authentication for testing
   app.use('/api', giftCardTemplateRoutes);
   app.use('/api', giftCardRoutes);
-  app.use('/api', scannerRoutes); // Add scanner routes to the application
+  app.use('/api/scanners', scannerRoutes); // Add scanner routes to the application
 
   // Error handling middleware to ensure JSON responses
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
