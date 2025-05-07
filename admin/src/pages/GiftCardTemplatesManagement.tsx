@@ -33,15 +33,7 @@ interface Template {
 
 export default function GiftCardTemplatesManagement() {
   const queryClient = useQueryClient();
-  const apiBase: string = (() => {
-    const envUrl = import.meta.env.VITE_API_URL;
-    if (envUrl) return envUrl;
-    const origin = window.location.origin;
-    if (origin.includes("-admin")) {
-      return origin.replace("-admin", "-server");
-    }
-    return origin;
-  })();
+  const apiBase: string = import.meta.env.VITE_API_URL ?? '';
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Template | null>(null);
@@ -57,7 +49,10 @@ export default function GiftCardTemplatesManagement() {
       return [];
     }
     if (!res.ok) throw new Error("Failed to fetch templates");
-    return res.json();
+    const payload = await res.json();
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray((payload as any).data)) return (payload as any).data;
+    return [];
   };
 
   const { data: templates = [] } = useQuery<Template[], Error, Template[]>({

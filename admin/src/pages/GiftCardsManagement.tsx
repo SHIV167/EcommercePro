@@ -35,16 +35,12 @@ interface GiftCard {
 
 export default function GiftCardsManagement() {
   const queryClient = useQueryClient();
-  const apiBase: string = (() => {
-    const envUrl = import.meta.env.VITE_API_URL;
-    if (envUrl) return envUrl;
-    const origin = window.location.origin;
-    // If on admin domain (e.g. ecommercepro-admin.onrender.com), map to main API domain
-    if (origin.includes('-admin')) {
-      return origin.replace('-admin', '-server');
-    }
-    return origin;
-  })();
+  // require API URL from env
+  const apiBase: string = import.meta.env.VITE_API_URL ?? (
+    window.location.origin.includes('-admin')
+      ? window.location.origin.replace('-admin', '-server')
+      : window.location.origin
+  );
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<GiftCard | null>(null);
@@ -63,6 +59,10 @@ export default function GiftCardsManagement() {
       return [];
     }
     if (!res.ok) throw new Error('Failed to fetch gift cards');
+    const contentType = res.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Unexpected content-type: ${contentType}`);
+    }
     const data = await res.json();
     if (Array.isArray(data)) return data;
     if (Array.isArray((data as any).data)) return (data as any).data;
