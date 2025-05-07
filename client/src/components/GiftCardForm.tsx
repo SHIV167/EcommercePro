@@ -26,16 +26,23 @@ export default function GiftCardForm() {
   const { addItem } = useCart();
   const [, navigate] = useLocation();
 
+  // Static fallback gift card amounts
+  const STATIC_AMOUNTS = [500,1000,1500,2500,5000,7500,10000,12500,15000];
+
   useEffect(() => {
     async function loadTemplates() {
       try {
         const res = await apiRequest('GET', '/api/giftcards');
         const data = (await res.json()) as GiftCardTemplate[];
         const sorted = data.sort((a, b) => a.initialAmount - b.initialAmount);
-        setTemplates(sorted);
-        if (sorted.length) {
-          // Initialize to first template
-          const defaultTemplate = sorted[0];
+        // Merge with static amounts
+        const missing = STATIC_AMOUNTS.filter(a => !sorted.some(t => t.initialAmount === a));
+        const staticTemplates = missing.map(amount => ({ _id: `static-${amount}`, initialAmount: amount, expiryDate: '', isActive: true, imageUrl: '' }));
+        const combined = [...sorted, ...staticTemplates].sort((a, b) => a.initialAmount - b.initialAmount);
+        setTemplates(combined);
+        if (combined.length) {
+          // Initialize to first option
+          const defaultTemplate = combined[0];
           setSelectedTemplate(defaultTemplate);
           setAmount(defaultTemplate.initialAmount);
         }

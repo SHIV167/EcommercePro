@@ -2091,11 +2091,11 @@ export async function registerRoutes(app: Application): Promise<Server> {
   };
 
   // Register routes
-  app.use('/api', authRoutes); // Add auth routes to the application
-  app.use('/api', couponRoutes); // Removed authentication for testing
-  app.use('/api', giftCardTemplateRoutes);
-  app.use('/api', giftCardRoutes);
-  app.use('/api/scanners', scannerRoutes); // Add scanner routes to the application
+  app.use('/api/auth', authRoutes); 
+  app.use('/api/coupons', couponRoutes); 
+  app.use('/api/admin/giftcard-templates', giftCardTemplateRoutes);
+  app.use('/api/admin/giftcards', giftCardRoutes);
+  app.use('/api/scanners', scannerRoutes); 
 
   // Error handling middleware to ensure JSON responses
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
