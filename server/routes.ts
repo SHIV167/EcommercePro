@@ -116,6 +116,7 @@ import couponRoutes from './routes/couponRoutes';
 import giftCardRoutes from './routes/giftCardRoutes';
 import giftCardTemplateRoutes from './routes/giftCardTemplateRoutes';
 import authRoutes from './routes/authRoutes'; // Import auth routes
+import scannerRoutes from './routes/scannerRoutes'; // Import scanner routes
 
 // Import controllers for coupons
 
@@ -2094,6 +2095,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', couponRoutes); // Removed authentication for testing
   app.use('/api', giftCardTemplateRoutes);
   app.use('/api', giftCardRoutes);
+  app.use('/api', scannerRoutes); // Add scanner routes to the application
 
   const httpServer = createServer(app);
   return httpServer;

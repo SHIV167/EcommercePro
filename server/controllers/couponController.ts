@@ -173,36 +173,43 @@ export const deleteCoupon = async (req: Request, res: Response) => {
 // Validate coupon for a user
 export const validateCoupon = async (req: Request, res: Response) => {
   try {
+    console.log('Received request to validate coupon:', req.body);
     const { code, cartValue } = req.body;
     
     if (!code) {
+      console.log('No coupon code provided');
       return res.status(400).json({ message: 'Coupon code is required' });
     }
 
     const coupon = await Coupon.findOne({ code: code.toUpperCase() });
     
     if (!coupon) {
+      console.log('Coupon not found:', code);
       return res.status(404).json({ message: 'Invalid coupon code' });
     }
 
     // Check if coupon is active
     if (!coupon.isActive) {
+      console.log('Coupon is inactive:', code);
       return res.status(400).json({ message: 'This coupon is inactive' });
     }
 
     // Check dates
     const now = new Date();
     if (now < coupon.startDate || now > coupon.endDate) {
+      console.log('Coupon is not active within the given dates:', code);
       return res.status(400).json({ message: 'This coupon has expired or is not yet active' });
     }
 
     // Check usage limit
     if (coupon.maxUses !== -1 && coupon.usedCount >= coupon.maxUses) {
+      console.log('Coupon has reached its usage limit:', code);
       return res.status(400).json({ message: 'This coupon has reached its usage limit' });
     }
 
     // Check minimum cart value
     if (cartValue < coupon.minimumCartValue) {
+      console.log('Minimum cart value not met:', code);
       return res.status(400).json({ 
         message: `Minimum cart value of ${coupon.minimumCartValue} required for this coupon`,
         minimumCartValue: coupon.minimumCartValue
@@ -217,6 +224,7 @@ export const validateCoupon = async (req: Request, res: Response) => {
       discountValue = coupon.discountAmount;
     }
 
+    console.log('Coupon is valid:', code);
     return res.status(200).json({
       valid: true,
       coupon,
