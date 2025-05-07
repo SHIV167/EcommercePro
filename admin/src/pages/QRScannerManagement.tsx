@@ -107,16 +107,23 @@ export default function QRScannerManagement() {
 
   const updateCouponCode = useMutation({
     mutationFn: async ({ scannerId, couponCode }: { scannerId: string; couponCode: string }) => {
-      const res = await apiRequest("PATCH", `/api/admin/qr-scanner/${scannerId}`, { couponCode });
-      return res.json();
+      const res = await apiRequest("PATCH", `/api/scanners/admin/qr-scanner/${scannerId}`, { couponCode });
+      toast({
+        title: "Success",
+        description: "Coupon code updated successfully",
+      });
+      return res;
     },
-    onSuccess: (_, variables) => {
-      toast({ title: "Coupon Code Updated", description: `Coupon code updated for scanner ${variables.scannerId}.` });
-      refetch(); // Refresh the scanner list
+    onError: (err) => {
+      console.error("Failed to update coupon code", err);
+      toast({
+        title: "Error",
+        description: "Failed to update coupon code",
+        variant: "destructive",
+      });
     },
-    onError: (error) => {
-      console.error("Failed to update coupon code", error);
-      toast({ title: "Failed to update coupon code", variant: "destructive" });
+    onSuccess: () => {
+      refetch();
     },
   });
 
@@ -179,20 +186,30 @@ export default function QRScannerManagement() {
   };
 
   // Handle email share for each row
-  const handleRowEmailChange = (id: string, value: string) => {
-    setRowEmails(prev => ({ ...prev, [id]: value }));
+  const handleRowEmailChange = (scannerId: string, email: string) => {
+    setRowEmails(prev => ({ ...prev, [scannerId]: email }));
   };
 
-  const handleRowEmailShare = async (id: string, url: string, productName?: string) => {
-    const email = rowEmails[id];
-    if (!email) return toast({ title: "Enter email", variant: "destructive" });
+  const handleRowEmailShare = async (scannerId: string, scannerData: string) => {
+    const email = rowEmails[scannerId];
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Please enter an email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      await apiRequest("POST", "/api/scanners/share", { email, url, productName });
-      toast({ title: "QR sent via email" });
-      // Do not clear the row email input after successful submission
+      await apiRequest("POST", "/api/scanners/share", { email, url: scannerData });
+      setRowEmails(prev => {
+        const newEmails = { ...prev };
+        delete newEmails[scannerId];
+        return newEmails;
+      });
     } catch (error) {
-      console.error(error);
-      toast({ title: "Email send failed", variant: "destructive" });
+      console.error("Error sharing QR code", error);
     }
   };
 
@@ -283,6 +300,7 @@ export default function QRScannerManagement() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scan Count</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scanned At</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coupon Code</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Share via Email</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -300,6 +318,23 @@ export default function QRScannerManagement() {
                       placeholder="Enter coupon code"
                       className="w-40"
                     />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="email"
+                        value={rowEmails[s._id] || ''}
+                        onChange={(e) => handleRowEmailChange(s._id, e.target.value)}
+                        placeholder="Enter email"
+                        className="w-40"
+                      />
+                      <Button
+                        onClick={() => handleRowEmailShare(s._id, s.data)}
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        Send
+                      </Button>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <Button
