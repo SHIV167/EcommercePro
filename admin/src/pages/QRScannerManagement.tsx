@@ -180,7 +180,7 @@ export default function QRScannerManagement() {
     try {
       await apiRequest("POST", "/api/scanners/share", { email, url, productName });
       toast({ title: "QR sent via email" });
-      setRowEmails(prev => ({ ...prev, [id]: "" }));
+      // Do not clear the row email input after successful submission
     } catch (error) {
       console.error(error);
       toast({ title: "Email send failed", variant: "destructive" });
@@ -192,85 +192,129 @@ export default function QRScannerManagement() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-heading">QR Scanner Management</h1>
-      <section className="border p-4 rounded">
-        <h2 className="text-lg mb-2">Generate QR Code</h2>
-        <div className="flex items-center space-x-2">
-          <select
-            className="border p-2 rounded"
-            value={selectedProduct}
-            onChange={(e) => setSelectedProduct(e.target.value)}
-          >
-            <option value="">Select product</option>
-            {products.map((p) => (
-              <option key={p._id} value={p._id}>{p.name}</option>
-            ))}
-          </select>
-          <Button onClick={handleGenerate}>Generate</Button>
-          <Button onClick={handleGenerateAll}>Generate All</Button>
-        </div>
-        {qrValue && (
-          <div className="mt-4">
-            <QRCodeCanvas value={qrValue} ref={qrRef} />
-            <div className="flex items-center space-x-2 mt-2">
-              <Button onClick={handleDownload}>Download</Button>
-              <Button onClick={handleShare}>Copy URL</Button>
-              <Input type="email" placeholder="Email address" value={emailAddr} onChange={e => setEmailAddr(e.target.value)} />
-              <Button onClick={handleEmailShare}>Email QR</Button>
-            </div>
-          </div>
-        )}
-      </section>
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">QR Scanner Management</h1>
 
-      <section className="border p-4 rounded">
-        <h2 className="text-lg mb-2">Scanned Entries</h2>
-        <div className="overflow-auto">
-          <table className="w-full border-collapse border border-gray-300 text-sm">
-            <thead>
+      {/* QR Generator */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">Generate QR Code</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="productSelect" className="block text-sm font-medium text-gray-700 mb-1">
+              Select Product
+            </label>
+            <select
+              id="productSelect"
+              value={selectedProduct}
+              onChange={e => setSelectedProduct(e.target.value)}
+              className="w-full p-2 border rounded"
+            >
+              <option value="">-- Select Product --</option>
+              {products.map(p => (
+                <option key={p._id} value={p._id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="emailAddr" className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
+            <input
+              id="emailAddr"
+              type="email"
+              value={emailAddr}
+              onChange={e => setEmailAddr(e.target.value)}
+              placeholder="Enter email to share"
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex gap-4">
+          <button
+            onClick={handleGenerate}
+            disabled={!selectedProduct}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Generate QR
+          </button>
+          <button
+            onClick={handleShare}
+            disabled={!qrValue}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Copy URL
+          </button>
+          <button
+            onClick={handleEmailShare}
+            disabled={!qrValue || !emailAddr}
+            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+          >
+            Share via Email
+          </button>
+        </div>
+        <div className="mt-6 flex justify-center">
+          <canvas ref={qrRef} className="border rounded-lg shadow-lg" />
+        </div>
+      </div>
+
+      {/* QR List */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Generated QR Codes</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="border border-gray-400 p-1">ID</th>
-                <th className="border border-gray-400 p-1">Data</th>
-                <th className="border border-gray-400 p-1">Product ID</th>
-                <th className="border border-gray-400 p-1">Scanned At</th>
-                <th className="border border-gray-400 p-1">QR Code</th>
-                <th className="border border-gray-400 p-1">Email</th>
-                <th className="border border-gray-400 p-1">Coupon Code</th>
-                <th className="border border-gray-400 p-1">Actions</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Share</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coupon Code</th>
               </tr>
             </thead>
-            <tbody>
-              {scanners?.map((s: any) => (
+            <tbody className="bg-white divide-y divide-gray-200">
+              {scanners?.map(s => (
                 <tr key={s._id}>
-                  <td className="border border-gray-400 p-1">{s._id}</td>
-                  <td className="border border-gray-400 p-1">{s.data}</td>
-                  <td className="border border-gray-400 p-1">{s.productId || '-'}</td>
-                  <td className="border border-gray-400 p-1">{new Date(s.scannedAt).toLocaleString()}</td>
-                  <td className="border border-gray-400 p-1">
-                    <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(s.data)}&size=100x100`} alt="QR Code" />
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{s._id?.slice(-6)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {products.find(p => p._id === s.productId)?.name || 'Unknown'}
                   </td>
-                  <td className="border border-gray-400 p-1">
-                    <div className="flex items-center space-x-2">
-                      <Input type="email" placeholder="Email" value={rowEmails[s._id] || ""} onChange={e => handleRowEmailChange(s._id, e.target.value)} />
-                      <Button size="sm" onClick={() => handleRowEmailShare(s._id, s.data, products.find(p => p._id === s.productId)?.name)}>Send</Button>
-                    </div>
-                  </td>
-                  <td className="border border-gray-400 p-1">
-                    <Input 
-                      value={s.couponCode || ""} 
-                      onChange={(e) => handleCouponCodeChange(s._id, e.target.value)} 
-                      placeholder="Enter Coupon Code"
-                      className="w-full"
-                    />
-                  </td>
-                  <td className="border border-gray-400 p-1">
-                    <Button
-                      size="sm"
-                      variant="destructive"
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(s.createdAt).toLocaleString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
                       onClick={() => deleteScanner.mutate(s._id)}
+                      className="text-red-600 hover:text-red-900"
                     >
                       Delete
-                    </Button>
+                    </button>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="email"
+                        value={rowEmails[s._id] || ""}
+                        onChange={e => setRowEmails(prev => ({ ...prev, [s._id]: e.target.value }))}
+                        placeholder="Email"
+                        className="p-1 border rounded w-32"
+                      />
+                      <button
+                        onClick={() => handleRowEmailShare(s._id, s.data, products.find(p => p._id === s.productId)?.name)}
+                        className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm"
+                      >
+                        Send
+                      </button>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <input
+                      type="text"
+                      value={s.couponCode || ""}
+                      onChange={e => handleCouponCodeChange(s._id, e.target.value)}
+                      placeholder="Coupon Code"
+                      className="p-1 border rounded w-24"
+                    />
                   </td>
                 </tr>
               ))}
@@ -278,20 +322,31 @@ export default function QRScannerManagement() {
           </table>
         </div>
 
-        <div className="mt-4 flex items-center space-x-2">
-          <Input
-            placeholder="Scanned data"
-            value={scanData}
-            onChange={(e) => setScanData(e.target.value)}
-          />
-          <Input
-            placeholder="Product ID (optional)"
-            value={scanProductId}
-            onChange={(e) => setScanProductId(e.target.value)}
-          />
-          <Button onClick={handleAddScanner}>Add Entry</Button>
+        <div className="mt-4 flex justify-between items-center">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={scanData}
+              onChange={e => setScanData(e.target.value)}
+              placeholder="Scanned data"
+              className="p-1 border rounded w-32"
+            />
+            <input
+              type="text"
+              value={scanProductId}
+              onChange={e => setScanProductId(e.target.value)}
+              placeholder="Product ID (optional)"
+              className="p-1 border rounded w-32"
+            />
+            <button
+              onClick={handleAddScanner}
+              className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+            >
+              Add Entry
+            </button>
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

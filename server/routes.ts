@@ -2097,6 +2097,12 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', giftCardRoutes);
   app.use('/api', scannerRoutes); // Add scanner routes to the application
 
+  // Error handling middleware to ensure JSON responses
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
