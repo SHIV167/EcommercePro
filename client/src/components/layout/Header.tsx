@@ -176,8 +176,8 @@ export default function Header() {
                     My Wishlist
                   </Link>
                   <Link href="/track-order" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900" role="menuitem">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 014-4h1a4 4 0 014 4v2M9 17h6" /></svg>
-                    Track your order
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3-3 3M8 9l-3 3 3 3M3 4h18M4 4v16a2 2 0 002 2h12a2 2 0 002-2V4" /></svg>
+                    Track Order
                   </Link>
                 </div>
               </Transition>
@@ -257,8 +257,8 @@ export default function Header() {
                     My Wishlist
                   </Link>
                   <Link href="/track-order" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900" role="menuitem">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 014-4h1a4 4 0 014 4v2M9 17h6" /></svg>
-                    Track your order
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3-3 3M8 9l-3 3 3 3M3 4h18M4 4v16a2 2 0 002 2h12a2 2 0 002-2V4" /></svg>
+                    Track Order
                   </Link>
                 </div>
               </Transition>

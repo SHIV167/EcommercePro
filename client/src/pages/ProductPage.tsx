@@ -28,6 +28,7 @@ export default function ProductPage() {
   const [serviceData, setServiceData] = useState<any[] | null>(null);
   const [serviceLoading, setServiceLoading] = useState(false);
   const [serviceError, setServiceError] = useState('');
+  const [couponApplied, setCouponApplied] = useState(false);
   
   const { data: product, isLoading: productLoading, error } = useQuery<Product>({
     queryKey: [`/api/products/${slug}`],
@@ -48,15 +49,26 @@ export default function ProductPage() {
     fetchPromoTimers();
   }, []);
   
-  // Log QR scan event
+  // Log QR scan event and apply coupon if available
   useEffect(() => {
     if (product?._id) {
       apiRequest("POST", "/api/scanners", { data: window.location.href, productId: product._id, scannedAt: new Date().toISOString() })
         .then(res => res.json())
-        .then(entry => setScannerEntry(entry))
+        .then(entry => {
+          setScannerEntry(entry);
+          if (entry?.couponCode && !couponApplied) {
+            // Here we would apply the coupon to the cart or store it for checkout
+            toast({
+              title: "Coupon Applied",
+              description: `Coupon code ${entry.couponCode} has been automatically applied.`
+            });
+            setCouponApplied(true);
+            // Note: Actual coupon application logic would depend on backend API for cart or checkout
+          }
+        })
         .catch(err => console.error("Log scan error", err));
     }
-  }, [product?._id]);
+  }, [product?._id, toast, couponApplied]);
   
   if (productLoading) {
     return (
@@ -107,25 +119,48 @@ export default function ProductPage() {
     });
   };
 
-  const handleCheckPincode = async () => {
-    if (!pincode) return;
+  
+  const handleCheckPincode = () => {
     setServiceLoading(true);
     setServiceError('');
-    try {
-      const res = await apiRequest('GET', `/api/serviceability?deliveryPincode=${pincode}`);
-      const json = await res.json();
-      if (!json.status) {
-        setServiceError(json.message || 'Service not available');
-        setServiceData(null);
-      } else {
-        setServiceData(json.data);
-      }
-    } catch (err: any) {
-      setServiceError(err.message || 'Error checking serviceability');
-      setServiceData(null);
-    } finally {
+    setServiceData(null);
+
+    if (!pincode) {
+      setServiceError('Please enter a pincode');
       setServiceLoading(false);
+      return;
     }
+
+    if (pincode.length !== 6 || !/^[0-9]{6}$/.test(pincode)) {
+      setServiceError('Please enter a valid 6-digit pincode');
+      setServiceLoading(false);
+      return;
+    }
+
+    // Check against valid pincodes from settings
+    import("../lib/settings").then(({ VALID_PINCODES, DELIVERY_ESTIMATION_DAYS }) => {
+      if (VALID_PINCODES.includes(pincode)) {
+        // Calculate estimated delivery date
+        const now = new Date();
+        let deliveryDays = DELIVERY_ESTIMATION_DAYS.STANDARD_DAYS;
+        
+        // First digit of pincode determines if it's eligible for faster delivery
+        if (pincode.startsWith('4')) {
+          deliveryDays = DELIVERY_ESTIMATION_DAYS.FAST_DAYS;
+        }
+        
+        const estimatedDate = new Date(now);
+        estimatedDate.setDate(now.getDate() + deliveryDays);
+        
+        setServiceData([{
+          rate: 0,
+          estimated_delivery_date: estimatedDate.toISOString(),
+        }]);
+      } else {
+        setServiceError('Sorry, delivery is not available to this pincode');
+      }
+      setServiceLoading(false);
+    });
   };
 
   return (

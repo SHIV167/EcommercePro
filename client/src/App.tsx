@@ -24,6 +24,7 @@ import NotFoundPage from "./pages/not-found";
 import StoreLocator from "./pages/StoreLocator";
 import OrderDetailsPage from "./pages/OrderDetailsPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
+import TrackingPage from "./pages/TrackingPage";
 
 export default function App() {
   const [location] = useLocation();
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/blogs" component={BlogsPage} />
           <Route path="/storelocator" component={StoreLocator} />
           <Route path="/orders/:orderId" component={OrderDetailsPage} />
+          <Route path="/track-order" component={TrackingPage} />
           <Route path="/orders/:orderId/track" component={TrackOrderPage} />
           <Route path="*" component={NotFoundPage} />
         </Switch>
