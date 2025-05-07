@@ -108,28 +108,32 @@ export default function CartPage() {
                             </p>
                           )}
                           <div className="flex justify-between items-end mt-4">
-                            <div className="flex items-center border border-neutral-sand rounded-md">
-                              <button
-                                onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                                className="w-8 h-8 flex items-center justify-center text-foreground"
-                                disabled={item.quantity <= 1}
-                                aria-label="Decrease quantity"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                                </svg>
-                              </button>
-                              <span className="w-8 text-center text-sm">{item.quantity}</span>
-                              <button
-                                onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                                className="w-8 h-8 flex items-center justify-center text-foreground"
-                                aria-label="Increase quantity"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                              </button>
-                            </div>
+                            {item.product?.slug ? (
+                              <div className="flex items-center border border-neutral-sand rounded-md">
+                                <button
+                                  onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                                  className="w-8 h-8 flex items-center justify-center text-foreground"
+                                  disabled={item.quantity <= 1}
+                                  aria-label="Decrease quantity"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                  </svg>
+                                </button>
+                                <span className="w-8 text-center text-sm">{item.quantity}</span>
+                                <button
+                                  onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                                  className="w-8 h-8 flex items-center justify-center text-foreground"
+                                  aria-label="Increase quantity"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                  </svg>
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="font-medium">Qty: {item.quantity}</span>
+                            )}
                             <div className="text-right">
                               <p className="font-medium text-primary">
                                 {formatCurrency((item.product?.price ?? 0) * item.quantity)}

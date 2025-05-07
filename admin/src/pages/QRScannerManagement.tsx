@@ -190,7 +190,7 @@ export default function QRScannerManagement() {
     setRowEmails(prev => ({ ...prev, [scannerId]: email }));
   };
 
-  const handleRowEmailShare = async (scannerId: string, scannerData: string) => {
+  const handleRowEmailShare = async (scannerId: string, scannerData: string, productName?: string) => {
     const email = rowEmails[scannerId];
     if (!email) {
       toast({
@@ -202,7 +202,7 @@ export default function QRScannerManagement() {
     }
 
     try {
-      await apiRequest("POST", "/api/scanners/share", { email, url: scannerData });
+      await apiRequest("POST", "/api/scanners/share", { email, url: scannerData, productName });
       setRowEmails(prev => {
         const newEmails = { ...prev };
         delete newEmails[scannerId];
@@ -329,7 +329,7 @@ export default function QRScannerManagement() {
                         className="w-40"
                       />
                       <Button
-                        onClick={() => handleRowEmailShare(s._id, s.data)}
+                        onClick={() => handleRowEmailShare(s._id, s.data, products.find(p => p._id === s.productId)?.name)}
                         className="bg-purple-600 hover:bg-purple-700"
                       >
                         Send

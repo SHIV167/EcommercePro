@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useCart } from '@/hooks/useCart';
 import { apiRequest } from '@/lib/queryClient';
@@ -34,12 +34,10 @@ export default function GiftCardForm() {
         const sorted = data.sort((a, b) => a.initialAmount - b.initialAmount);
         setTemplates(sorted);
         if (sorted.length) {
-          // Initialize slider at 500
-          const defaultAmount = 500;
-          setAmount(defaultAmount);
-          // Find matching template or fallback to first
-          const defaultTemplate = sorted.find(t => t.initialAmount === defaultAmount) ?? sorted[0];
+          // Initialize to first template
+          const defaultTemplate = sorted[0];
           setSelectedTemplate(defaultTemplate);
+          setAmount(defaultTemplate.initialAmount);
         }
       } catch (err) {
         console.error('Failed to load gift card templates:', err);
@@ -49,18 +47,6 @@ export default function GiftCardForm() {
     }
     loadTemplates();
   }, []);
-
-  // Fixed gift card amounts: 500 then increments of 1000 up to 15000
-  const allowedAmounts = useMemo(() => {
-    return Array.from({ length: 16 }, (_, i) => (i === 0 ? 500 : i * 1000));
-  }, []);
-
-  function handleSliderChange(index: number) {
-    const newAmount = allowedAmounts[index];
-    setAmount(newAmount);
-    const found = templates.find((t) => t.initialAmount === newAmount);
-    if (found) setSelectedTemplate(found);
-  }
 
   if (loading) return <div className="text-center">Loading...</div>;
   if (!selectedTemplate) return <div className="text-center">No gift cards available.</div>;
@@ -107,16 +93,23 @@ export default function GiftCardForm() {
           An exceptional gift that promises a touch of personalized luxury! Give the gift of choice with Kama Ayurveda eGift Card.
         </p>
         <label className="block font-medium mb-1">Select Gift Card Amount *</label>
-        <input
-          type="range"
-          min={0}
-          max={allowedAmounts.length - 1}
-          step={1}
-          value={allowedAmounts.indexOf(amount)}
-          onChange={(e) => handleSliderChange(Number(e.target.value))}
-          className="w-full mb-2 accent-primary"
-        />
-        <div className="mb-4 font-bold">₹{formatCurrency(amount)}</div>
+        <select
+          className="w-full p-2 border rounded mb-4"
+          value={selectedTemplate?._id}
+          onChange={(e) => {
+            const tpl = templates.find(t => t._id === e.target.value);
+            if (tpl) {
+              setSelectedTemplate(tpl);
+              setAmount(tpl.initialAmount);
+            }
+          }}
+        >
+          {templates.map(tpl => (
+            <option key={tpl._id} value={tpl._id}>
+              ₹{formatCurrency(tpl.initialAmount)}
+            </option>
+          ))}
+        </select>
         <div className="grid grid-cols-2 gap-2 mb-2">
           <input
             className="border p-2 rounded"
