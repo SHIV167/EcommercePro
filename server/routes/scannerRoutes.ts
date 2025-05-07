@@ -60,4 +60,42 @@ router.patch('/scanners/admin/qr-scanner/:id', async (req: Request, res: Respons
   }
 });
 
+// Endpoint to get scanner data when QR code is scanned
+router.get('/scanners/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const scanner = await ScannerModel.findById(id);
+    if (!scanner) {
+      return res.status(404).json({ message: 'Scanner not found' });
+    }
+    // Increment scan count and update scannedAt
+    scanner.scanCount += 1;
+    scanner.scannedAt = new Date();
+    await scanner.save();
+    return res.status(200).json({ data: scanner.data, couponCode: scanner.couponCode, productId: scanner.productId });
+  } catch (error: unknown) {
+    console.error('Error retrieving scanner data:', error);
+    return res.status(500).json({ message: 'Failed to retrieve scanner data', error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+// Endpoint to retrieve scanner data including coupon code when a QR code is scanned
+router.get('/scanners/:id/with-coupon', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const scanner = await ScannerModel.findById(id);
+    if (!scanner) {
+      return res.status(404).json({ message: 'Scanner not found' });
+    }
+    // Increment scan count and update scannedAt
+    scanner.scanCount += 1;
+    scanner.scannedAt = new Date();
+    await scanner.save();
+    return res.status(200).json({ data: scanner.data, couponCode: scanner.couponCode, productId: scanner.productId });
+  } catch (error: unknown) {
+    console.error('Error retrieving scanner data:', error);
+    return res.status(500).json({ message: 'Failed to retrieve scanner data', error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
 export default router;
