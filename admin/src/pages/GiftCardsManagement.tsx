@@ -41,7 +41,7 @@ export default function GiftCardsManagement() {
     const origin = window.location.origin;
     // If on admin domain (e.g. ecommercepro-admin.onrender.com), map to main API domain
     if (origin.includes('-admin')) {
-      return origin.replace('-admin', '');
+      return origin.replace('-admin', '-server');
     }
     return origin;
   })();

@@ -38,7 +38,7 @@ export default function GiftCardTemplatesManagement() {
     if (envUrl) return envUrl;
     const origin = window.location.origin;
     if (origin.includes("-admin")) {
-      return origin.replace("-admin", "");
+      return origin.replace("-admin", "-server");
     }
     return origin;
   })();

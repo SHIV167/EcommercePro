@@ -281,7 +281,7 @@ export default function Sidebar() {
           <li>
             <SidebarLink
               href="/admin/giftcard-templates"
-              icon={<Gift />}
+              icon={<Gift size={20} />}
               label="Gift Card Templates"
               isCollapsed={isCollapsed}
             />
