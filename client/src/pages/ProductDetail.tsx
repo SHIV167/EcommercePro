@@ -44,7 +44,7 @@ const ProductDetail: React.FC = () => {
         cartValue
       });
       if (response.data.valid) {
-        const discountAmount = response.data.discount;
+        const discountAmount = response.data.discountValue;
         setDiscount(discountAmount);
         toast.success(`Coupon ${couponCode} applied successfully! Discount: $${discountAmount}`);
       } else {

@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 const QRRedirect: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get the scanner ID from URL params
-  const navigate = useNavigate();
+  const history = useHistory();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchScannerData = async () => {
       try {
-        const response = await axios.get(`/api/scanners/scanners/${id}`);
+        const response = await axios.get(`/api/scanners/${id}`);
         const { data, couponCode, productId } = response.data;
 
         // If there's a coupon code, store it in localStorage to apply it later
@@ -22,21 +22,21 @@ const QRRedirect: React.FC = () => {
 
         // Redirect to the product page if productId exists, otherwise redirect to a default page
         if (productId) {
-          navigate(`/product/${productId}`);
+          history.push(`/product/${productId}`);
         } else {
-          navigate('/');
+          history.push('/');
         }
       } catch (error) {
         console.error('Error fetching scanner data:', error);
         toast.error('Invalid QR code or error occurred.');
-        navigate('/');
+        history.push('/');
       } finally {
         setLoading(false);
       }
     };
 
     fetchScannerData();
-  }, [id, navigate]);
+  }, [id, history]);
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;

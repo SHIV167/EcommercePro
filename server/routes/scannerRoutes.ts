@@ -34,7 +34,7 @@ router.post('/share', async (req: Request, res: Response) => {
 });
 
 // Endpoint to update coupon code for a scanner
-router.patch('/scanners/admin/qr-scanner/:id', async (req: Request, res: Response) => {
+router.patch('/admin/qr-scanner/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { couponCode } = req.body;
