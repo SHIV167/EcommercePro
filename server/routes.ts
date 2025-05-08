@@ -125,7 +125,12 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Enable JSON and URL-encoded body parsing for incoming requests
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-
+  // Mount admin API routers
+  app.use('/api', authRoutes);
+  app.use('/api', couponRoutes);
+  app.use('/api', giftCardRoutes);
+  app.use('/api', giftCardTemplateRoutes);
+  app.use('/api', scannerRoutes);
   // ensure upload directory exists in public/uploads
   const uploadDir = path.join(__dirname, '../public/uploads');
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -2091,11 +2096,11 @@ export async function registerRoutes(app: Application): Promise<Server> {
   };
 
   // Register routes
-  app.use('/api/auth', authRoutes); 
-  app.use('/api/coupons', couponRoutes); 
-  app.use('/api/admin/giftcard-templates', giftCardTemplateRoutes);
-  app.use('/api/admin/giftcards', giftCardRoutes);
-  app.use('/api/scanners', scannerRoutes); 
+  app.use('/api/admin', authRoutes); 
+  app.use('/api/admin', couponRoutes); 
+  app.use('/api/admin', giftCardTemplateRoutes);
+  app.use('/api/admin', giftCardRoutes);
+  app.use('/api/admin', scannerRoutes); 
 
   // Error handling middleware to ensure JSON responses
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
