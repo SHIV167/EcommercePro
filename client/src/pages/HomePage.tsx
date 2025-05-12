@@ -7,6 +7,7 @@ import TestimonialSection from "@/components/home/TestimonialSection";
 import SustainabilitySection from "@/components/home/SustainabilitySection";
 import NewsletterSection from "@/components/home/NewsletterSection";
 import NewLaunchSection from "@/components/home/NewLaunchSection";
+import BrandsCarousel from "@/components/home/BrandsCarousel";
 import { Helmet } from 'react-helmet';
 import SearchBar from '@/components/home/SearchBar';
 import React, { useState, useEffect } from 'react';
@@ -39,6 +40,7 @@ export default function HomePage() {
       <AyurvedicBanner />
       <BestsellerSection />
       <TestimonialSection />
+      <BrandsCarousel />
       <SustainabilitySection />
       <NewsletterSection />
       <MobileFooterNav />
