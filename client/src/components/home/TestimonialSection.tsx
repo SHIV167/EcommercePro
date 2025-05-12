@@ -1,5 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Testimonial } from "../../../../shared/schema";
 
 // Sample fallback testimonials matching Testimonial type
@@ -10,8 +11,12 @@ const sampleTestimonials: Testimonial[] = [
 ];
 
 export default function TestimonialSection() {
-  const { data: testimonials = [], isLoading } = useQuery<Testimonial[]>({
+  const { data: testimonials = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/testimonials/featured?limit=3'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/testimonials/featured?limit=3');
+      return res.json();
+    },
   });
   const displayTestimonials = testimonials.length > 0 ? testimonials : sampleTestimonials;
 
@@ -32,8 +37,8 @@ export default function TestimonialSection() {
               </div>
             ))
           ) : (
-            displayTestimonials.map((testimonial) => (
-              <div key={testimonial.id} className="bg-neutral-cream p-6 rounded-md">
+            displayTestimonials.map((testimonial: any) => (
+              <div key={testimonial.id || testimonial._id} className="bg-neutral-cream p-6 rounded-md">
                 <div className="flex text-secondary mb-4">
                   {Array.from({ length: testimonial.rating }).map((_, i) => (
                     <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -44,7 +49,7 @@ export default function TestimonialSection() {
                 <p className="italic text-neutral-gray mb-4">"{testimonial.content}"</p>
                 <div>
                   <p className="font-medium text-primary">{testimonial.name}</p>
-                  <p className="text-sm text-neutral-gray">{testimonial.createdAt.toLocaleDateString()}</p>
+                  <p className="text-sm text-neutral-gray">{new Date(testimonial.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
             ))

@@ -27,6 +27,7 @@ import PromoCoupon from './pages/PromoCoupon';
 import GiftCardsManagement from './pages/GiftCardsManagement';
 import QRScannerManagement from './pages/QRScannerManagement';
 import GiftCardTemplatesManagement from './pages/GiftCardTemplatesManagement';
+import TestimonialsManagement from './pages/TestimonialsManagement';
 
 function AdminContainer() {
   const { isAuthenticated, isLoading } = useAdminAuth();
@@ -58,6 +59,7 @@ function AdminContainer() {
             <Route path="/admin/giftcards" component={GiftCardsManagement} />
             <Route path="/admin/giftcard-templates" component={GiftCardTemplatesManagement} />
             <Route path="/admin/qrscanner" component={QRScannerManagement} />
+            <Route path="/admin/testimonials" component={TestimonialsManagement} />
             <Route path="/admin" component={Dashboard} />
             <Route>
               <div className="flex items-center justify-center h-full">

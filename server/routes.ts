@@ -10,6 +10,7 @@ import OrderModel from "./models/Order"; // Import OrderModel
 import ProductModel from "./models/Product"; // Import ProductModel
 import BannerModel from "./models/Banner"; // Import BannerModel
 import ScannerModel from "./models/Scanner"; // Import ScannerModel
+import TestimonialModel from "./models/Testimonial"; // Import TestimonialModel for seeding
 
 import { v4 as uuidv4 } from "uuid"; // Import uuid
 import { z } from "zod";
@@ -117,6 +118,7 @@ import giftCardRoutes from './routes/giftCardRoutes';
 import giftCardTemplateRoutes from './routes/giftCardTemplateRoutes';
 import authRoutes from './routes/authRoutes'; // Import auth routes
 import scannerRoutes from './routes/scannerRoutes'; // Import scanner routes
+import testimonialRoutes from './routes/testimonialRoutes'; // Import testimonial routes
 
 // Import controllers for coupons
 
@@ -131,6 +133,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', giftCardRoutes);
   app.use('/api', giftCardTemplateRoutes);
   app.use('/api', scannerRoutes);
+  app.use('/api', testimonialRoutes);
   // ensure upload directory exists in public/uploads
   const uploadDir = path.join(__dirname, '../public/uploads');
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -151,6 +154,16 @@ export async function registerRoutes(app: Application): Promise<Server> {
     await BlogModel.create([
       { title: 'Welcome to Our Blog', slug: 'welcome', author: 'Admin', summary: 'Start reading our latest news.', content: 'This is the first post content.', imageUrl: '', publishedAt: new Date() },
       { title: 'Getting Started', slug: 'getting-started', author: 'Admin', summary: 'How to get started.', content: 'Getting started content.', imageUrl: '', publishedAt: new Date() }
+    ]);
+  }
+
+  // Seed sample testimonials if none exist
+  const testimonialCount = await TestimonialModel.estimatedDocumentCount();
+  if (testimonialCount === 0) {
+    await TestimonialModel.create([
+      { name: 'Priya S.', content: 'The Kumkumadi face oil has transformed my skin.', rating: 5, featured: true },
+      { name: 'Rahul M.', content: 'I was skeptical about Ayurvedic hair care but Bringadi oil has proven me wrong.', rating: 5, featured: true },
+      { name: 'Anita K.', content: 'The Rose Jasmine face cleanser is gentle yet effective.', rating: 4, featured: true }
     ]);
   }
 
@@ -2101,6 +2114,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api/admin', giftCardTemplateRoutes);
   app.use('/api/admin', giftCardRoutes);
   app.use('/api/admin', scannerRoutes); 
+  app.use('/api/admin', testimonialRoutes);
 
   // Error handling middleware to ensure JSON responses
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAdminAuth } from "../../hooks/useAdminAuth";
-import { Gift } from "lucide-react";
+import { Gift, MessageSquare } from "lucide-react";
 
 interface SidebarLinkProps {
   href: string;
@@ -297,6 +297,14 @@ export default function Sidebar() {
                 </svg>
               }
               label="QR Scanner"
+              isCollapsed={isCollapsed}
+            />
+          </li>
+          <li>
+            <SidebarLink
+              href="/admin/testimonials"
+              icon={<MessageSquare />}
+              label="Testimonials"
               isCollapsed={isCollapsed}
             />
           </li>
