@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Product, Review } from "@shared/schema";
+import ReviewForm from "@/components/product/ReviewForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import RatingStars from "@/components/products/RatingStars";
@@ -25,6 +26,8 @@ export default function ProductPage() {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const [pincode, setPincode] = useState('');
+  const [activeImage, setActiveImage] = useState<string | undefined>(undefined);
+  const [showReviewForm, setShowReviewForm] = useState<boolean>(false);
   const [serviceData, setServiceData] = useState<any[] | null>(null);
   const [serviceLoading, setServiceLoading] = useState(false);
   const [serviceError, setServiceError] = useState('');
@@ -365,6 +368,26 @@ export default function ProductPage() {
                 </div>
               ) : reviews.length > 0 ? (
                 <div className="space-y-6">
+                  {isAuthenticated && !showReviewForm && (
+                    <div className="flex justify-end mb-4">
+                      <Button 
+                        onClick={() => setShowReviewForm(true)}
+                        className="bg-primary hover:bg-primary-light text-white"
+                      >
+                        Write a Review
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {showReviewForm && isAuthenticated && product?._id && (
+                    <div className="mb-8">
+                      <ReviewForm 
+                        productId={product._id} 
+                        onClose={() => setShowReviewForm(false)} 
+                      />
+                    </div>
+                  )}
+                  
                   {reviews.map((review, idx) => (
                     <div key={review.id ?? idx} className="border-b border-neutral-sand pb-6">
                       <RatingStars rating={review.rating} size="md" />
@@ -379,12 +402,22 @@ export default function ProductPage() {
                 <div className="text-center py-8">
                   <p className="text-neutral-gray mb-4">This product has no reviews yet. Be the first to leave a review!</p>
                   {isAuthenticated ? (
-                    <Button className="bg-primary hover:bg-primary-light text-white">
-                      Write a Review
-                    </Button>
+                    showReviewForm && product?._id ? (
+                      <ReviewForm 
+                        productId={product._id} 
+                        onClose={() => setShowReviewForm(false)} 
+                      />
+                    ) : (
+                      <Button 
+                        onClick={() => setShowReviewForm(true)}
+                        className="bg-primary hover:bg-primary-light text-white"
+                      >
+                        Write a Review
+                      </Button>
+                    )
                   ) : (
                     <Button className="bg-primary hover:bg-primary-light text-white" asChild>
-                      <a href="/login?redirect=/products/${slug}">Login to Write a Review</a>
+                      <a href={`/login?redirect=/products/${slug}`}>Login to Write a Review</a>
                     </Button>
                   )}
                 </div>

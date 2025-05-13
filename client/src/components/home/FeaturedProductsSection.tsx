@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Product } from "../../../../shared/schema";
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { formatCurrency } from "@/lib/utils";
 import { CartContext } from "@/contexts/CartContext";
 
