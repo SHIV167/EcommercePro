@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface FreeProduct {
   _id: string;
@@ -44,6 +44,7 @@ interface Product {
 
 export default function FreeProductsPage() {
   const { get, post, put, del } = useApiClient();
+  const { toast } = useToast();
   const [freeProducts, setFreeProducts] = useState<FreeProduct[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +83,7 @@ export default function FreeProductsPage() {
       setFreeProducts(freeProductsWithDetails);
     } catch (error) {
       console.error('Error loading free products:', error);
-      toast.error('Failed to load free products');
+      toast({ title: 'Failed to load free products', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ export default function FreeProductsPage() {
       setProducts(response.data);
     } catch (error) {
       console.error('Error loading products:', error);
-      toast.error('Failed to load product list');
+      toast({ title: 'Failed to load product list', variant: 'destructive' });
     }
   };
 
@@ -155,17 +156,17 @@ export default function FreeProductsPage() {
       if (editingProduct) {
         // Update existing free product
         await put(`/api/admin/free-products/${editingProduct._id}`, formData);
-        toast.success('Free product updated successfully');
+        toast({ title: 'Free product updated successfully' });
       } else {
         // Create new free product
         await post('/api/admin/free-products', formData);
-        toast.success('Free product created successfully');
+        toast({ title: 'Free product created successfully' });
       }
       handleCloseModal();
       loadFreeProducts();
     } catch (error) {
       console.error('Error saving free product:', error);
-      toast.error('Failed to save free product');
+      toast({ title: 'Failed to save free product', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -177,11 +178,11 @@ export default function FreeProductsPage() {
     setLoading(true);
     try {
       await del(`/api/admin/free-products/${id}`);
-      toast.success('Free product deleted successfully');
+      toast({ title: 'Free product deleted successfully' });
       loadFreeProducts();
     } catch (error) {
       console.error('Error deleting free product:', error);
-      toast.error('Failed to delete free product');
+      toast({ title: 'Failed to delete free product', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
