@@ -4,6 +4,7 @@ import CategorySection from "@/components/home/CategorySection";
 import AyurvedicBanner from "@/components/home/AyurvedicBanner";
 import BestsellerSection from "@/components/home/BestsellerSection";
 import TestimonialSection from "@/components/home/TestimonialSection";
+import FeaturedProductsSection from "@/components/home/FeaturedProductsSection";
 import SustainabilitySection from "@/components/home/SustainabilitySection";
 import NewsletterSection from "@/components/home/NewsletterSection";
 import NewLaunchSection from "@/components/home/NewLaunchSection";
@@ -43,6 +44,7 @@ export default function HomePage() {
       <AyurvedicBanner />
       <BestsellerSection />
       <TestimonialSection />
+      <FeaturedProductsSection />
       <VideoCarousel /> 
       <SustainabilitySection />
       <VideoGallery />
