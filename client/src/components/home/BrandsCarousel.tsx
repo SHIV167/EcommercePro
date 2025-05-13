@@ -191,8 +191,29 @@ export default function BrandsCarousel() {
         }
         .swiper-button-prev, .swiper-button-next {
           color: white !important;
-          background: transparent !important;
-          box-shadow: none !important;
+          background: rgba(0, 0, 0, 0.5) !important;
+          width: 44px !important;
+          height: 44px !important;
+          border-radius: 50% !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+          transform: translateY(-50%) !important;
+          top: 50% !important;
+        }
+        .swiper-button-prev {
+          left: calc(50% - 165px) !important;
+        }
+        .swiper-button-next {
+          right: calc(50% - 165px) !important;
+        }
+        .swiper-button-prev:hover, .swiper-button-next:hover {
+          background: rgba(0, 0, 0, 0.7) !important;
+        }
+        .swiper-button-prev:after, .swiper-button-next:after {
+          font-size: 18px !important;
+          font-weight: bold !important;
         }
         .brand-slide {
           transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);

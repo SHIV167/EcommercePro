@@ -56,7 +56,7 @@ export default function LoginPage() {
       
       toast({
         title: "Login successful",
-        description: "Welcome back to Kama Ayurveda.",
+        description: "Welcome back to Kama Ayurveda."
       });
       
       navigate(redirectTo);
@@ -64,7 +64,7 @@ export default function LoginPage() {
       toast({
         title: "Login failed",
         description: "Invalid email or password. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);

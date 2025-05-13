@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
+import { Button } from '../ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Input } from '../ui/input';
 import { useAuth } from '@/hooks/useAuth';
 
 interface AuthModalProps {
@@ -13,6 +14,7 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login, register } = useAuth();
+  const { toast } = useToast();
 
   // Form state
   const [form, setForm] = useState({
@@ -32,14 +34,27 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
     try {
       if (mode === 'login') {
         await login(form.email, form.password);
+        toast({
+          description: "Welcome back to Kama Ayurveda.",
+          title: "Login successful"
+        });
       } else {
         await register(form.name, form.email, form.password);
+        toast({
+          description: "Welcome to Kama Ayurveda.",
+          title: "Registration successful"
+        });
       }
       setLoading(false);
       onClose();
     } catch (err: any) {
       setLoading(false);
       setError(err?.message || 'Something went wrong.');
+      toast({
+        variant: "destructive",
+        title: mode === 'login' ? "Login failed" : "Registration failed",
+        description: err?.message || (mode === 'login' ? "Invalid email or password." : "Could not create your account.")
+      });
     }
   };
 

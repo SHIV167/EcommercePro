@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Testimonial } from "../../../../shared/schema";
@@ -15,6 +15,7 @@ const sampleTestimonials: Testimonial[] = [
 ];
 
 export default function TestimonialSection() {
+  const sliderRef = useRef<Slider>(null);
   const { data: testimonials = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/testimonials/featured?limit=6'],
     queryFn: async () => {
@@ -28,14 +29,27 @@ export default function TestimonialSection() {
   const SliderArrow = ({ className, style, onClick, isNext = false }: any) => {
     return (
       <button
-        className={`absolute z-10 top-1/2 transform -translate-y-1/2 ${isNext ? 'right-0' : 'left-0'} bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md focus:outline-none border border-gray-100 ${className}`}
-        style={{ ...style }}
+        className={`custom-nav-arrow absolute z-20 top-1/2 transform -translate-y-1/2 ${isNext ? 'right-4' : 'left-4'} rounded-full w-12 h-12 flex items-center justify-center focus:outline-none ${className}`}
+        style={{
+          ...style,
+          backgroundColor: 'rgba(85, 128, 118, 0.85)',
+          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
+          transition: 'all 0.2s ease',
+        }}
         onClick={onClick}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(85, 128, 118, 1)';
+          e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(85, 128, 118, 0.85)';
+          e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+        }}
       >
         {isNext ? (
-          <ChevronRight className="w-5 h-5 text-secondary" />
+          <ChevronRight className="w-6 h-6 text-white" />
         ) : (
-          <ChevronLeft className="w-5 h-5 text-secondary" />
+          <ChevronLeft className="w-6 h-6 text-white" />
         )}
       </button>
     );
@@ -48,8 +62,7 @@ export default function TestimonialSection() {
     speed: 500,
     slidesToShow: 3,
     slidesToScroll: 1,
-    nextArrow: <SliderArrow isNext={true} />,
-    prevArrow: <SliderArrow />,
+    arrows: false, // Disable default arrows
     responsive: [
       {
         breakpoint: 1024,
@@ -72,11 +85,54 @@ export default function TestimonialSection() {
   };
 
   return (
-    <section className="py-12 bg-white overflow-hidden">
+    <section className="py-12 bg-white overflow-hidden testimonial-section">
       <div className="container mx-auto px-4">
         <h2 className="font-heading text-2xl text-primary text-center mb-10">What Our Customers Say</h2>
         
         <div className="px-4 relative">
+          {/* Custom navigation buttons */}
+          <button 
+            onClick={() => sliderRef.current?.slickPrev()}
+            className="custom-nav-arrow absolute z-20 top-1/2 transform -translate-y-1/2 left-4 rounded-full w-12 h-12 flex items-center justify-center focus:outline-none"
+            style={{
+              backgroundColor: 'rgba(85, 128, 118, 0.85)',
+              boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
+              transition: 'all 0.2s ease',
+            }}
+            aria-label="Previous slide"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(85, 128, 118, 1)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(85, 128, 118, 0.85)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+            }}
+          >
+            <ChevronLeft className="w-6 h-6 text-white" />
+          </button>
+          
+          <button 
+            onClick={() => sliderRef.current?.slickNext()}
+            className="custom-nav-arrow absolute z-20 top-1/2 transform -translate-y-1/2 right-4 rounded-full w-12 h-12 flex items-center justify-center focus:outline-none"
+            style={{
+              backgroundColor: 'rgba(85, 128, 118, 0.85)',
+              boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
+              transition: 'all 0.2s ease',
+            }}
+            aria-label="Next slide"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(85, 128, 118, 1)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(85, 128, 118, 0.85)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+            }}
+          >
+            <ChevronRight className="w-6 h-6 text-white" />
+          </button>
+          
           {isLoading ? (
             // Render skeleton cards when loading
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -91,7 +147,7 @@ export default function TestimonialSection() {
               ))}
             </div>
           ) : (
-            <Slider {...sliderSettings}>
+            <Slider ref={sliderRef} {...sliderSettings}>
               {displayTestimonials.map((testimonial: any) => (
                 <div key={testimonial.id || testimonial._id} className="p-3">
                   <div className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow rounded-lg p-6 h-full flex flex-col relative">

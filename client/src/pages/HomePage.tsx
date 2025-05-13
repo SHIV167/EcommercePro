@@ -9,7 +9,9 @@ import SustainabilitySection from "@/components/home/SustainabilitySection";
 import NewsletterSection from "@/components/home/NewsletterSection";
 import NewLaunchSection from "@/components/home/NewLaunchSection";
 import BrandsCarousel from "@/components/home/BrandsCarousel";
-import VideoCarousel from "@/components/home/VideoCarousel";
+// Try alternate import path syntax for VideoCarousel
+import VideoCarousel from "../components/home/VideoCarousel";
+import AyurvedicWisdomSection from "@/components/home/AyurvedicWisdomSection";
 import VideoGallery from "@/components/home/VideoGallery";
 import { Helmet } from 'react-helmet';
 import SearchBar from '@/components/home/SearchBar';
@@ -46,6 +48,7 @@ export default function HomePage() {
       <TestimonialSection />
       <FeaturedProductsSection />
       <VideoCarousel /> 
+      <AyurvedicWisdomSection />
       <SustainabilitySection />
       <VideoGallery />
       <NewsletterSection />

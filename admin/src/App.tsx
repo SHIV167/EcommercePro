@@ -30,6 +30,7 @@ import QRScannerManagement from './pages/QRScannerManagement';
 import GiftCardTemplatesManagement from './pages/GiftCardTemplatesManagement';
 import TestimonialsManagement from './pages/TestimonialsManagement';
 import FreeProductsPage from './pages/FreeProductsPage';
+import ReviewManagement from './pages/ReviewManagement';
 
 function AdminContainer() {
   const { isAuthenticated, isLoading } = useAdminAuth();
@@ -46,6 +47,7 @@ function AdminContainer() {
           <Switch>
             <Route path="/admin/dashboard" component={Dashboard} />
             <Route path="/admin/products" component={ProductsManagement} />
+            <Route path="/admin/reviews" component={ReviewManagement} />
             <Route path="/admin/categories" component={CategoriesManagement} />
             <Route path="/admin/collections" component={CollectionsManagement} />
             <Route path="/admin/orders" component={OrdersManagement} />

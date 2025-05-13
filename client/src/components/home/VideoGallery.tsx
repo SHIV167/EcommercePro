@@ -6,6 +6,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 // Sample video data
+// Double the first few items to ensure proper looping without blank spaces
 const videos = [
   {
     id: 1,
@@ -15,6 +16,31 @@ const videos = [
     value: '600',
     description: 'Rejuvenating saffron therapy',
     startingFrom: '₹985',
+  },
+  {
+    id: 9,
+    title: 'Rejuvenating Saffron Therapy',
+    videoUrl: 'https://video.gumlet.io/64661d8e673536e1fe9044e2/67ed273a292035ad5abb5803/main.mp4',
+    thumbnailUrl: '/uploads/brands/Brand_Carousel_Web_U_R_you.png',
+    value: '600',
+    description: 'Rejuvenating saffron therapy',
+    startingFrom: '₹985',
+  },
+  {
+    id: 10,
+    title: 'Kumkumadi Youth Illumination',
+    videoUrl: 'https://video.gumlet.io/64661d8e673536e1fe9044e2/67ed273a292035ad5abb5803/main.mp4',
+    thumbnailUrl: '/uploads/brands/Brand_Carousel_Web_karrot.png',
+    description: 'Kumkumadi Youth Illumination',
+    startingFrom: '₹1195',
+  },
+  {
+    id: 11,
+    title: 'Rose Essential Oil Box',
+    videoUrl: 'https://video.gumlet.io/64661d8e673536e1fe9044e2/67ed273a292035ad5abb5803/main.mp4',
+    thumbnailUrl: '/uploads/brands/Brand_Carousel_Web_U_R_you.png',
+    description: 'Rose Essential Oil Box',
+    startingFrom: '₹1995',
   },
   {
     id: 2,
@@ -40,6 +66,42 @@ const videos = [
     value: '78',
     description: 'Brighter skin',
     startingFrom: '₹1195',
+  },
+  {
+    id: 5,
+    title: 'Kumkumadi Youth Revolution',
+    videoUrl: 'https://video.gumlet.io/64661d8e673536e1fe9044e2/67ed273a292035ad5abb5803/main.mp4',
+    thumbnailUrl: '/uploads/brands/Brand_Carousel_Web_U_R_you.png',
+    value: '78',
+    description: 'Brighter skin',
+    startingFrom: '₹1195',
+  },
+  {
+    id: 6,
+    title: 'Kumkumadi Youth Revolution',
+    videoUrl: 'https://video.gumlet.io/64661d8e673536e1fe9044e2/67ed273a292035ad5abb5803/main.mp4',
+    thumbnailUrl: '/uploads/brands/Brand_Carousel_Web_U_R_you.png',
+    value: '78',
+    description: 'Brighter skin',
+    startingFrom: '₹1195',
+  },
+  {
+    id: 7,
+    title: 'Kumkumadi Youth Revolution',
+    videoUrl: 'https://video.gumlet.io/64661d8e673536e1fe9044e2/67ed273a292035ad5abb5803/main.mp4',
+    thumbnailUrl: '/uploads/brands/Brand_Carousel_Web_U_R_you.png',
+    value: '78',
+    description: 'Brighter skin',
+    startingFrom: '₹1195',
+  },
+  {
+    id: 8,
+    title: 'Kumkumadi Youth Revolution',
+    videoUrl: 'https://video.gumlet.io/64661d8e673536e1fe9044e2/67ed273a292035ad5abb5803/main.mp4',
+    thumbnailUrl: '/uploads/brands/Brand_Carousel_Web_U_R_you.png',
+    value: '78',
+    description: 'Brighter skin',
+    startingFrom: '₹1195',
   }
 ];
 
@@ -54,31 +116,24 @@ export default function VideoGallery() {
         </h2>
         
         <Swiper
-          slidesPerView={1}
-          spaceBetween={20}
+          slidesPerView={"auto"}
           navigation={true}
           pagination={{ clickable: true }}
-          breakpoints={{
-            640: {
-              slidesPerView: 2,
-              spaceBetween: 20,
-            },
-            768: {
-              slidesPerView: 3,
-              spaceBetween: 20,
-            },
-            1024: {
-              slidesPerView: 4,
-              spaceBetween: 20,
-            },
-          }}
+          loop={true}
+          centeredSlides={false}
+          slidesPerGroup={1}
+          spaceBetween={10}
+          grabCursor={true}
+          loopAdditionalSlides={4}
+          observer={true}
+          observeParents={true}
           modules={[Navigation, Pagination]}
-          className="video-gallery-swiper"
+          className="video-gallery-swiper explore-shop-section"
         >
           {videos.map((video) => (
-            <SwiperSlide key={video.id} className="p-1">
+            <SwiperSlide key={video.id}>
               <div 
-                className="relative rounded-lg overflow-hidden border border-neutral-100 group"
+                className="video-gallery-card relative rounded-lg overflow-hidden border border-neutral-100 group" style={{maxWidth: '280px', height: '450px'}}
                 onMouseEnter={() => {
                   setHoveredVideo(video.id);
                   if (videoRefs.current[video.id]) {
@@ -93,7 +148,7 @@ export default function VideoGallery() {
                 }}
               >
                 {/* Video/Thumbnail */}
-                <div className="relative overflow-hidden" style={{ height: '500px' }}>
+                <div className="video-thumbnail relative overflow-hidden">
                   {hoveredVideo === video.id ? (
                     <video 
                       ref={el => videoRefs.current[video.id] = el}
@@ -139,25 +194,20 @@ export default function VideoGallery() {
                   </div>
                 </div>
                 
-                {/* Footer with product info and explore button */}
-                <div className="bg-white">
-                  {/* Product name and price */}
-                  <div className="p-3 border-b border-gray-100">
-                    <div className="font-medium text-sm mb-1">{video.title}</div>
-                    <div className="flex justify-between items-center">
-                      <div className="text-xs text-gray-500">Starting from</div>
-                      <div className="font-semibold text-sm">{video.startingFrom}</div>
-                    </div>
+                {/* Footer with product info and explore button - FIXED HEIGHT STRUCTURE */}
+                <div className="product-info-container">
+                  <div className="product-title">{video.title}</div>
+                  <div className="starting-from-text">Starting from</div>
+                  <div className="product-price">{video.startingFrom}</div>
+                  <div className="explore-button-wrapper">
+                    <button className="explore-button">
+                      <span>Explore More</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </button>
                   </div>
-                  
-                  {/* Explore More button (full width) */}
-                  <button className="w-full p-3 flex items-center justify-between text-primary text-sm font-medium border-t border-gray-200 hover:bg-gray-50 transition-colors">
-                    <span>Explore More</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                  </button>
                 </div>
               </div>
             </SwiperSlide>
@@ -166,14 +216,161 @@ export default function VideoGallery() {
       </div>
       
       <style>{`
+        /* Basic swiper styling */
         .video-gallery-swiper {
           padding-bottom: 50px !important;
+          width: 100% !important;
+          overflow: hidden !important;
+          padding: 0 !important;
+        }
+        
+        /* Force all slides to be exactly the same size and spacing */
+        .video-gallery-swiper .swiper-slide {
+          width: 280px !important;
+          height: 450px !important;
+          padding: 0 !important;
+          margin: 0 8px !important;
+          box-sizing: border-box !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          flex-shrink: 0 !important;
+          display: flex !important;
+          justify-content: center !important;
+          align-items: flex-start !important;
+        }
+        
+        /* Make sure carousel fills available space */
+        .video-gallery-swiper {
+          width: 100% !important;
+          overflow: hidden !important;
+          padding: 0 !important;
+        }
+        
+        .container {
+          padding: 0 5px !important;
+          max-width: 1300px !important;
+          width: 100% !important;
+          margin: 0 auto !important;
+          overflow: hidden !important;
+        }
+        
+        /* Fix for looping - prevent blank slides */
+        .video-gallery-swiper .swiper-slide-duplicate-active,
+        .video-gallery-swiper .swiper-slide-duplicate-next,
+        .video-gallery-swiper .swiper-slide-duplicate-prev {
+          pointer-events: auto !important;
+          visibility: visible !important;
+        }
+        
+        /* Style for the card container */
+        .video-gallery-card {
+          width: 100% !important;
+          height: 100% !important;
+          display: block !important;
+          margin: 0 !important;
+          overflow: hidden !important;
+          box-sizing: border-box !important;
+        }
+        
+        /* Thumbnail container */
+        .video-thumbnail {
+          width: 100% !important;
+          height: 330px !important; /* Fixed height for the image */
+          position: relative !important;
+          overflow: hidden !important;
+        }
+        
+        /* Images and videos inside thumbnails */
+        .video-thumbnail img,
+        .video-thumbnail video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          display: block !important;
+        }
+        
+        /* Product info container styling */
+        .product-info-container {
+          background: white !important;
+          height: 120px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          padding: 10px !important;
+          position: relative !important;
+        }
+        
+        .product-title {
+          font-weight: 500 !important;
+          font-size: 14px !important;
+          color: #333 !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          margin-bottom: 4px !important;
+        }
+        
+        .starting-from-text {
+          font-size: 12px !important;
+          color: #666 !important;
+          margin-bottom: 2px !important;
+        }
+        
+        .product-price {
+          font-weight: 500 !important;
+          font-size: 14px !important;
+          color: #333 !important;
+          margin-bottom: auto !important;
+        }
+        
+        .explore-button-wrapper {
+          margin-top: auto !important;
+          border-top: 1px solid #eee !important;
+          padding-top: 8px !important;
+        }
+        
+        .explore-button {
+          width: 100% !important;
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          background: none !important;
+          border: none !important;
+          color: #558076 !important;
+          font-size: 13px !important;
+          font-weight: 500 !important;
+          padding: 0 !important;
+          cursor: pointer !important;
+          transition: all 0.2s !important;
+        }
+        
+        .explore-button:hover {
+          opacity: 0.8 !important;
         }
         .swiper-pagination {
           bottom: 0 !important;
         }
-        .swiper-button-prev, .swiper-button-next {
+        /* Target only the explore shop section's navigation buttons */
+        .explore-shop-section .swiper-button-prev, 
+        .explore-shop-section .swiper-button-next {
           color: #000 !important;
+          width: 40px !important;
+          height: 40px !important;
+          background: rgba(255, 255, 255, 0.9) !important;
+          border-radius: 50% !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+          top: 165px !important; /* Position at the middle of the image portion */
+          transform: translateY(0) !important;
+          z-index: 100 !important;
+        }
+        .explore-shop-section .swiper-button-prev {
+          left: 10px !important;
+        }
+        .explore-shop-section .swiper-button-next {
+          right: 10px !important;
+        }
+        .explore-shop-section .swiper-button-prev:after, 
+        .explore-shop-section .swiper-button-next:after {
+          font-size: 18px !important;
         }
       `}</style>
     </section>

@@ -51,6 +51,7 @@ const videos = [
   }
 ];
 
+// Video slide component that plays on hover
 const VideoSlide = ({ video, isActive }: { video: typeof videos[0], isActive: boolean }) => {
   const [isHovered, setIsHovered] = useState(false);
   const shouldPlayVideo = isActive || isHovered;

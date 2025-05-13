@@ -66,7 +66,7 @@ export default function RegisterPage() {
       
       toast({
         title: "Registration successful",
-        description: "Welcome to Kama Ayurveda.",
+        description: "Welcome to Kama Ayurveda."
       });
       
       navigate(redirectTo);
@@ -74,7 +74,7 @@ export default function RegisterPage() {
       toast({
         title: "Registration failed",
         description: error.message || "An error occurred during registration. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);

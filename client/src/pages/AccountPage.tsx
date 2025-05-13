@@ -106,9 +106,16 @@ export default function AccountPage() {
   const handleLogout = async () => {
     try {
       await logout();
-      toast({ title: "Logout successful", description: "You have been logged out." });
+      toast({
+        title: "Logout successful",
+        description: "You have been logged out."
+      });
     } catch {
-      toast({ title: "Logout failed", description: "Could not log out. Please try again.", variant: "destructive" });
+      toast({
+        title: "Logout failed",
+        description: "Could not log out. Please try again.",
+        variant: "destructive"
+      });
     }
   };
   
