@@ -32,20 +32,24 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const storedAdmin = localStorage.getItem("admin");
-        if (storedAdmin) {
-          const adminData = JSON.parse(storedAdmin);
-          
-          // Verify that the user is actually an admin
-          if (adminData.isAdmin) {
-            setAdmin(adminData);
-          } else {
-            // If not an admin, clear local storage
-            localStorage.removeItem("admin");
-          }
+        // Verify authentication with the server
+        const response = await apiRequest("GET", "/api/admin/auth/verify", undefined);
+        const data = await response.json();
+        
+        if (data.isAuthenticated && data.user && data.user.isAdmin) {
+          setAdmin(data.user);
+          // Also update localStorage for fallback
+          localStorage.setItem("admin", JSON.stringify(data.user));
+        } else {
+          // If not authenticated or not admin, clear local storage
+          localStorage.removeItem("admin");
+          setAdmin(null);
         }
       } catch (error) {
         console.error("Authentication check failed:", error);
+        // Clear local storage on error
+        localStorage.removeItem("admin");
+        setAdmin(null);
       } finally {
         setIsLoading(false);
       }
@@ -57,7 +61,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   // Login function
   const login = async (email: string, password: string): Promise<User> => {
     try {
-      const response = await apiRequest("POST", "/api/auth/login", {
+      const response = await apiRequest("POST", "/api/admin/auth/login", {
         email,
         password,
       });
@@ -69,7 +73,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Not authorized as admin");
       }
       
-      // Store admin data
+      // Store admin data for UI purposes
       localStorage.setItem("admin", JSON.stringify(userData));
       setAdmin(userData);
       
@@ -83,12 +87,17 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   // Logout function
   const logout = async (): Promise<void> => {
     try {
+      // Call the logout endpoint to clear the cookie
+      await apiRequest("POST", "/api/admin/auth/logout", {});
       localStorage.removeItem("admin");
       setAdmin(null);
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
-      throw error;
+      // Still clear local state even if server call fails
+      localStorage.removeItem("admin");
+      setAdmin(null);
+      navigate("/login");
     }
   };
 

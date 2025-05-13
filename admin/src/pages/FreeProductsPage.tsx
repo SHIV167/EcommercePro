@@ -65,6 +65,18 @@ export default function FreeProductsPage() {
     try {
       const response = await get('/api/admin/free-products');
       
+      // Check if data is an array before proceeding
+      if (!Array.isArray(response.data)) {
+        console.error('Expected array response but got:', typeof response.data, response.data);
+        toast({ 
+          title: 'Invalid data format from server', 
+          description: 'Please check your authentication status and try again.',
+          variant: 'destructive' 
+        });
+        setFreeProducts([]);
+        return;
+      }
+      
       // Fetch product details for each free product
       const freeProductsWithDetails = await Promise.all(
         response.data.map(async (freeProduct: FreeProduct) => {
@@ -75,15 +87,21 @@ export default function FreeProductsPage() {
               product: productResponse.data
             };
           } catch (error) {
+            console.warn(`Failed to fetch details for product ${freeProduct.productId}:`, error);
             return freeProduct;
           }
         })
       );
       
       setFreeProducts(freeProductsWithDetails);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading free products:', error);
-      toast({ title: 'Failed to load free products', variant: 'destructive' });
+      toast({ 
+        title: 'Failed to load free products', 
+        description: error.message || 'Check authentication status',
+        variant: 'destructive' 
+      });
+      setFreeProducts([]);
     } finally {
       setLoading(false);
     }

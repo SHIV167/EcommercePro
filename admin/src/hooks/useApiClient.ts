@@ -20,6 +20,7 @@ export function useApiClient() {
     headers: {
       'Content-Type': 'application/json',
     },
+    withCredentials: true, // Enable sending cookies in cross-domain requests
   });
 
   // Authentication is handled via cookies, so no need to add Authorization header
