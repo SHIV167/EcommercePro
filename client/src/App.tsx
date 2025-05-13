@@ -3,6 +3,7 @@ import { Route, Switch, useLocation } from "wouter";
 import Header from "./components/layout/Header";
 import NewsletterPopup from "./components/layout/NewsletterPopup";
 import Footer from "./components/layout/Footer";
+import { Toaster } from "./components/ui/toaster";
 import HomePage from "./pages/HomePage";
 import CartPage from "./pages/CartPage";
 import GiftCardsPage from "./pages/GiftCardsPage";
@@ -33,6 +34,7 @@ export default function App() {
     <div className="app">
       {!isCheckout && <Header />}
       {!isCheckout && <NewsletterPopup />}
+      <Toaster />
       <main>
         <Switch>
           <Route path="/" component={HomePage} />
