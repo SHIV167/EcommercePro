@@ -111,10 +111,29 @@ export default function FreeProductsPage() {
   const loadProducts = async () => {
     try {
       const response = await get('/api/products');
-      setProducts(response.data);
-    } catch (error) {
+      
+      // Check if data is an array before setting state
+      if (Array.isArray(response.data)) {
+        setProducts(response.data);
+      } else {
+        console.error('Expected array for products but got:', typeof response.data, response.data);
+        toast({ 
+          title: 'Invalid product data format', 
+          description: 'Please check your API response',
+          variant: 'destructive' 
+        });
+        // Initialize with empty array to prevent map errors
+        setProducts([]);
+      }
+    } catch (error: any) {
       console.error('Error loading products:', error);
-      toast({ title: 'Failed to load product list', variant: 'destructive' });
+      toast({ 
+        title: 'Failed to load product list', 
+        description: error.message || 'API request failed',
+        variant: 'destructive' 
+      });
+      // Initialize with empty array to prevent map errors
+      setProducts([]);
     }
   };
 

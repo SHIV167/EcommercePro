@@ -5,6 +5,7 @@ import { Redirect, Switch, Route } from "wouter";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { AdminAuthProvider, useAdminAuth } from "./hooks/useAdminAuth";
+import AuthDebug from "./components/debug/AuthDebug";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 import Dashboard from "./pages/Dashboard";
@@ -40,6 +41,8 @@ function AdminContainer() {
       <div className="flex-1 flex flex-col">
         <Header />
         <main className="flex-1 p-6 overflow-auto">
+          {/* Add debug component */}
+          <AuthDebug />
           <Switch>
             <Route path="/admin/dashboard" component={Dashboard} />
             <Route path="/admin/products" component={ProductsManagement} />
