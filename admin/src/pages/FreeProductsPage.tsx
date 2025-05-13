@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 // Using absolute import path instead of relative
 import { useApiClient } from '@/hooks/useApiClient';
+import { logApiResponse } from '@/utils/apiLogger';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -112,14 +113,55 @@ export default function FreeProductsPage() {
     try {
       const response = await get('/api/products');
       
-      // Check if data is an array before setting state
+      // Log the response to understand its structure
+      logApiResponse(response.data, { label: 'Products API Response', expandObjects: true });
+      
+      // Check response structure and extract products
       if (Array.isArray(response.data)) {
-        setProducts(response.data);
+        // Direct array format - ensure products match expected type
+        const validProducts = response.data.filter((item: unknown) => 
+          item && typeof item === 'object' && '_id' in item && 'name' in item && 'price' in item
+        ) as Product[];
+        setProducts(validProducts);
+      } else if (response.data && typeof response.data === 'object') {
+        // Check if response has a products property that's an array
+        if (Array.isArray(response.data.products)) {
+          const validProducts = response.data.products.filter((item: unknown) => 
+            item && typeof item === 'object' && '_id' in item && 'name' in item && 'price' in item
+          ) as Product[];
+          setProducts(validProducts);
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          // Some APIs return data in a nested 'data' property
+          const validProducts = response.data.data.filter((item: unknown) => 
+            item && typeof item === 'object' && '_id' in item && 'name' in item && 'price' in item
+          ) as Product[];
+          setProducts(validProducts);
+        } else {
+          // Try to extract values if it's an object of products
+          const extractedProducts = Object.values(response.data);
+          if (Array.isArray(extractedProducts) && extractedProducts.length > 0 && 
+              extractedProducts[0] && typeof extractedProducts[0] === 'object') {
+            // Validate and cast the extracted products to ensure they match the Product type
+            const validProducts = extractedProducts.filter((item: unknown) => 
+              item && typeof item === 'object' && '_id' in item && 'name' in item && 'price' in item
+            ) as Product[];
+            
+            setProducts(validProducts);
+          } else {
+            console.error('Could not extract products array from:', response.data);
+            toast({ 
+              title: 'Invalid product data format', 
+              description: 'Please check the API response structure',
+              variant: 'destructive' 
+            });
+            setProducts([]);
+          }
+        }
       } else {
-        console.error('Expected array for products but got:', typeof response.data, response.data);
+        console.error('Expected array or object for products but got:', typeof response.data, response.data);
         toast({ 
           title: 'Invalid product data format', 
-          description: 'Please check your API response',
+          description: 'Please check the API response',
           variant: 'destructive' 
         });
         // Initialize with empty array to prevent map errors
