@@ -31,7 +31,7 @@ export default function HomePage() {
   return (
     <>
       <Helmet>
-        <title>Kama Ayurveda - Luxury Ayurvedic Beauty Products</title>
+        <title>Shiv Kumar Jha - Luxury Ayurvedic Beauty Products</title>
         <meta name="description" content="Discover the power of Ayurveda with Kama Ayurveda's premium skincare, haircare and wellness products crafted with authentic ingredients and traditional methods." />
       </Helmet>
       <SearchBar show={searchOpen} onClose={() => setSearchOpen(false)} />
@@ -39,13 +39,13 @@ export default function HomePage() {
       <CategorySection />
       <ProductCollection collectionSlug="kumkumadi" slider={true} />
       <NewLaunchSection />
+      <BrandsCarousel />
       <AyurvedicBanner />
       <BestsellerSection />
       <TestimonialSection />
-      <BrandsCarousel />
-      <VideoCarousel />
-      <VideoGallery />
+      <VideoCarousel /> 
       <SustainabilitySection />
+      <VideoGallery />
       <NewsletterSection />
       <MobileFooterNav />
     </>

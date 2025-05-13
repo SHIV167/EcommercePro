@@ -12,13 +12,28 @@ export default function NewsletterPopup() {
 
   useEffect(() => {
     fetch('/api/popup-settings')
-      .then(res => res.json())
+      .then(res => {
+        // Check if response is OK and has content
+        if (res.ok && res.headers.get('content-length') !== '0') {
+          return res.json();
+        }
+        // Return default settings if empty response
+        console.warn('Empty or invalid popup settings response');
+        return { enabled: false };
+      })
       .then(data => {
         console.log('Popup settings from API:', data);
-        setBg(data.bgImage);
-        setEnabled(data.enabled);
-        setStart(data.startDate);
-        setEnd(data.endDate);
+        if (data) {
+          setBg(data.bgImage || '');
+          setEnabled(data.enabled || false);
+          setStart(data.startDate || null);
+          setEnd(data.endDate || null);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching popup settings:', error);
+        // Disable popup on error
+        setEnabled(false);
       });
   }, []);
 
