@@ -11,11 +11,12 @@ import ProductModel from "./models/Product"; // Import ProductModel
 import BannerModel from "./models/Banner"; // Import BannerModel
 import ScannerModel from "./models/Scanner"; // Import ScannerModel
 import TestimonialModel from "./models/Testimonial"; // Import TestimonialModel for seeding
+import FreeProductModel from "./models/FreeProduct"; // Import FreeProductModel
 
 import { v4 as uuidv4 } from "uuid"; // Import uuid
 import { z } from "zod";
+import { CartItem, Product } from "../shared/schema";
 import { categorySchema, collectionSchema, productSchema } from "@shared/schema";
-import type { Product } from "../shared/schema";
 
 type InsertProduct = Omit<Product, 'id' | '_id' | 'createdAt'>;
 import { sendMail } from "./utils/mailer";
@@ -51,7 +52,8 @@ function getCookieDomain(req: Request): string | undefined {
 const cartItemInsertSchema = z.object({
   cartId: z.string(),
   productId: z.string(),
-  quantity: z.number().min(1)
+  quantity: z.number().min(1),
+  isFree: z.boolean().optional()
 });
 
 // Order input validation
@@ -119,6 +121,7 @@ import giftCardTemplateRoutes from './routes/giftCardTemplateRoutes';
 import authRoutes from './routes/authRoutes'; // Import auth routes
 import scannerRoutes from './routes/scannerRoutes'; // Import scanner routes
 import testimonialRoutes from './routes/testimonialRoutes'; // Import testimonial routes
+import freeProductRoutes from './routes/freeProductRoutes'; // Import freeProduct routes
 
 // Import controllers for coupons
 
@@ -134,6 +137,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', giftCardTemplateRoutes);
   app.use('/api', scannerRoutes);
   app.use('/api', testimonialRoutes);
+  app.use('/api', freeProductRoutes);
   // ensure upload directory exists in public/uploads
   const uploadDir = path.join(__dirname, '../public/uploads');
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -1195,7 +1199,11 @@ export async function registerRoutes(app: Application): Promise<Server> {
           </table>
           <p>Shipping Address: ${createdOrder.shippingAddress}</p>
         `;
-        sendMail({ to: toEmail, subject: `Order Confirmation - ${orderId}`, html }).catch(err => console.error("Invoice email error:", err));
+        sendMail({
+          to: toEmail,
+          subject: `Order Confirmation - ${orderId}`,
+          html
+        }).catch(err => console.error("Invoice email error:", err));
       }
       return res.status(201).json({ order: createdOrder, items: createdItems });
     } catch (error) {
@@ -1450,7 +1458,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   
   app.post("/api/cart/items", async (req, res) => {
     try {
-      const { cartId, productId, quantity } = req.body;
+      const { cartId, productId, quantity, isFree } = req.body;
       
       if (!cartId || !productId || !quantity) {
         return res.status(400).json({ message: "cartId, productId, and quantity are required" });
@@ -1459,12 +1467,17 @@ export async function registerRoutes(app: Application): Promise<Server> {
       const validatedData = cartItemInsertSchema.parse({
         cartId,
         productId,
-        quantity
+        quantity,
+        isFree
       });
       
-      const cartItem = await storage.addCartItem(validatedData);
-      
-      return res.status(201).json(cartItem);
+      const newItem = await storage.addCartItem({
+        productId,
+        quantity,
+        cartId: cartId,
+        isFree: false
+      });
+      return res.status(201).json(newItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: error.errors });
@@ -1521,7 +1534,128 @@ export async function registerRoutes(app: Application): Promise<Server> {
       return res.status(500).json({ message: "Server error" });
     }
   });
+
+  // Get eligible free products based on cart total
+  app.get("/api/cart/:cartId/eligible-free-products", async (req, res) => {
+    try {
+      const { cartId } = req.params;
+      
+      // Get the cart with items
+      const cart = await storage.getCartById(cartId);
+      if (!cart) {
+        return res.status(404).json({ message: "Cart not found" });
+      }
+      
+      // Get cart items with product details
+      const cartItemsWithProduct = await storage.getCartItemsWithProductDetails(cartId);
+      
+      // Calculate cart total
+      let cartTotal = 0;
+      cartItemsWithProduct.forEach((item: CartItem & { product: Product }) => {
+        if (!item.isFree) { // Only count non-free items for the total
+          cartTotal += (item.product.price * item.quantity);
+        }
+      });
+      
+      // Get all free products
+      const freeProducts = await FreeProductModel.find().lean();
+      
+      // Filter for eligible free products based on cart total
+      const eligibleFreeProducts = freeProducts.filter(freeProduct => {
+        return cartTotal >= freeProduct.minOrderValue;
+      });
+      
+      // Get full product details for eligible free products
+      const productsWithDetails = [];
+      for (const freeProduct of eligibleFreeProducts) {
+        const product = await storage.getProductById(freeProduct.productId);
+        if (product) {
+          productsWithDetails.push({
+            ...product,
+            freeProductId: freeProduct._id,
+            minOrderValue: freeProduct.minOrderValue
+          });
+        }
+      }
+      
+      return res.status(200).json(productsWithDetails);
+    } catch (error) {
+      console.error('Get eligible free products error:', error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
   
+  // Add a free product to the cart
+  app.post("/api/cart/:cartId/add-free-product", async (req, res) => {
+    try {
+      const { cartId } = req.params;
+      const { productId, freeProductId } = req.body;
+      
+      if (!productId || !freeProductId) {
+        return res.status(400).json({ message: "productId and freeProductId are required" });
+      }
+      
+      // Verify this is a valid free product
+      const freeProduct = await FreeProductModel.findById(freeProductId);
+      if (!freeProduct) {
+        return res.status(404).json({ message: "Free product not found" });
+      }
+      
+      // Check if product ID matches
+      if (freeProduct.productId !== productId) {
+        return res.status(400).json({ message: "Product ID does not match free product record" });
+      }
+      
+      // Get the cart with items
+      const cart = await storage.getCartById(cartId);
+      if (!cart) {
+        return res.status(404).json({ message: "Cart not found" });
+      }
+      
+      // Get cart items with product details
+      const cartItemsWithProduct = await storage.getCartItemsWithProductDetails(cartId);
+      
+      // Calculate cart total
+      let cartTotal = 0;
+      cartItemsWithProduct.forEach((item: CartItem & { product: Product }) => {
+        if (!item.isFree) { // Only count non-free items for the total
+          cartTotal += (item.product.price * item.quantity);
+        }
+      });
+      
+      // Check if cart meets minimum order value
+      if (cartTotal < freeProduct.minOrderValue) {
+        return res.status(400).json({ 
+          message: `Cart total must be at least ${freeProduct.minOrderValue} to qualify for this free product`,
+          cartTotal,
+          minimumRequired: freeProduct.minOrderValue
+        });
+      }
+      
+      // Check if this free product is already in the cart
+      const existingFreeItem = cartItemsWithProduct.find((item: CartItem & { product: Product }) => 
+        item.isFree && item.productId === productId
+      );
+      
+      if (existingFreeItem) {
+        return res.status(400).json({ message: "This free product is already in your cart" });
+      }
+      
+      // Add the free product to the cart
+      const newItem = await storage.addCartItem({
+        productId,
+        quantity: 1, // Free products always have quantity of 1
+        cartId,
+        isFree: true
+      });
+      
+      return res.status(201).json(newItem);
+    } catch (error) {
+      console.error('Add free product error:', error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
   // Admin: list all users
   app.get("/api/admin/users", async (req, res) => {
     try {

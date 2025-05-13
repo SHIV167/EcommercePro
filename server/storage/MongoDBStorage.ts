@@ -533,6 +533,11 @@ export class MongoDBStorage implements IStorage {
     return cart ? convertToObject<Cart>(cart) : undefined;
   }
 
+  async getCartById(id: string): Promise<Cart | undefined> {
+    const cart = await CartModel.findById(id);
+    return cart ? convertToObject<Cart>(cart) : undefined;
+  }
+
   async createCart(cart: InsertCart): Promise<Cart> {
     const id = new mongoose.Types.ObjectId().toHexString();
     const newCart = new CartModel({
@@ -548,6 +553,25 @@ export class MongoDBStorage implements IStorage {
   async getCartItems(cartId: string): Promise<CartItem[]> {
     const cartItems = await CartItemModel.find({ cartId });
     return cartItems.map(ci => convertToObject<CartItem>(ci));
+  }
+
+  async getCartItemsWithProductDetails(cartId: string): Promise<Array<CartItem & { product: Product }>> {
+    const cartItems = await CartItemModel.find({ cartId });
+    const result: Array<CartItem & { product: Product }> = [];
+    
+    for (const item of cartItems) {
+      const cartItem = convertToObject<CartItem>(item);
+      const product = await this.getProductById(cartItem.productId);
+      
+      if (product) {
+        result.push({
+          ...cartItem,
+          product
+        });
+      }
+    }
+    
+    return result;
   }
 
   async addCartItem(cartItem: InsertCartItem): Promise<CartItem> {

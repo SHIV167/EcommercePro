@@ -109,6 +109,7 @@ export type CartItem = {
   cartId: string;
   productId: string;
   quantity: number;
+  isFree: boolean;
 };
 export type InsertCartItem = Omit<CartItem, 'id' | '_id'>;
 
