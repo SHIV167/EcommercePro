@@ -45,6 +45,7 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       isNew: false,
       categoryId: '1',
       createdAt: new Date(),
+      sku: "KUM-MAS-001",
       images: []
     },
     {
@@ -64,6 +65,7 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       isNew: true,
       categoryId: '1',
       createdAt: new Date(),
+      sku: "KUM-SER-002",
       images: []
     },
     {
@@ -83,6 +85,27 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       isNew: false,
       categoryId: '1',
       createdAt: new Date(),
+      sku: "KUM-SET-003",
+      images: []
+    },
+    {
+      _id: '4',
+      name: "Kumkumadi Brightening Face Oil",
+      slug: "kumkumadi-brightening-face-oil",
+      description: "Luxurious Ayurvedic facial oil for brightening",
+      shortDescription: "Luxurious Ayurvedic facial oil for brightening",
+      price: 1995,
+      discountedPrice: null,
+      stock: 12,
+      imageUrl: "https://images.unsplash.com/photo-1596462502278-27bfdc403348",
+      rating: 4.7,
+      totalReviews: 156,
+      featured: true,
+      bestseller: true,
+      isNew: false,
+      categoryId: '1',
+      createdAt: new Date(),
+      sku: "KUM-OIL-004",
       images: []
     }
   ];
@@ -129,7 +152,7 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
     dots: false,
     infinite: true,
     speed: 500,
-    slidesToShow: 3,
+    slidesToShow: 4,
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 5000,
@@ -138,6 +161,10 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
     prevArrow: <PrevArrow />,
     nextArrow: <NextArrow />,
     responsive: [
+      {
+        breakpoint: 1280,
+        settings: { slidesToShow: 3 },
+      },
       {
         breakpoint: 1024,
         settings: { slidesToShow: 2 },
@@ -154,8 +181,8 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
           <h2 className="font-heading text-2xl text-primary">{collectionTitle}</h2>
-          <Link href={`/collections/${collectionSlug}`} className="text-sm text-neutral-gray hover:text-primary">
-            View All
+          <Link href={`/collections/${collectionSlug}`} className="bg-black text-white px-6 py-2 hover:bg-gray-800 transition-colors duration-300 text-sm font-medium">
+            VIEW ALL
           </Link>
         </div>
         

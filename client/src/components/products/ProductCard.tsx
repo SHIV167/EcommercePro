@@ -95,15 +95,17 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
           <RatingStars rating={product.rating} reviews={product.totalReviews} />
         </div>
         {/* Product Name */}
-        <h3 className="font-heading text-primary hover:text-primary-light mb-1 text-base text-center line-clamp-2 min-h-[2.5rem]">
+        <h3 className="font-heading text-primary hover:text-primary-light mb-1 text-base text-center line-clamp-2 min-h-[3rem]">
           <Link href={`/products/${product.slug}`}>{product.name}</Link>
         </h3>
         {/* Short Description */}
-        {product.shortDescription && (
-          <p className="text-sm text-neutral-gray mb-3 text-center line-clamp-2 min-h-[2.5rem]">{product.shortDescription}</p>
-        )}
+        <div className="min-h-[3rem] mb-3">
+          {product.shortDescription ? (
+            <p className="text-sm text-neutral-gray text-center line-clamp-2">{product.shortDescription}</p>
+          ) : <div className="h-full"></div>}
+        </div>
         {/* Price */}
-        <div className="flex items-center justify-center gap-2 mb-4">
+        <div className="flex items-center justify-center gap-2 mb-4 min-h-[2rem]">
           <span className="font-semibold text-lg text-primary">{formatCurrency(product.price)}</span>
           {product.discountedPrice && (
             <span className="text-sm text-neutral-gray line-through">{formatCurrency(product.discountedPrice)}</span>
@@ -113,7 +115,7 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
         <Button
           variant="outline"
           size="lg"
-          className="w-full border-neutral-sand border-2 rounded-none font-medium uppercase tracking-wide text-primary hover:bg-primary hover:text-white py-3 mt-auto"
+          className="w-full bg-black text-white border-0 rounded-none font-medium uppercase tracking-wide hover:bg-neutral-darkGray py-3 mt-auto"
           onClick={handleAddToCart}
         >
           Add to Bag
