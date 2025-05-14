@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import './ProductDetail.css'; // Import custom CSS for mobile styles
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get product ID from URL
@@ -80,8 +81,13 @@ const ProductDetail: React.FC = () => {
 
   const discountedPrice = discount > 0 ? product.price - discount : product.price;
 
+  // Function to scroll to top
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 pb-28 md:pb-4"> {/* Further increased padding for mobile */}
       <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
       <div className="flex flex-col md:flex-row gap-6">
         <img src={product.image} alt={product.name} className="w-full md:w-1/2 object-cover rounded-lg shadow-md" />
@@ -100,11 +106,28 @@ const ProductDetail: React.FC = () => {
           <button
             onClick={addToCart}
             disabled={cartLoading}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+            className="hidden md:block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
           >
             {cartLoading ? 'Adding...' : 'Add to Cart'}
           </button>
         </div>
+      </div>
+      
+      {/* Mobile sticky Add to Cart - always visible on mobile */}
+      <div className="mobile-sticky-cart fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-50 shadow-lg">
+        <button
+          onClick={() => {
+            scrollToTop(); // Scroll to top first
+            // Add a small delay before adding to cart
+            setTimeout(() => {
+              addToCart();
+            }, 300);
+          }}
+          disabled={cartLoading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg text-lg shadow-md"
+        >
+          {cartLoading ? 'Adding...' : 'Add to Cart'}
+        </button>
       </div>
     </div>
   );

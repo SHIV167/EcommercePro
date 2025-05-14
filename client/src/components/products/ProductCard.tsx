@@ -39,6 +39,16 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
   // Helper to check if a URL is YouTube
   const isYouTubeUrl = (url?: string) => url && /youtu(be)?\.([a-z]+)/i.test(url);
 
+  // Calculate discount percentage if discounted price exists
+  const calculateDiscountPercentage = () => {
+    if (!product.discountedPrice) return null;
+    const discount = product.price - product.discountedPrice;
+    const percentage = Math.round((discount / product.price) * 100);
+    return percentage > 0 ? percentage : null;
+  };
+
+  const discountPercentage = calculateDiscountPercentage();
+
   // Find promo timer for this product
   const promoTimers = (window as any).PROMO_TIMERS as { productId: string; endTime: string; enabled: boolean }[] | undefined;
   const promoTimer = promoTimers?.find(t => t.enabled && (t.productId === product._id || t.productId === product.slug));
@@ -59,8 +69,14 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
             Featured
           </span>
         )}
+        {/* Discount Badge */}
+        {discountPercentage && (
+          <span className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-sm z-20">
+            -{discountPercentage}%
+          </span>
+        )}
         {/* Wishlist Heart */}
-        <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-neutral-cream transition-colors group" aria-label="Add to Wishlist">
+        <button className="absolute top-14 right-2 p-1 rounded-full hover:bg-neutral-cream transition-colors group" aria-label="Add to Wishlist">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-neutral-gray group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
           </svg>
@@ -68,7 +84,7 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
         {/* Video Icon - show only if videoUrl exists */}
         {product.videoUrl && (
           <button
-            className="absolute top-2 right-10 bg-white rounded-full border-2 border-green-500 p-1 z-20 shadow"
+            className="absolute top-14 right-12 bg-white rounded-full border-2 border-green-500 p-1 z-20 shadow"
             style={{ boxShadow: '0 2px 8px rgba(0,128,0,0.12)' }}
             aria-label="Play Product Video"
             onClick={e => { e.preventDefault(); setShowVideo(true); }}
