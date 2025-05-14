@@ -195,30 +195,72 @@ export default function CheckoutPage() {
 
   if (razorpayOrder && pendingOrderPayload) {
     return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        <RazorpayCheckout
-          orderId={razorpayOrder.orderId}
-          amount={razorpayOrder.amount}
-          currency={razorpayOrder.currency}
-          onSuccess={async res => {
-            setIsSubmitting(true);
-            try {
-              const valid = await apiRequest('POST','/api/razorpay/verify',res).then(r=>r.json());
-              if (!valid.valid) throw new Error('Invalid');
-              pendingOrderPayload.order.paymentStatus = 'paid';
-              pendingOrderPayload.order.paymentId = res.razorpay_payment_id;
-              const data = await apiRequest('POST','/api/orders',pendingOrderPayload).then(r=>r.json());
-              const orderId = data.order.id;
-              toast({ title: 'Payment successful!', description: `Your order #${orderId} has been placed.` });
-              clearCart();
-              navigate(`/thank-you/${orderId}`);
-            } catch {
-              toast({ title: 'Payment failed', variant: 'destructive' });
-            } finally { setIsSubmitting(false); }
-          }}
-          onError={err => toast({ title: 'Payment error', description: err.error?.description||err.message, variant: 'destructive' })}
-        />
-      </div>
+      <>
+        <Helmet>
+          <title>Complete Payment | Kama Ayurveda</title>
+        </Helmet>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50">
+          <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md text-center">
+            <img src="/uploads/logo.svg" alt="Kama Ayurveda" className="h-10 mx-auto mb-6" />
+            <h1 className="text-2xl font-heading text-primary mb-4">Complete Your Purchase</h1>
+            <p className="text-gray-600 mb-6">Please complete your payment to finalize your order.</p>
+            
+            <div className="bg-neutral-cream p-4 rounded-md mb-6">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Total Amount:</span>
+                <span className="font-heading text-xl text-primary">
+                  {formatCurrency(razorpayOrder.amount/100)}
+                </span>
+              </div>
+            </div>
+            
+            <RazorpayCheckout
+              orderId={razorpayOrder.orderId}
+              amount={razorpayOrder.amount}
+              currency={razorpayOrder.currency}
+              onSuccess={async res => {
+                setIsSubmitting(true);
+                try {
+                  const valid = await apiRequest('POST','/api/razorpay/verify',res).then(r=>r.json());
+                  if (!valid.valid) throw new Error('Invalid');
+                  pendingOrderPayload.order.paymentStatus = 'paid';
+                  pendingOrderPayload.order.paymentId = res.razorpay_payment_id;
+                  const data = await apiRequest('POST','/api/orders',pendingOrderPayload).then(r=>r.json());
+                  const orderId = data.order.id;
+                  toast({ title: 'Payment successful!', description: `Your order #${orderId} has been placed.` });
+                  clearCart();
+                  navigate(`/thank-you/${orderId}`);
+                } catch {
+                  toast({ title: 'Payment failed', variant: 'destructive' });
+                  // Reset payment state if payment fails
+                  setRazorpayOrder(null);
+                  setPendingOrderPayload(null);
+                } finally { 
+                  setIsSubmitting(false); 
+                }
+              }}
+              onError={err => {
+                toast({ title: 'Payment error', description: err.error?.description||err.message, variant: 'destructive' });
+                // Reset payment state when payment is canceled or errors out
+                setRazorpayOrder(null);
+                setPendingOrderPayload(null);
+                setIsSubmitting(false);
+              }}
+            />
+            
+            <button 
+              onClick={() => {
+                setRazorpayOrder(null);
+                setPendingOrderPayload(null);
+                setIsSubmitting(false);
+              }}
+              className="mt-4 text-gray-600 hover:text-primary underline text-sm"
+            >
+              Cancel and return to checkout
+            </button>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -229,364 +271,353 @@ export default function CheckoutPage() {
         <meta name="description" content="Complete your purchase securely." />
       </Helmet>
       <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
-      {/* Custom Header */}
-      <div className="bg-white py-4 border-b">
-        <div className="container mx-auto flex justify-center">
-          <Link href="/" className="block">
-            <div className="flex flex-col items-center">
-              <h1 className="text-primary font-heading text-2xl md:text-3xl font-bold">KAMA</h1>
-              <p className="text-primary font-accent text-sm tracking-widest">AYURVEDA</p>
-            </div>
+      
+      <div className="bg-neutral-50 py-10 mt-16">
+        <div className="container mx-auto px-4 max-w-6xl">
+          {/* Back button */}
+          <Link href="/cart" className="flex items-center text-sm text-gray-600 mb-6">
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            BACK
           </Link>
-        </div>
-      </div>
-      
-      <div className="bg-neutral-cream py-8">
-        <div className="container mx-auto px-4">
-          <h1 className="font-heading text-3xl text-primary text-center">Checkout</h1>
-        </div>
-      </div>
-      
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            {!isAuthenticated && (
-              <div className="bg-yellow-100 border border-yellow-300 rounded px-4 py-3 mb-8 text-center text-yellow-900">
-                Please{' '}
-                <button
-                  className="text-primary hover:underline font-semibold"
+          
+          {/* Login prompt - only shown if not authenticated */}
+          {!isAuthenticated && (
+            <div className="bg-gray-50 p-4 mb-8 rounded border border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">To use Amaaya points, vouchers, please log in</span>
+                <button 
                   onClick={() => setAuthModalOpen(true)}
-                  type="button"
+                  className="bg-neutral-800 text-white text-xs px-4 py-2 uppercase tracking-wider"
                 >
-                  login
-                </button>{' '}
-                to place your order.
+                  LOGIN
+                </button>
               </div>
-            )}
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <div className="border border-neutral-sand rounded-md overflow-hidden">
-                  <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
-                    <h2 className="font-heading text-lg text-primary">Billing Information</h2>
-                  </div>
-                  <div className="p-6 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="John Doe" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input placeholder="john@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+            </div>
+          )}
+          
+          {/* Promotional banner */}
+          <div className="bg-amber-50 p-4 mb-8 rounded border border-amber-100">
+            <div className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a4 4 0 118 0v7M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+              <p className="text-sm">Add products worth Rs. 2000 and Choose any 2 complimentary gifts worth up to Rs. 1990 on orders above Rs 3000.</p>
+            </div>
+          </div>
+          
+          {/* Main checkout form and order summary */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <div className="lg:col-span-2">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                  <div className="border border-neutral-sand rounded-md overflow-hidden">
+                    <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
+                      <h2 className="font-heading text-lg text-primary">Billing Information</h2>
                     </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input placeholder="+91 9876543210" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Address</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="1234 Main St" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>City</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Mumbai" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="state"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>State</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Maharashtra" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="zipCode"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Zip code</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Zip code" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="sameAsBilling"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              checked={field.value}
-                              onChange={field.onChange}
-                              className="h-4 w-4 mt-1"
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Shipping address is the same as billing address</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    {!sameAsBilling && (
-                      <div className="border-t border-neutral-sand pt-6 space-y-6">
-                        <h3 className="font-heading text-primary">Shipping Information</h3>
-                        
+                    <div className="p-6 space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                           control={form.control}
-                          name="shippingAddress"
+                          name="name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Address</FormLabel>
+                              <FormLabel>Full Name</FormLabel>
                               <FormControl>
-                                <Textarea placeholder="1234 Main St" {...field} />
+                                <Input placeholder="John Doe" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input placeholder="john@example.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone</FormLabel>
+                            <FormControl>
+                              <Input placeholder="+91 9876543210" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Address</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="1234 Main St" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>City</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Mumbai" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="state"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>State</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Maharashtra" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="zipCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Zip code</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Zip code" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="sameAsBilling"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <input
+                                type="checkbox"
+                                checked={field.value}
+                                onChange={field.onChange}
+                                className="h-4 w-4 mt-1"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Shipping address is the same as billing address</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {!sameAsBilling && (
+                        <div className="border-t border-neutral-sand pt-6 space-y-6">
+                          <h3 className="font-heading text-primary">Shipping Information</h3>
+                          
                           <FormField
                             control={form.control}
-                            name="shippingCity"
+                            name="shippingAddress"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>City</FormLabel>
+                                <FormLabel>Shipping Address</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Mumbai" {...field} />
+                                  <Textarea placeholder="1234 Main St" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
                           
-                          <FormField
-                            control={form.control}
-                            name="shippingState"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>State</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Maharashtra" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="shippingZipCode"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Zip Code</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="400001" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <FormField
+                              control={form.control}
+                              name="shippingCity"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>City</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Mumbai" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={form.control}
+                              name="shippingState"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>State</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Maharashtra" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={form.control}
+                              name="shippingZipCode"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Zip code</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Zip code" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="border border-neutral-sand rounded-md overflow-hidden">
+                    <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
+                      <h2 className="font-heading text-lg text-primary">Payment Method</h2>
+                    </div>
+                    <div className="p-6">
+                      <FormField
+                        control={form.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <RadioGroup
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                className="flex flex-col space-y-3"
+                              >
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="card" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal cursor-pointer">
+                                    Credit / Debit Card
+                                  </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="upi" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal cursor-pointer">
+                                    UPI
+                                  </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="cod" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal cursor-pointer">
+                                    Cash on Delivery
+                                  </FormLabel>
+                                </FormItem>
+                              </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </span>
+                    ) : (
+                      "Place Order"
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </div>
+            
+            <div className="lg:col-span-1">
+              <div className="border border-neutral-sand rounded-md overflow-hidden sticky top-20">
+                <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
+                  <h2 className="font-heading text-lg text-primary">Order Summary</h2>
+                </div>
+                <div className="p-4">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-gray">Subtotal</span>
+                      <span className="font-medium">{formatCurrency(subtotal)}</span>
+                    </div>
+                    
+                    {/* Add Coupon Form */}
+                    <CouponForm
+                      cartTotal={subtotal}
+                      onCouponApplied={applyCoupon}
+                      onCouponRemoved={removeCoupon}
+                      appliedCoupon={appliedCoupon}
+                    />
+                    
+                    {appliedCoupon && (
+                      <div className="flex justify-between items-center text-green-600">
+                        <span>Discount</span>
+                        <span>-{formatCurrency(appliedCoupon.discountValue)}</span>
                       </div>
                     )}
-                  </div>
-                </div>
-                
-                <div className="border border-neutral-sand rounded-md overflow-hidden">
-                  <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
-                    <h2 className="font-heading text-lg text-primary">Payment Method</h2>
-                  </div>
-                  <div className="p-6">
-                    <FormField
-                      control={form.control}
-                      name="paymentMethod"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="space-y-4"
-                            >
-                              <div className="flex items-center space-x-2 rounded-md border p-4">
-                                <RadioGroupItem value="card" id="card" />
-                                <FormLabel htmlFor="card" className="flex-1 cursor-pointer">
-                                  <div className="font-medium">Credit/Debit Card</div>
-                                  <div className="text-sm text-muted-foreground">Pay securely with your card</div>
-                                </FormLabel>
-                                <div className="flex space-x-1">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6" viewBox="0 0 24 24" fill="#1434CB">
-                                    <path d="M22.5 4.5H1.5c-.828 0-1.5.672-1.5 1.5v12c0 .828.672 1.5 1.5 1.5h21c.828 0 1.5-.672 1.5-1.5V6c0-.828-.672-1.5-1.5-1.5z" />
-                                    <path fill="#FFF" d="M9.3 14.7H7.5l1.1-6.9h1.8l-1.1 6.9zm6.7-6.7c-.6-.2-1.5-.5-2.6-.5-2.9 0-4.9 1.5-4.9 3.5 0 1.5 1.4 2.4 2.5 2.9 1.1.5 1.5.8 1.5 1.3 0 .7-.9 1-1.7 1-1.1 0-1.8-.2-2.7-.6l-.4-.2-.4 2.3c.6.3 1.8.6 3 .6 2.8 0 4.7-1.4 4.7-3.6 0-1.2-.8-2.1-2.4-2.9-1-.5-1.6-.8-1.6-1.3 0-.4.5-.9 1.6-.9.9 0 1.6.2 2.1.4l.3.1.4-2.1zm3.6-.2h-1.4c-.4 0-.8.1-1 .6l-2.8 6.3h2s.3-.9.4-1.1h2.4c.1.3.2 1.1.2 1.1h1.8l-1.6-6.9zm-2.4 4.2c.2-.4.8-2 .8-2 0 .1.2-.4.3-.7l.1.7s.4 1.8.5 2h-1.7z" />
-                                  </svg>
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6" viewBox="0 0 24 24">
-                                    <path d="M16 9h-3.2c-.3 0-.6.1-.8.3-.2.2-.2.5-.1.7l2.5 5.8c0 .1.1.1.1.2H12l-.4-1.1H9.6l-.4 1.1H7l2.3-5.5c.2-.5.8-.9 1.3-.9H16V9z" fill="#4D4D4D" />
-                                    <path d="M9.8 12.55l.8-1.9.8 1.9h-1.6z" fill="#4D4D4D" />
-                                    <path d="M22.5 4.5H1.5c-.828 0-1.5.672-1.5 1.5v12c0 .828.672 1.5 1.5 1.5h21c.828 0 1.5-.672 1.5-1.5V6c0-.828-.672-1.5-1.5-1.5zM8.7 16c-.1.1-.2.2-.4.2H5.8c-.3 0-.5-.1-.5-.4l2.1-5.2c.1-.4.5-.6.9-.6H11c.3 0 .6.1.8.3.2.2.2.5.1.7l-2.5 5c0 0-.5 0-.7 0zm5.7 0h-1.9l.8-2h-2l-1 2h-2l2.3-5.5c.2-.5.8-.9 1.3-.9H16V16zm4.1 0c-.1.1-.2.2-.4.2h-3.2V9h3.4c.3 0 .5.2.5.5v.7c0 .3-.2.5-.5.5h-2.4v.7h2.4c.3 0 .5.2.5.5v.7c0 .3-.2.5-.3.5z" fill="#231F20" />
-                                  </svg>
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center space-x-2 rounded-md border p-4">
-                                <RadioGroupItem value="upi" id="upi" />
-                                <FormLabel htmlFor="upi" className="flex-1 cursor-pointer">
-                                  <div className="font-medium">UPI</div>
-                                  <div className="text-sm text-muted-foreground">Pay using UPI apps</div>
-                                </FormLabel>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="24" viewBox="0 0 64 24" fill="none">
-                                  <path d="M10.5 8.5L4.5 17H10.5L16.5 8.5H10.5Z" fill="#097939"/>
-                                  <path d="M16.5 17L22.5 8.5H16.5L10.5 17H16.5Z" fill="#ed752e"/>
-                                </svg>
-                              </div>
-                              
-                              <div className="flex items-center space-x-2 rounded-md border p-4">
-                                <RadioGroupItem value="cod" id="cod" />
-                                <FormLabel htmlFor="cod" className="flex-1 cursor-pointer">
-                                  <div className="font-medium">Cash on Delivery</div>
-                                  <div className="text-sm text-muted-foreground">Pay when you receive your order</div>
-                                </FormLabel>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                              </div>
-                            </RadioGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : (
-                    "Place Order"
-                  )}
-                </Button>
-              </form>
-            </Form>
-          </div>
-          
-          <div className="lg:col-span-1">
-            <div className="border border-neutral-sand rounded-md overflow-hidden sticky top-4">
-              <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
-                <h2 className="font-heading text-lg text-primary">Order Summary</h2>
-              </div>
-              <div className="p-4">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-neutral-gray">Subtotal</span>
-                    <span className="font-medium">{formatCurrency(subtotal)}</span>
-                  </div>
-                  
-                  {/* Add Coupon Form */}
-                  <CouponForm
-                    cartTotal={subtotal}
-                    onCouponApplied={applyCoupon}
-                    onCouponRemoved={removeCoupon}
-                    appliedCoupon={appliedCoupon}
-                  />
-                  
-                  {appliedCoupon && (
-                    <div className="flex justify-between items-center text-green-600">
-                      <span>Discount</span>
-                      <span>-{formatCurrency(appliedCoupon.discountValue)}</span>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-gray">Shipping</span>
+                      <span>{finalTotal > 500 ? "Free" : formatCurrency(50)}</span>
                     </div>
-                  )}
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-neutral-gray">Shipping</span>
-                    <span>{finalTotal > 500 ? "Free" : formatCurrency(50)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-neutral-gray">Tax (18%)</span>
-                    <span>{formatCurrency(finalTotal * 0.18)}</span>
-                  </div>
-                  
-                  <div className="border-t border-neutral-sand pt-4 flex justify-between items-center">
-                    <span className="font-heading text-primary">Total</span>
-                    <span className="font-heading text-xl text-primary">
-                      {formatCurrency(finalTotal + (finalTotal > 500 ? 0 : 50) + finalTotal * 0.18)}
-                    </span>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-gray">Tax (18%)</span>
+                      <span>{formatCurrency(finalTotal * 0.18)}</span>
+                    </div>
+                    
+                    <div className="border-t border-neutral-sand pt-4 flex justify-between items-center">
+                      <span className="font-heading text-primary">Total</span>
+                      <span className="font-heading text-xl text-primary">
+                        {formatCurrency(finalTotal + (finalTotal > 500 ? 0 : 50) + finalTotal * 0.18)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -594,12 +625,13 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+      
       {/* Custom Footer */}
       <footer className="bg-white py-6 border-t mt-12">
         <div className="container mx-auto flex justify-center items-center space-x-6">
-          <img src="/icons/visa.svg" alt="Visa" className="h-6" />
-          <img src="/icons/mastercard.svg" alt="Mastercard" className="h-6" />
-          <img src="/icons/paypal.svg" alt="PayPal" className="h-6" />
+          <img src="/uploads/payment.svg" alt="Visa" className="h-6" />
+          {/* <img src="/icons/mastercard.svg" alt="Mastercard" className="h-6" />
+          <img src="/icons/paypal.svg" alt="PayPal" className="h-6" /> */}
         </div>
       </footer>
     </>

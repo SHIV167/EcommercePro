@@ -1,6 +1,7 @@
 import React from "react";
 import { Route, Switch, useLocation } from "wouter";
 import Header from "./components/layout/Header";
+import CheckoutHeader from "./components/layout/CheckoutHeader";
 import NewsletterPopup from "./components/layout/NewsletterPopup";
 import Footer from "./components/layout/Footer";
 import { Toaster } from "./components/ui/toaster";
@@ -32,10 +33,10 @@ export default function App() {
   const isCheckout = location === "/checkout";
   return (
     <div className="app">
-      {!isCheckout && <Header />}
+      {isCheckout ? <CheckoutHeader /> : <Header />}
       {!isCheckout && <NewsletterPopup />}
       <Toaster />
-      <main>
+      <main className={isCheckout ? "pt-[60px]" : "pt-[180px] mt-2"}>
         <Switch>
           <Route path="/" component={HomePage} />
           <Route path="/cart" component={CartPage} />

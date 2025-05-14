@@ -1,10 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { useCart } from "@/hooks/useCart";
 import { Link } from "wouter";
 import { formatCurrency } from "@/lib/utils";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "../ui/carousel";
 import { useQuery } from "@tanstack/react-query";
 import { Product } from "@/types/product";
+import OffersPopup from "@/components/offers/OffersPopup";
+import { useCoupon } from "@/hooks/useCoupon";
+import { useAuth } from "@/hooks/useAuth";
+import AuthModal from "../common/AuthModal";
 
 interface MiniCartProps {
   isOpen: boolean;
@@ -13,6 +17,9 @@ interface MiniCartProps {
 
 export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
   const { cartItems, updateQuantity, removeItem } = useCart();
+  const { applyCoupon } = useCoupon();
+  const [offersPopupOpen, setOffersPopupOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Fetch recommended products (bestsellers as example)
   const { data: recommendedProducts = [], isLoading: recLoading } = useQuery<Product[]>({
@@ -31,8 +38,36 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
 
   if (!isOpen) return null;
 
+  const handleApplyCoupon = async (code: string) => {
+    const subtotal = cartItems.reduce((sum, item) =>
+      sum + (item.product && typeof item.product.price === 'number' ? item.product.price * item.quantity : 0)
+    , 0);
+    
+    applyCoupon(code, subtotal * 0.1); // Example discount calculation
+    setOffersPopupOpen(false);
+  };
+
+  const handleApplyVoucher = async (code: string) => {
+    setOffersPopupOpen(false);
+  };
+
   return (
     <>
+      {/* Offers Popup */}
+      <OffersPopup 
+        isOpen={offersPopupOpen} 
+        onClose={() => setOffersPopupOpen(false)}
+        onApplyCoupon={handleApplyCoupon}
+        onApplyVoucher={handleApplyVoucher}
+        openAuthModal={() => {
+          setOffersPopupOpen(false);
+          setAuthModalOpen(true);
+        }}
+      />
+      
+      {/* Auth Modal */}
+      <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      
       {/* Overlay - covers entire viewport, closes on click, sits below drawer */}
       <div
         className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-60 z-40 transition-opacity duration-300"
@@ -47,7 +82,7 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between pt-6 pb-2 border-b border-gray-200 px-6">
-          <div className="text-sm text-neutral-600 font-medium">Items in your bag</div>
+          <Link href="/cart" onClick={onClose} className="text-sm text-neutral-600 font-medium hover:text-primary hover:underline">View Total In Bag</Link>
           <button
             className="ml-2 text-neutral-700 hover:text-black p-1"
             onClick={onClose}
@@ -167,20 +202,34 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
         {/* Sticky Footer for Cart Items */}
         {cartItems.length > 0 && (
           <div className="border-t border-gray-200 py-6 bg-white sticky bottom-0 px-6">
-            <div className="flex justify-between items-center font-medium mb-4">
+            {/* Apply Offers button */}
+            <button
+              className="w-full mb-4 border border-primary text-primary hover:bg-primary-light hover:text-white py-2 rounded text-sm font-medium transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOffersPopupOpen(true);
+              }}
+            >
+              APPLY OFFERS
+            </button>
+            
+            {/* Subtotal with border */}
+            <div className="flex justify-between items-center font-medium mb-4 py-3 border-y border-gray-200">
               <span>Subtotal</span>
               <span>{formatCurrency(cartItems.reduce((sum, item) =>
                 sum + (item.product && typeof item.product.price === 'number' ? item.product.price * item.quantity : 0)
               , 0))}</span>
             </div>
-            <Link href="/cart">
+            
+            {/* Checkout button */}
+            <Link href="/checkout">
               <button
                 className="w-full bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg text-base font-semibold py-4 shadow-md transition-all duration-200"
                 onClick={() => {
                   onClose();
                 }}
               >
-                View Bag & Checkout
+                Checkout
               </button>
             </Link>
           </div>

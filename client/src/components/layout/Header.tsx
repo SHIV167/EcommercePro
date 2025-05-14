@@ -44,7 +44,7 @@ export default function Header() {
   }, [announcementMessages.length]);
 
   return (
-    <header className="sticky top-0 z-50 bg-white">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white w-full shadow-sm">
       <Helmet>
         <meta property="og:site_name" content="Kama Ayurveda" />
         <meta property="og:type" content="website" />
@@ -60,9 +60,9 @@ export default function Header() {
       </div>
       {/* Main header */}
       <div className="border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          {/* Mobile: menu (now visible on all screens) */}
-          <div className="flex items-center space-x-4">
+        <div className="mx-auto px-4 py-4 flex flex-row items-center justify-between">
+          {/* Left: menu and search */}
+          <div className="flex items-center space-x-4 w-1/3">
             <button 
               className="p-2 rounded-lg text-primary hover:bg-gray-100 transition-colors" 
               aria-label="Toggle menu" 
@@ -105,7 +105,7 @@ export default function Header() {
             </button>
           </div>
           {/* Logo centered */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 lg:static lg:transform-none lg:flex-1 lg:flex lg:justify-center">
+          <div className="w-1/3 flex justify-center relative z-40">
             <Link href="/" className="block">
               <div className="flex flex-col items-center">
                 <h1 className="text-primary font-heading text-2xl md:text-3xl font-bold">KAMA</h1>
@@ -113,8 +113,8 @@ export default function Header() {
               </div>
             </Link>
           </div>
-          {/* Desktop: User actions */}
-          <div className="hidden lg:flex items-center space-x-6">
+          {/* Right: User actions desktop */}
+          <div className="hidden lg:flex items-center space-x-6 justify-end w-1/3">
             <div className="relative" 
                  onMouseEnter={() => setIsUserMenuOpen(true)} 
                  onMouseLeave={() => setIsUserMenuOpen(false)}
@@ -148,7 +148,7 @@ export default function Header() {
                 leaveFrom="opacity-100 translate-y-0"
                 leaveTo="opacity-0 translate-y-2"
               >
-                <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg py-2 z-50 border border-gray-100" role="menu">
+                <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg py-2 z-[100] border border-gray-100" role="menu">
                   {!isAuthenticated && (
                     <>
                       <Link href="/login" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900" role="menuitem">
@@ -192,10 +192,9 @@ export default function Header() {
                 </span>
               )}
             </button>
-            <MiniCart isOpen={isMiniCartOpen} onClose={() => setIsMiniCartOpen(false)} />
           </div>
-          {/* Mobile: User actions */}
-          <div className="flex lg:hidden items-center space-x-4">
+          {/* Right: User actions mobile */}
+          <div className="flex lg:hidden items-center space-x-4 justify-end w-1/3">
             <div className="relative" 
                  onMouseEnter={() => setIsUserMenuOpen(true)} 
                  onMouseLeave={() => setIsUserMenuOpen(false)}
@@ -229,7 +228,7 @@ export default function Header() {
                 leaveFrom="opacity-100 translate-y-0"
                 leaveTo="opacity-0 translate-y-2"
               >
-                <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg py-2 z-50 border border-gray-100" role="menu">
+                <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg py-2 z-[100] border border-gray-100" role="menu">
                   {!isAuthenticated && (
                     <>
                       <Link href="/login" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900" role="menuitem">
@@ -278,11 +277,13 @@ export default function Header() {
                 </span>
               )}
             </button>
+          </div>
+          <div className="fixed top-0 right-0 z-[1000]">
             <MiniCart isOpen={isMiniCartOpen} onClose={() => setIsMiniCartOpen(false)} />
           </div>
         </div>
         {/* Desktop MegaMenu navigation */}
-        <div className="hidden lg:block border-t border-gray-200 py-4">
+        <div className="hidden lg:block border-t border-gray-200 py-4 relative">
           <div className="container mx-auto px-4">
             <MegaMenu />
           </div>
@@ -295,7 +296,9 @@ export default function Header() {
       />
       
       {/* Search Bar - now outside the header for both mobile and desktop */}
-      <SearchBar show={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <div className="fixed top-0 left-0 right-0 z-[1000]">
+        <SearchBar show={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      </div>
     </header>
   );
 }

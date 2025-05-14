@@ -60,7 +60,7 @@ export default function MegaMenu() {
   const [hovered, setHovered] = useState<string | null>(null);
 
   return (
-    <nav className="relative w-full bg-transparent">
+    <nav className="relative w-full bg-white">
       <ul className="flex items-center justify-center gap-4 border-b border-gray-200 bg-transparent text-[15px] font-serif font-normal tracking-wide">
         {collections.map((col: Collection) => (
           <li
@@ -73,7 +73,7 @@ export default function MegaMenu() {
             {/* Best Sellers MegaMenu */}
             {col.slug === 'best-sellers' && hovered === 'best-sellers' && (
               <div
-                className="absolute left-1/2 -translate-x-1/2 mt-2 z-50 bg-[#f8f6f2] border border-gray-200 shadow-xl w-[920px] rounded-none px-8 py-7 text-[15px] text-black"
+                className="fixed left-1/2 -translate-x-1/2 top-[169px] z-[1000] bg-[#f8f6f2] border border-gray-200 shadow-xl w-[920px] rounded-none px-8 py-7 text-[15px] text-black"
                 onMouseEnter={() => setHovered('best-sellers')}
                 onMouseLeave={() => setHovered(null)}
               >
@@ -103,7 +103,7 @@ export default function MegaMenu() {
             {/* Haircare (now Kumkumadi) MegaMenu */}
             {col.slug === 'kumkumadi' && hovered === 'kumkumadi' && (
               <div
-                className="absolute left-1/2 -translate-x-1/2 mt-2 z-50 bg-[#f8f6f2] border border-gray-200 shadow-xl w-[920px] rounded-none px-8 py-7 text-[15px] text-black"
+                className="fixed left-1/2 -translate-x-1/2 top-[169px] z-[1000] bg-[#f8f6f2] border border-gray-200 shadow-xl w-[920px] rounded-none px-8 py-7 text-[15px] text-black"
                 onMouseEnter={() => setHovered('kumkumadi')}
                 onMouseLeave={() => setHovered(null)}
                 style={{ minHeight: '260px' }}

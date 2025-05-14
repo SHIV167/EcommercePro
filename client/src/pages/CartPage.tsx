@@ -1,16 +1,22 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
+import { useAuth } from "@/hooks/useAuth";
 import { CouponForm } from "@/components/coupon/CouponForm";
+import OffersPopup from "@/components/offers/OffersPopup";
 import { formatCurrency } from "@/lib/utils";
 import { Helmet } from 'react-helmet';
 import { useToast } from "@/hooks/use-toast";
+import AuthModal from '@/components/common/AuthModal';
 
 export default function CartPage() {
   const { cartItems, removeItem, updateQuantity, subtotal, isEmpty, totalItems } = useCart();
   const { appliedCoupon, applyCoupon, removeCoupon, calculateDiscountedTotal } = useCoupon();
   const { toast } = useToast();
+  const [offersPopupOpen, setOffersPopupOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   
   const finalTotal = calculateDiscountedTotal(subtotal);
   
@@ -31,12 +37,36 @@ export default function CartPage() {
     }
   };
   
+  const handleApplyCoupon = async (code: string) => {
+    applyCoupon(code, subtotal * 0.1); // Example discount calculation
+    setOffersPopupOpen(false);
+    toast({ title: "Coupon applied", description: `Coupon ${code} has been applied to your cart.` });
+  };
+
+  const handleApplyVoucher = async (code: string) => {
+    toast({ title: "Voucher applied", description: `Voucher ${code} has been applied to your account.` });
+    setOffersPopupOpen(false);
+  };
+  
   return (
     <>
       <Helmet>
         <title>Your Cart | Kama Ayurveda</title>
         <meta name="description" content="Review the items in your shopping cart and proceed to checkout." />
       </Helmet>
+      
+      <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      
+      <OffersPopup 
+        isOpen={offersPopupOpen} 
+        onClose={() => setOffersPopupOpen(false)}
+        onApplyCoupon={(code: string) => handleApplyCoupon(code)}
+        onApplyVoucher={(code: string) => handleApplyVoucher(code)}
+        openAuthModal={() => {
+          setOffersPopupOpen(false);
+          setAuthModalOpen(true);
+        }}
+      />
       
       <div className="bg-neutral-cream py-8">
         <div className="container mx-auto px-4">
@@ -173,13 +203,17 @@ export default function CartPage() {
                       <span className="font-medium">{formatCurrency(subtotal)}</span>
                     </div>
                     
-                    {/* Coupon Form */}
-                    <CouponForm
-                      cartTotal={subtotal}
-                      onCouponApplied={applyCoupon}
-                      onCouponRemoved={removeCoupon}
-                      appliedCoupon={appliedCoupon}
-                    />
+                    {/* Apply Offers Button */}
+                    <Button 
+                      variant="outline"
+                      className="w-full border-primary text-primary hover:bg-primary-light hover:text-white my-3"
+                      onClick={() => {
+                        // Ensure we're setting the state to true to trigger the popup
+                        setOffersPopupOpen(true);
+                      }}
+                    >
+                      APPLY OFFERS
+                    </Button>
                     
                     {appliedCoupon && (
                       <div className="flex justify-between items-center text-green-600">
