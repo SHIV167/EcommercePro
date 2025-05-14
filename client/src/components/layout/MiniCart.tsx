@@ -70,13 +70,13 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
       
       {/* Overlay - covers entire viewport, closes on click, sits below drawer */}
       <div
-        className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-60 z-40 transition-opacity duration-300"
+        className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-60 z-[60] transition-opacity duration-300"
         onClick={onClose}
         aria-label="Close minicart overlay"
       />
       {/* Drawer - fixed, right, above overlay, w-[380px], pointer-events-auto */}
       <aside
-        className="fixed top-0 right-0 h-full w-[380px] bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 pointer-events-auto"
+        className="fixed top-0 right-0 h-full w-[380px] bg-white shadow-2xl z-[70] flex flex-col transition-transform duration-300 pointer-events-auto"
         role="dialog"
         aria-modal="true"
       >

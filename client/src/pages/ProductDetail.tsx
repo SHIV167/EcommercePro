@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'wouter';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import './ProductDetail.css'; // Import custom CSS for mobile styles
+import SocialShare from '@/components/products/SocialShare';
+
+// Removed ProductDetail.css import; using Tailwind for responsive layout
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get product ID from URL
@@ -57,6 +59,7 @@ const ProductDetail: React.FC = () => {
     }
   };
 
+  const [, navigate] = useLocation();
   const addToCart = async () => {
     if (!product) return;
     setCartLoading(true);
@@ -66,6 +69,21 @@ const ProductDetail: React.FC = () => {
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error('Failed to add to cart');
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
+  const buyNow = async () => {
+    if (!product) return;
+    setCartLoading(true);
+    try {
+      await axios.post('/api/cart/add', { productId: id, quantity: 1 });
+      toast.success('Added to cart');
+      navigate('/checkout');
+    } catch (error) {
+      console.error('Error buying now:', error);
+      toast.error('Failed to buy now');
     } finally {
       setCartLoading(false);
     }
@@ -87,49 +105,68 @@ const ProductDetail: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 pb-28 md:pb-4"> {/* Further increased padding for mobile */}
-      <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-      <div className="flex flex-col md:flex-row gap-6">
-        <img src={product.image} alt={product.name} className="w-full md:w-1/2 object-cover rounded-lg shadow-md" />
-        <div className="flex flex-col gap-4 md:w-1/2">
-          <p className="text-lg text-gray-700">{product.description}</p>
-          <div className="price-section">
-            {discount > 0 ? (
-              <>
-                <p className="text-2xl font-semibold text-gray-500 line-through">${product.price}</p>
-                <p className="text-2xl font-semibold text-green-600">${discountedPrice} (Discount: ${discount})</p>
-              </>
-            ) : (
-              <p className="text-2xl font-semibold text-green-600">${product.price}</p>
-            )}
+    <>
+      <div className="container mx-auto p-4 pb-4"> {/* Desktop-only product details */}
+        <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
+        <div className="flex flex-col md:flex-row gap-6">
+          <img src={product.image} alt={product.name} className="w-full md:w-1/2 object-cover rounded-lg shadow-md" />
+          <div className="flex flex-col gap-4 md:w-1/2">
+            <p className="text-lg text-gray-700">{product.description}</p>
+            <div className="price-section">
+              {discount > 0 ? (
+                <>
+                  <p className="text-2xl font-semibold text-gray-500 line-through">${product.price}</p>
+                  <p className="text-2xl font-semibold text-green-600">${discountedPrice} (Discount: ${discount})</p>
+                </>
+              ) : (
+                <p className="text-2xl font-semibold text-green-600">${product.price}</p>
+              )}
+            </div>
+            <div className="flex gap-4 mt-4">
+              <button
+                onClick={addToCart}
+                disabled={cartLoading}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+              >
+                {cartLoading ? 'Adding...' : 'Add to Cart'}
+              </button>
+              <button
+                onClick={buyNow}
+                disabled={cartLoading}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+              >
+                {cartLoading ? 'Processing...' : 'Buy Now'}
+              </button>
+            </div>
+            <div className="mt-4">
+              <SocialShare
+                url={window.location.href}
+                title={product.name}
+                description={product.description}
+                image={product.image}
+              />
+            </div>
           </div>
-          <button
-            onClick={addToCart}
-            disabled={cartLoading}
-            className="hidden md:block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-          >
-            {cartLoading ? 'Adding...' : 'Add to Cart'}
-          </button>
         </div>
       </div>
-      
-      {/* Mobile sticky Add to Cart - always visible on mobile */}
-      <div className="mobile-sticky-cart fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-50 shadow-lg">
+      {/* Mobile-only Add to Cart */}
+      <div className="fixed bottom-0 left-0 right-0 block md:hidden bg-white border-t border-gray-200 p-4 z-10 md:z-50 shadow-lg">
         <button
-          onClick={() => {
-            scrollToTop(); // Scroll to top first
-            // Add a small delay before adding to cart
-            setTimeout(() => {
-              addToCart();
-            }, 300);
-          }}
+          onClick={addToCart}
           disabled={cartLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg text-lg shadow-md"
+          className="w-full h-[80px] bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 rounded-lg text-lg shadow-md"
         >
           {cartLoading ? 'Adding...' : 'Add to Cart'}
         </button>
       </div>
-    </div>
+      {/* Back to Top button */}
+      {/* <button
+        onClick={scrollToTop}
+        className="fixed bottom-24 md:bottom-32 right-4 w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center rounded-full shadow-md z-50"
+      >
+        ↑
+      </button> */}
+    </>
   );
 };
 
