@@ -61,10 +61,7 @@ export default function ProductPage() {
           setScannerEntry(entry);
           if (entry?.couponCode && !couponApplied) {
             // Here we would apply the coupon to the cart or store it for checkout
-            toast({
-              title: "Coupon Applied",
-              description: `Coupon code ${entry.couponCode} has been automatically applied.`
-            });
+            (toast as any)("Coupon Applied");
             setCouponApplied(true);
             // Note: Actual coupon application logic would depend on backend API for cart or checkout
           }
@@ -72,38 +69,6 @@ export default function ProductPage() {
         .catch(err => console.error("Log scan error", err));
     }
   }, [product?._id, toast, couponApplied]);
-  
-  if (productLoading) {
-    return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="w-full md:w-1/2 bg-neutral-sand animate-pulse h-[500px]"></div>
-          <div className="w-full md:w-1/2 space-y-4">
-            <div className="h-8 w-3/4 bg-neutral-sand animate-pulse"></div>
-            <div className="h-4 w-1/4 bg-neutral-sand animate-pulse"></div>
-            <div className="h-24 w-full bg-neutral-sand animate-pulse"></div>
-            <div className="h-8 w-1/3 bg-neutral-sand animate-pulse"></div>
-            <div className="h-12 w-full bg-neutral-sand animate-pulse"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  if (error || !product) {
-    return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-heading text-primary mb-4">Product Not Found</h1>
-        <p className="text-neutral-gray mb-8">Sorry, the product you're looking for could not be found.</p>
-        <Button 
-          onClick={() => navigate('/collections/all')}
-          className="bg-primary hover:bg-primary-light text-white"
-        >
-          Continue Shopping
-        </Button>
-      </div>
-    );
-  }
   
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity >= 1 && newQuantity <= 10) {
@@ -113,16 +78,25 @@ export default function ProductPage() {
   
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
-      addItem(product);
+      addItem(product!);
     }
     
-    toast({
-      title: "Added to cart",
-      description: `${quantity} ${quantity === 1 ? 'item' : 'items'} of ${product.name} added to your cart.`
-    });
+    (toast as any)(`Added to cart`);
   };
 
-  
+  const handleBuyNow = async (product: Product) => {
+    try {
+      for (let i = 0; i < quantity; i++) {
+        await addItem(product);
+      }
+      (toast as any)('Added to cart');
+      navigate('/checkout');
+    } catch (error) {
+      console.error('Error in Buy Now:', error);
+      (toast as any)('Failed to process your request');
+    }
+  };
+
   const handleCheckPincode = () => {
     setServiceLoading(true);
     setServiceError('');
@@ -166,14 +140,46 @@ export default function ProductPage() {
     });
   };
 
+  if (productLoading) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="w-full md:w-1/2 bg-neutral-sand animate-pulse h-[500px]"></div>
+          <div className="w-full md:w-1/2 space-y-4">
+            <div className="h-8 w-3/4 bg-neutral-sand animate-pulse"></div>
+            <div className="h-4 w-1/4 bg-neutral-sand animate-pulse"></div>
+            <div className="h-24 w-full bg-neutral-sand animate-pulse"></div>
+            <div className="h-8 w-1/3 bg-neutral-sand animate-pulse"></div>
+            <div className="h-12 w-full bg-neutral-sand animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error || !product) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-heading text-primary mb-4">Product Not Found</h1>
+        <p className="text-neutral-gray mb-8">Sorry, the product you're looking for could not be found.</p>
+        <Button 
+          onClick={() => navigate('/collections/all')}
+          className="bg-primary hover:bg-primary-light text-white"
+        >
+          Continue Shopping
+        </Button>
+      </div>
+    );
+  }
+  
   return (
     <>
       <Helmet>
-        <title>{product.name} | Shiv Kumar jha</title>
-        <meta name="description" content={product.shortDescription || product.description.substring(0, 160)} />
-        <meta property="og:title" content={product.name} />
-        <meta property="og:description" content={product.shortDescription || product.description.substring(0, 160)} />
-        <meta property="og:image" content={product.images?.[selectedImageIndex] || product.imageUrl} />
+        <title>{product!.name} | Shiv Kumar jha</title>
+        <meta name="description" content={product!.shortDescription || product!.description.substring(0, 160)} />
+        <meta property="og:title" content={product!.name} />
+        <meta property="og:description" content={product!.shortDescription || product!.description.substring(0, 160)} />
+        <meta property="og:image" content={product!.images?.[selectedImageIndex] || product!.imageUrl} />
         <meta property="og:url" content={window.location.href} />
         <meta property="og:type" content="product" />
       </Helmet>
@@ -191,17 +197,17 @@ export default function ProductPage() {
           <div className="w-full md:w-1/2">
             <div className="border border-neutral-sand p-8 rounded-md">
               <img
-                src={product.images?.[selectedImageIndex] || product.imageUrl}
-                alt={product.name}
+                src={product!.images?.[selectedImageIndex] || product!.imageUrl}
+                alt={product!.name}
                 className="w-full h-auto max-h-[500px] object-contain mx-auto"
               />
-              {product.images && product.images.length > 1 && (
+              {product!.images && product!.images.length > 1 && (
                 <div className="flex mt-4 space-x-2 justify-center">
-                  {product.images.map((img, idx) => (
+                  {product!.images.map((img, idx) => (
                     <img
                       key={idx}
                       src={img}
-                      alt={`${product.name} ${idx + 1}`}
+                      alt={`${product!.name} ${idx + 1}`}
                       onClick={() => setSelectedImageIndex(idx)}
                       className={`w-16 h-16 object-cover cursor-pointer rounded ${idx === selectedImageIndex ? 'ring-2 ring-primary' : 'ring-1 ring-neutral-sand'}`}
                     />
@@ -213,22 +219,22 @@ export default function ProductPage() {
           
           {/* Product Details */}
           <div className="w-full md:w-1/2">
-            <h1 className="font-heading text-2xl md:text-3xl text-primary mb-2">{product.name}</h1>
+            <h1 className="font-heading text-2xl md:text-3xl text-primary mb-2">{product!.name}</h1>
             
-            <RatingStars rating={product.rating} reviews={product.totalReviews} size="md" />
+            <RatingStars rating={product!.rating} reviews={product!.totalReviews} size="md" />
             
-            <p className="text-sm text-neutral-gray mb-6">{product.shortDescription}</p>
+            <p className="text-sm text-neutral-gray mb-6">{product!.shortDescription}</p>
             
             <div className="mb-6">
               <p className="font-heading text-xl text-primary">
-                ₹{product.price?.toFixed(2) ?? '0.00'}
-                {product.discountedPrice && (
+                ₹{product!.price?.toFixed(2) ?? '0.00'}
+                {product!.discountedPrice && (
                   <span className="ml-3 text-base text-neutral-gray line-through">
-                    ₹{product.discountedPrice?.toFixed(2) ?? '0.00'}
+                    ₹{product!.discountedPrice?.toFixed(2) ?? '0.00'}
                   </span>
                 )}
               </p>
-              {product.stock > 0 ? (
+              {product!.stock > 0 ? (
                 <p className="text-sm text-green-600 mt-1">In Stock</p>
               ) : (
                 <p className="text-sm text-red-500 mt-1">Out of Stock</p>
@@ -271,18 +277,26 @@ export default function ProductPage() {
                 </div>
               </div>
               
-              <Button
-                onClick={handleAddToCart}
-                className="w-full bg-primary hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium"
-                disabled={product.stock <= 0}
-              >
-                {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleAddToCart}
+                  className="w-full bg-black hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium"
+                  disabled={product!.stock <= 0}
+                >
+                  {product!.stock <= 0 ? "Out of Stock" : "Add to Cart"}
+                </Button>
+                <Button
+                  onClick={() => handleBuyNow(product!)}
+                  className="w-full bg-primary hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium"
+                >
+                  Buy Now
+                </Button>
+              </div>
               <SocialShare
                 url={window.location.href}
-                title={product.name}
-                description={product.shortDescription || product.description}
-                image={product.images?.[selectedImageIndex] || product.imageUrl}
+                title={product!.name}
+                description={product!.shortDescription || product!.description}
+                image={product!.images?.[selectedImageIndex] || product!.imageUrl}
               />
             </div>
             {/* Serviceability Check */}
@@ -334,7 +348,7 @@ export default function ProductPage() {
         </div>
             <div className="prose prose-sm max-w-none text-neutral-gray mt-6">
               <h3 className="text-primary font-heading text-lg">Product Description</h3>
-              <p>{product.description}</p>
+              <p>{product!.description}</p>
             </div>
           </div>
         </div>
@@ -351,7 +365,7 @@ export default function ProductPage() {
             
             <TabsContent value="description" className="pt-6">
               <div className="prose prose-sm max-w-none text-neutral-gray">
-                <p>{product.description}</p>
+                <p>{product!.description}</p>
               </div>
             </TabsContent>
             
@@ -382,7 +396,7 @@ export default function ProductPage() {
                   {showReviewForm && isAuthenticated && product?._id && (
                     <div className="mb-8">
                       <ReviewForm 
-                        productId={product._id} 
+                        productId={product!._id} 
                         onClose={() => setShowReviewForm(false)} 
                       />
                     </div>
@@ -404,7 +418,7 @@ export default function ProductPage() {
                   {isAuthenticated ? (
                     showReviewForm && product?._id ? (
                       <ReviewForm 
-                        productId={product._id} 
+                        productId={product!._id} 
                         onClose={() => setShowReviewForm(false)} 
                       />
                     ) : (
@@ -471,7 +485,7 @@ export default function ProductPage() {
         </div>
       </div>
       <StickyAddToCart
-        product={product}
+        product={product!}
         quantity={quantity}
         setQuantity={setQuantity}
         onAddToCart={handleAddToCart}

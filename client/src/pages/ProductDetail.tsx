@@ -12,6 +12,7 @@ const ProductDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [cartLoading, setCartLoading] = useState(false);
   const [discount, setDiscount] = useState<number>(0);
+  const [, navigate] = useLocation(); // Define useLocation at the component level
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -59,7 +60,6 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  const [, navigate] = useLocation();
   const addToCart = async () => {
     if (!product) return;
     setCartLoading(true);
@@ -74,19 +74,23 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  const buyNow = async () => {
+  // Direct Buy Now functionality within component
+  const handleBuyNow = () => {
     if (!product) return;
+    
     setCartLoading(true);
-    try {
-      await axios.post('/api/cart/add', { productId: id, quantity: 1 });
-      toast.success('Added to cart');
-      navigate('/checkout');
-    } catch (error) {
-      console.error('Error buying now:', error);
-      toast.error('Failed to buy now');
-    } finally {
-      setCartLoading(false);
-    }
+    
+    axios.post('/api/cart/add', { productId: id, quantity: 1 })
+      .then(() => {
+        toast.success('Added to cart');
+        // Use direct browser navigation
+        window.location.href = '/checkout';
+      })
+      .catch((error) => {
+        console.error('Error buying now:', error);
+        toast.error('Failed to process your request');
+        setCartLoading(false);
+      });
   };
 
   if (loading) {
@@ -122,20 +126,21 @@ const ProductDetail: React.FC = () => {
                 <p className="text-2xl font-semibold text-green-600">${product.price}</p>
               )}
             </div>
-            <div className="flex gap-4 mt-4">
+            <div className="flex flex-col gap-4 mt-4 border border-red-500">
               <button
                 onClick={addToCart}
                 disabled={cartLoading}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
               >
                 {cartLoading ? 'Adding...' : 'Add to Cart'}
               </button>
               <button
-                onClick={buyNow}
-                disabled={cartLoading}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                onClick={handleBuyNow}
+                id="desktop-buy-now"
+                style={{ border: '2px solid green', zIndex: 50, position: 'relative', backgroundColor: 'yellow' }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
               >
-                {cartLoading ? 'Processing...' : 'Buy Now'}
+                Buy Now
               </button>
             </div>
             <div className="mt-4">
@@ -149,15 +154,24 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
       </div>
-      {/* Mobile-only Add to Cart */}
+      {/* Mobile-only Add to Cart and Buy Now */}
       <div className="fixed bottom-0 left-0 right-0 block md:hidden bg-white border-t border-gray-200 p-4 z-10 md:z-50 shadow-lg">
-        <button
-          onClick={addToCart}
-          disabled={cartLoading}
-          className="w-full h-[80px] bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 rounded-lg text-lg shadow-md"
-        >
-          {cartLoading ? 'Adding...' : 'Add to Cart'}
-        </button>
+        <div className="flex flex-col space-y-3">
+          <button
+            onClick={addToCart}
+            disabled={cartLoading}
+            className="w-full h-[60px] bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 rounded-lg text-lg shadow-md"
+          >
+            {cartLoading ? 'Adding...' : 'Add to Cart'}
+          </button>
+          <button
+            onClick={handleBuyNow}
+            disabled={cartLoading}
+            className="w-full h-[60px] bg-green-600 hover:bg-green-700 text-white font-bold px-6 rounded-lg text-lg shadow-md"
+          >
+            {cartLoading ? 'Processing...' : 'Buy Now'}
+          </button>
+        </div>
       </div>
       {/* Back to Top button */}
       {/* <button
