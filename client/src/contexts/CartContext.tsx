@@ -17,6 +17,8 @@ interface CartContextType {
   subtotal: number;
   totalItems: number;
   isEmpty: boolean;
+  freeProducts: Product[];
+  eligibleFreeProducts: Product[];
 }
 
 export const CartContext = createContext<CartContextType>({
@@ -28,6 +30,8 @@ export const CartContext = createContext<CartContextType>({
   subtotal: 0,
   totalItems: 0,
   isEmpty: true,
+  freeProducts: [],
+  eligibleFreeProducts: [],
 });
 
 interface CartProviderProps {
@@ -38,6 +42,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartId, setCartId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [freeProducts, setFreeProducts] = useState<Product[]>([]);
+  const [eligibleFreeProducts, setEligibleFreeProducts] = useState<Product[]>([]);
 
   // Calculate derived values
   const subtotal = cartItems.reduce(
@@ -50,6 +56,71 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   );
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
   const isEmpty = cartItems.length === 0;
+
+  // Load free products
+  useEffect(() => {
+    const loadFreeProducts = async () => {
+      try {
+        const response = await apiRequest('GET', '/api/free-products');
+        if (response.ok) {
+          const data = await response.json();
+          // Get product details for each free product
+          const productsWithDetails = await Promise.all(
+            data.map(async (freeProduct: any) => {
+              try {
+                const productResponse = await apiRequest('GET', `/api/products/${freeProduct.productId}`);
+                if (productResponse.ok) {
+                  const productData = await productResponse.json();
+                  return {
+                    ...productData,
+                    minOrderValue: freeProduct.minOrderValue,
+                    isFreeProduct: true
+                  };
+                }
+              } catch (error) {
+                console.error('Failed to fetch product details:', error);
+              }
+              return null;
+            })
+          );
+          setFreeProducts(productsWithDetails.filter(Boolean));
+        }
+      } catch (error) {
+        console.error('Failed to load free products:', error);
+      }
+    };
+    loadFreeProducts();
+  }, []);
+
+  // Check for eligible free products when subtotal changes
+  useEffect(() => {
+    const eligible = freeProducts.filter(
+      (product) => product && typeof product.minOrderValue === 'number' && product.minOrderValue <= subtotal
+    );
+    setEligibleFreeProducts(eligible);
+
+    // Automatically add eligible free products to cart
+    eligible.forEach(async (product) => {
+      if (!product?._id) return;
+      
+      const isInCart = cartItems.some(
+        item => item.product?._id === product._id
+      );
+
+      if (!isInCart) {
+        try {
+          // Add the free product flag
+          const freeProduct = {
+            ...product,
+            isFreeProduct: true
+          };
+          await addItem(freeProduct);
+        } catch (error) {
+          console.error('Failed to add free product:', error);
+        }
+      }
+    });
+  }, [subtotal, freeProducts, cartItems]);
 
   // Initialize cart on component mount
   useEffect(() => {
@@ -236,6 +307,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         subtotal,
         totalItems,
         isEmpty,
+        freeProducts,
+        eligibleFreeProducts,
       }}
     >
       {children}

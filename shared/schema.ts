@@ -21,6 +21,8 @@ export const productSchema = z.object({
   createdAt: z.date().optional(),
   images: z.array(z.string()).optional().default([]),
   videoUrl: z.string().optional(),
+  minOrderValue: z.number().optional(), // For free products
+  isFreeProduct: z.boolean().optional(), // Flag for free products
 });
 export type Product = z.infer<typeof productSchema>;
 

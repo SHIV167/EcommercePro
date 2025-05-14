@@ -104,41 +104,54 @@ export default function CartPage() {
                     <div key={item.id} className="p-4 md:p-6">
                       <div className="flex flex-col md:flex-row gap-4">
                         <div className="w-full md:w-24 h-24 bg-neutral-sand rounded-md overflow-hidden">
-                          {item.product && item.product.imageUrl ? (
-                            <img
-                              src={item.product.imageUrl}
-                              alt={item.product.name}
-                              className="w-full h-full object-cover object-center"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-200" />
-                          )}
+                          <img
+                            src={item.product?.imageUrl || item.product?.images?.[0] || '/placeholder.jpg'}
+                            alt={item.product?.name || 'Product'}
+                            className="w-full h-full object-cover object-center"
+                          />
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between">
-                            <Link 
-                              href={`/products/${item.product?.slug ?? ""}`}
-                              className="font-heading text-primary hover:text-primary-light line-clamp-2"
-                            >
-                              {item.product?.name ?? "Unknown Product"}
-                            </Link>
-                            <button
-                              onClick={() => handleRemove(item.id)}
-                              className="text-muted-foreground hover:text-foreground"
-                              aria-label="Remove item"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium">{item.product?.name}</h3>
+                                {item.product?.isFreeProduct && (
+                                  <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                                    Free Gift
+                                  </span>
+                                )}
+                              </div>
+                              {item.product?.shortDescription && (
+                                <p className="text-sm text-muted-foreground">
+                                  {item.product.shortDescription}
+                                </p>
+                              )}
+                            </div>
+                            {!item.product?.isFreeProduct && (
+                              <button
+                                onClick={() => handleRemove(item.id)}
+                                className="text-muted-foreground hover:text-foreground"
+                                aria-label="Remove item"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-5 w-5"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            )}
                           </div>
-                          {item.product?.shortDescription && (
-                            <p className="text-sm text-neutral-gray mt-1">
-                              {item.product.shortDescription}
-                            </p>
-                          )}
                           <div className="flex justify-between items-end mt-4">
-                            {item.product?.slug ? (
+                            {!item.product?.isFreeProduct && (
                               <div className="flex items-center border border-neutral-sand rounded-md">
                                 <button
                                   onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
@@ -154,6 +167,7 @@ export default function CartPage() {
                                 <button
                                   onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                                   className="w-8 h-8 flex items-center justify-center text-foreground"
+                                  disabled={!!item.product?.stock && item.quantity >= item.product.stock}
                                   aria-label="Increase quantity"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -161,16 +175,20 @@ export default function CartPage() {
                                   </svg>
                                 </button>
                               </div>
-                            ) : (
-                              <span className="font-medium">Qty: {item.quantity}</span>
                             )}
                             <div className="text-right">
-                              <p className="font-medium text-primary">
-                                {formatCurrency((item.product?.price ?? 0) * item.quantity)}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {formatCurrency(item.product?.price ?? 0)} each
-                              </p>
+                              {item.product?.isFreeProduct ? (
+                                <p className="font-medium text-green-600 text-sm">Free Gift</p>
+                              ) : (
+                                <>
+                                  <p className="font-medium text-primary">
+                                    {formatCurrency((item.product?.price ?? 0) * item.quantity)}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatCurrency(item.product?.price ?? 0)} each
+                                  </p>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
