@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
-import { apiRequest, API_BASE_URL } from "../lib/queryClient";
+import { apiRequest } from "../lib/apiUtils";
 import { User } from "../../../shared/schema";
 
 interface AdminAuthContextType {
@@ -34,22 +34,21 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         const storedAdmin = localStorage.getItem("admin");
         if (storedAdmin) {
           // Verify the stored admin with the server
-          try {
-            const response = await apiRequest("GET", `/api/admin/auth/verify`);
-            const adminData = await response.json();
-            if (adminData.isAdmin) {
-              setAdmin(adminData);
-            } else {
-              throw new Error("Not authorized as admin");
-            }
-          } catch (error) {
-            console.error("Server verification failed:", error);
-            localStorage.removeItem("admin");
-            setAdmin(null);
+          const response = await apiRequest('/api/admin/auth/verify');
+          if (!response.ok) {
+            throw new Error('Verification failed');
+          }
+          const adminData = await response.json();
+          if (adminData.isAuthenticated) {
+            setAdmin(adminData.user);
+          } else {
+            throw new Error(adminData.message || 'Not authorized as admin');
           }
         }
       } catch (error) {
         console.error("Authentication check failed:", error);
+        localStorage.removeItem("admin");
+        setAdmin(null);
       } finally {
         setIsLoading(false);
       }
@@ -59,9 +58,22 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean, data?: User, error?: string }> => {
     try {
-      // Use apiRequest to ensure proxy and JSON handling
-      const response = await apiRequest("POST", `${API_BASE_URL}/api/auth/login`, { email, password });
+      const response = await apiRequest('/api/admin/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
+      }
+
       const userData = await response.json();
+      if (!userData.isAdmin) {
+        throw new Error('Not authorized as admin');
+      }
+
       localStorage.setItem('admin', JSON.stringify(userData));
       setAdmin(userData);
       return { success: true, data: userData };
@@ -73,7 +85,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = useCallback(async (): Promise<void> => {
     try {
-      await apiRequest("POST", "/api/admin/auth/logout", {});
+      await apiRequest('/api/admin/auth/logout', { method: 'POST' });
     } catch (error) {
       console.error("Logout API call failed:", error);
     } finally {

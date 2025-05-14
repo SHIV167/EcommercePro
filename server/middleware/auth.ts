@@ -26,7 +26,7 @@ export const authenticateJWT = (req: AuthRequest, res: Response, next: NextFunct
 
 // Admin role check middleware
 export const isAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || !req.user.isAdmin) {
     return res.status(403).json({ message: 'Admin access required' });
   }
   next();

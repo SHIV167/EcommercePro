@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { toast } from 'sonner';
 import { apiRequest } from '@/lib/apiUtils';
 import { 
@@ -13,7 +14,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Search, CheckCircle, XCircle } from 'lucide-react';
-import AdminLayout from '@/components/layout/AdminLayout';
 
 interface Review {
   _id: string;
@@ -28,12 +28,14 @@ interface Review {
 }
 
 const ReviewManagement = () => {
+  const { isAuthenticated, isLoading: authLoading } = useAdminAuth();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
 
   // Fetch reviews based on filter
   const { data: reviews, isLoading, error } = useQuery({
+    enabled: isAuthenticated,
     queryKey: ['reviews', filter],
     queryFn: async () => {
       const url = filter === 'all' 
@@ -127,19 +129,16 @@ const ReviewManagement = () => {
 
   if (error) {
     return (
-      <AdminLayout>
-        <div className="p-6">
+        <div>
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
             Error loading reviews: {(error as Error).message}
           </div>
         </div>
-      </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="p-6">
+      <div>
         <h1 className="text-2xl font-bold mb-6">Review Management</h1>
         
         <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
@@ -212,7 +211,7 @@ const ReviewManagement = () => {
                         </TableCell>
                         <TableCell>
                           <Badge variant={
-                            review.status === 'approved' ? 'success' :
+                            review.status === 'approved' ? 'secondary' :
                             review.status === 'rejected' ? 'destructive' : 'default'
                           }>
                             {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
@@ -277,7 +276,6 @@ const ReviewManagement = () => {
           </>
         )}
       </div>
-    </AdminLayout>
   );
 };
 
