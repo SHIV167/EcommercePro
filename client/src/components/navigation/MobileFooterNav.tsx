@@ -25,12 +25,12 @@ const FooterNav = styled.nav`
   }
 `;
 
-const NavItem = styled.a<{ active?: boolean }>`
+const NavItem = styled.div<{ $active?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   text-decoration: none;
-  color: ${props => props.active ? '#8257F6' : '#666'};
+  color: ${props => props.$active ? '#8257F6' : '#666'};
   font-size: 0.75rem;
   gap: 6px;
   padding: 8px 0;
@@ -44,7 +44,7 @@ const NavItem = styled.a<{ active?: boolean }>`
   svg {
     width: 20px;
     height: 20px;
-    stroke-width: ${props => props.active ? 2.5 : 1.5};
+    stroke-width: ${props => props.$active ? 2.5 : 1.5};
     transition: all 0.2s ease;
   }
 `;
@@ -95,14 +95,14 @@ const MobileFooterNav: React.FC = () => {
   return (
     <FooterNav>
       <Link href="/">
-        <NavItem active={isActive('/')}>
+        <NavItem $active={isActive('/')}>
           {isActive('/') && <ActiveIndicator />}
           <Home />
           <NavLabel>Home</NavLabel>
         </NavItem>
       </Link>
       <Link href="/categories">
-        <NavItem active={isActive('/categories')}>
+        <NavItem $active={isActive('/categories')}>
           {isActive('/categories') && <ActiveIndicator />}
           <Grid />
           <NavLabel>Categories</NavLabel>
@@ -110,23 +110,23 @@ const MobileFooterNav: React.FC = () => {
       </Link>
       
       <Link href="/offers">
-        <CenterButton active={isActive('/offers')}>
+        <CenterButton $active={isActive('/offers')}>
           <ShoppingBag />
         </CenterButton>
       </Link>
       
       <Link href="/account">
-        <NavItem active={isActive('/account')}>
+        <NavItem $active={isActive('/account')}>
           {isActive('/account') && <ActiveIndicator />}
           <User />
-          <NavLabel>Profile</NavLabel>
+          <NavLabel>Account</NavLabel>
         </NavItem>
       </Link>
-      <Link href="/get-app">
-        <NavItem active={isActive('/get-app')}>
-          {isActive('/get-app') && <ActiveIndicator />}
+      <Link href="/downloads">
+        <NavItem $active={isActive('/downloads')}>
+          {isActive('/downloads') && <ActiveIndicator />}
           <Download />
-          <NavLabel>Get App</NavLabel>
+          <NavLabel>Downloads</NavLabel>
         </NavItem>
       </Link>
     </FooterNav>

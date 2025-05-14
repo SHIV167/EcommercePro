@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
+import type { SwiperProps } from 'swiper/react';
 import { Navigation, Pagination, EffectCoverflow } from 'swiper/modules';
 import { cn } from '@/lib/utils';
 import 'swiper/css';
@@ -122,23 +123,25 @@ export default function VideoCarousel() {
 
         <div className="relative">
           <Swiper
-            effect={'coverflow'}
-            grabCursor={true}
-            centeredSlides={true}
-            slidesPerView={'auto'}
-            coverflowEffect={{
-              rotate: 0,
-              stretch: 0,
-              depth: 200,
-              modifier: 3,
-              slideShadows: true,
-            }}
-            initialSlide={2}
-            pagination={{ clickable: true }}
-            navigation={true}
-            loop={true}
-            modules={[EffectCoverflow, Pagination, Navigation]}
-            className="video-swiper"
+            {...{
+              effect: 'coverflow',
+              grabCursor: true,
+              centeredSlides: true,
+              slidesPerView: 'auto',
+              coverflowEffect: {
+                rotate: 0,
+                stretch: 0,
+                depth: 200,
+                modifier: 3,
+                slideShadows: true,
+              },
+              initialSlide: 2,
+              pagination: { clickable: true },
+              navigation: true,
+              loop: true,
+              modules: [EffectCoverflow, Pagination, Navigation],
+              className: 'video-swiper'
+            } as SwiperProps}
           >
             {videos.map((video) => (
               <SwiperSlide key={video.id} className="video-slide w-[320px] h-[480px] relative overflow-hidden">
