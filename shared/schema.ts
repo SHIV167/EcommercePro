@@ -74,12 +74,14 @@ export type InsertOrderItem = Omit<OrderItem, 'id' | '_id'>;
 
 // Review types
 export type Review = {
+  _id?: string;
   id?: string;
   userId: string;
   productId: string;
   rating: number;
   comment: string;
   createdAt: Date;
+  userName?: string;
 };
 export type InsertReview = Omit<Review, 'id' | '_id' | 'createdAt'>;
 

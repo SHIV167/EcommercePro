@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Product, Review } from "@shared/schema";
+// Extend Review type with server-enriched fields
+type EnrichedReview = Review & { _id?: string; userName?: string };
 import ReviewForm from "@/components/product/ReviewForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -38,7 +40,7 @@ export default function ProductPage() {
     enabled: !!slug,
   });
   
-  const { data: reviews = [], isLoading: reviewsLoading } = useQuery<Review[]>({
+  const { data: reviews = [], isLoading: reviewsLoading } = useQuery<EnrichedReview[]>({
     queryKey: [`/api/products/${product?._id}/reviews`],
     enabled: !!product?._id,
   });
@@ -402,11 +404,11 @@ export default function ProductPage() {
                     </div>
                   )}
                   
-                  {reviews.map((review, idx) => (
-                    <div key={review.id ?? idx} className="border-b border-neutral-sand pb-6">
+                  {reviews.map((review) => (
+                    <div key={review._id} className="border-b border-neutral-sand pb-6">
                       <RatingStars rating={review.rating} size="md" />
                       <p className="text-sm text-muted-foreground mt-1 mb-2">
-                        By Anonymous Customer • {review.createdAt?.toLocaleDateString() ?? ''}
+                        By {review.userName || 'Anonymous Customer'} • {new Date(review.createdAt).toLocaleDateString()}
                       </p>
                       <p className="text-neutral-gray">{review.comment}</p>
                     </div>

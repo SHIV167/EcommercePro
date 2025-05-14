@@ -2,18 +2,28 @@ import express, { Request, Response } from 'express';
 import { authenticateJWT, isAdmin, AuthRequest } from '../middleware/auth';
 import Review from '../models/Review';
 import Product from '../models/Product';
+import User from '../models/User';
 
 const router = express.Router();
 
 // Get all approved reviews for a product (public facing)
 router.get('/products/:id/reviews', async (req: Request, res: Response) => {
   try {
-    const reviews = await Review.find({ 
+    const reviews = await Review.find({
       productId: req.params.id,
       status: 'approved'
     }).sort({ createdAt: -1 });
-    
-    return res.status(200).json(reviews);
+
+    const enrichedReviews = await Promise.all(
+      reviews.map(async (review) => {
+        const user = await User.findOne({ id: review.userId });
+        const obj: any = review.toObject();
+        obj.userName = user?.name || 'Anonymous Customer';
+        return obj;
+      })
+    );
+
+    return res.status(200).json(enrichedReviews);
   } catch (error) {
     console.error('Error fetching reviews:', error);
     return res.status(500).json({ message: 'Error fetching reviews' });
@@ -25,9 +35,21 @@ router.get('/admin/reviews', authenticateJWT, isAdmin, async (req: AuthRequest, 
   try {
     const status = req.query.status as string | undefined;
     const query = status ? { status } : {};
-    
+
     const reviews = await Review.find(query).sort({ createdAt: -1 });
-    return res.status(200).json(reviews);
+
+    const enrichedReviews = await Promise.all(
+      reviews.map(async (review) => {
+        const product = await Product.findById(review.productId);
+        const user = await User.findOne({ id: review.userId });
+        const obj: any = review.toObject();
+        obj.productName = product?.name || '';
+        obj.userName = user?.name || 'Anonymous';
+        return obj;
+      })
+    );
+
+    return res.status(200).json(enrichedReviews);
   } catch (error) {
     console.error('Error fetching reviews for admin:', error);
     return res.status(500).json({ message: 'Error fetching reviews' });
