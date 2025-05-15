@@ -65,7 +65,8 @@ export async function setupVite(app: Express, server: Server) {
   // Mount client middleware and HTML fallback
   app.use(clientVite.middlewares);
   app.use(async (req, res, next) => {
-    if (req.originalUrl.startsWith('/admin')) return next();
+    // Skip API and admin routes
+    if (req.originalUrl.startsWith('/admin') || req.originalUrl.startsWith('/api')) return next();
     try {
       const clientRoot = path.resolve(__dirname, '..', 'client');
       const templatePath = path.resolve(clientRoot, 'index.html');
@@ -110,7 +111,9 @@ export function serveStatic(app: Express) {
     );
   }
   app.use(express.static(clientDist));
-  app.use("*", (_req, res) => {
+  // Fallback for client UI, skip API and admin
+  app.use((req, res, next) => {
+    if (req.originalUrl.startsWith('/admin') || req.originalUrl.startsWith('/api')) return next();
     res.sendFile(path.resolve(clientDist, "index.html"));
   });
 }
