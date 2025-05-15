@@ -69,7 +69,7 @@ export async function updatePopupSetting(req: Request, res: Response) {
   try {
     // Check database connection
     if (!mongoose.connection.readyState) {
-      console.warn('MongoDB not connected');
+      console.warn('MongoDB not connected', { readyState: mongoose.connection.readyState, uri: process.env.MONGODB_URI ? 'MONGODB_URI set' : 'MONGODB_URI not set' });
       return res.status(503).json({ message: 'Database connection unavailable' });
     }
 
@@ -111,7 +111,7 @@ export async function updatePopupSetting(req: Request, res: Response) {
       data: setting.toObject()
     });
   } catch (error) {
-    console.error('Popup settings update error:', error);
+    console.error('Popup settings update error:', error, { stack: error instanceof Error ? error.stack : 'No stack available' });
     return res.status(500).json({ 
       message: 'Server error', 
       error: error instanceof Error ? error.message : 'Unknown error'
