@@ -2252,6 +2252,14 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api/admin', scannerRoutes); 
   app.use('/api/admin', testimonialRoutes);
 
+  // Popup routes
+  app.get('/api/admin/popup', isAdminMiddleware, getPopupSetting);
+  app.put('/api/admin/popup', isAdminMiddleware, updatePopupSetting);
+
+  app.get('/api/health', (req: Request, res: Response) => {
+    res.status(200).json({ message: 'OK' });
+  });
+
   // Error handling middleware to ensure JSON responses
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error('Unhandled error:', err);
