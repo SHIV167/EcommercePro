@@ -7,12 +7,15 @@ export async function getPopupSetting(req: Request, res: Response) {
   try {
     // Ensure we have a valid database connection before querying
     if (!mongoose.connection.readyState) {
-      console.warn('MongoDB not connected, returning default popup settings');
-      return res.json({
-        enabled: false,
-        startDate: new Date().toISOString(),
-        endDate: new Date().toISOString(),
-        bgImage: ''
+      console.warn('MongoDB not connected');
+      return res.status(503).json({ 
+        message: 'Database connection unavailable',
+        data: {
+          enabled: false,
+          startDate: new Date().toISOString(),
+          endDate: new Date().toISOString(),
+          bgImage: ''
+        }
       });
     }
     
@@ -29,24 +32,34 @@ export async function getPopupSetting(req: Request, res: Response) {
         });
       } catch (createError) {
         console.error('Failed to create default popup settings:', createError);
-        // Return default settings even if creation fails
-        return res.json({
-          enabled: false,
-          startDate: new Date().toISOString(),
-          endDate: new Date().toISOString(),
-          bgImage: ''
+        return res.status(500).json({
+          message: 'Failed to create default popup settings',
+          error: createError instanceof Error ? createError.message : 'Unknown error',
+          data: {
+            enabled: false,
+            startDate: new Date().toISOString(),
+            endDate: new Date().toISOString(),
+            bgImage: ''
+          }
         });
       }
     }
-    res.json(setting);
+
+    return res.json({
+      success: true,
+      data: setting.toObject()
+    });
   } catch (error) {
     console.error('Error in getPopupSetting:', error);
-    // Return default settings on error instead of error response
-    res.json({
-      enabled: false,
-      startDate: new Date().toISOString(),
-      endDate: new Date().toISOString(),
-      bgImage: ''
+    return res.status(500).json({ 
+      message: 'Server error',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      data: {
+        enabled: false,
+        startDate: new Date().toISOString(),
+        endDate: new Date().toISOString(),
+        bgImage: ''
+      }
     });
   }
 }
@@ -54,6 +67,12 @@ export async function getPopupSetting(req: Request, res: Response) {
 // Update popup settings (singleton)
 export async function updatePopupSetting(req: Request, res: Response) {
   try {
+    // Check database connection
+    if (!mongoose.connection.readyState) {
+      console.warn('MongoDB not connected');
+      return res.status(503).json({ message: 'Database connection unavailable' });
+    }
+
     console.log('Popup settings update request:', req.body);
     const { enabled, startDate, endDate, bgImage } = req.body;
 
@@ -63,14 +82,18 @@ export async function updatePopupSetting(req: Request, res: Response) {
     console.log('endDate:', endDate, typeof endDate);
     console.log('bgImage:', bgImage, typeof bgImage);
 
-    // Relaxed validation for debugging
-    if (typeof enabled !== 'boolean' ||
-        !startDate ||
-        !endDate ||
-        !bgImage ||
-        typeof bgImage !== 'string') {
-      console.log('Validation failed');
-      return res.status(400).json({ message: 'Invalid popup settings. All fields are required.' });
+    // Strict validation
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({ message: 'enabled must be a boolean' });
+    }
+    if (!startDate || typeof startDate !== 'string') {
+      return res.status(400).json({ message: 'startDate is required and must be a string' });
+    }
+    if (!endDate || typeof endDate !== 'string') {
+      return res.status(400).json({ message: 'endDate is required and must be a string' });
+    }
+    if (!bgImage || typeof bgImage !== 'string') {
+      return res.status(400).json({ message: 'bgImage is required and must be a string' });
     }
 
     const setting = await PopupSetting.findOneAndUpdate(
@@ -79,9 +102,19 @@ export async function updatePopupSetting(req: Request, res: Response) {
       { new: true, upsert: true }
     );
 
-    res.json(setting);
+    if (!setting) {
+      return res.status(500).json({ message: 'Failed to update popup settings' });
+    }
+
+    return res.json({
+      success: true,
+      data: setting.toObject()
+    });
   } catch (error) {
     console.error('Popup settings update error:', error);
-    res.status(500).json({ message: 'Server error', error });
+    return res.status(500).json({ 
+      message: 'Server error', 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }
