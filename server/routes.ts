@@ -566,21 +566,21 @@ export async function registerRoutes(app: Application): Promise<Server> {
         );
       }
 
-      const total = filteredProducts.length;
-      const totalPages = Math.ceil(total / limit);
-      const start = (page - 1) * limit;
-      const paginated = filteredProducts.slice(start, start + limit);
+      const totalProducts = filteredProducts.length;
+      const totalPages = Math.ceil(totalProducts / limit);
+      // Paginate results
+      const pageProducts = filteredProducts.slice(offset, offset + limit);
 
       return res.status(200).json({
-        products: paginated,
-        total,
+        products: pageProducts,
+        total: totalProducts,
         page,
         totalPages,
-        totalItems: total
+        totalItems: totalProducts
       });
     } catch (error) {
-      console.error('Fetch products error:', error);
-      return res.status(500).json({ message: 'Server error' });
+      console.error("Error fetching products:", error);
+      return res.status(500).json({ error: "Failed to fetch products" });
     }
   });
   
@@ -2254,6 +2254,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
 
   // Popup routes - public and admin
   app.get('/api/popup-settings', getPopupSetting); // Public route for frontend
+  app.put('/api/popup-settings', updatePopupSetting); // Public PUT route for updates
   app.get('/api/admin/popup', isAdminMiddleware, getPopupSetting); // Admin route
   app.put('/api/admin/popup', isAdminMiddleware, updatePopupSetting); // Admin-only update
 
