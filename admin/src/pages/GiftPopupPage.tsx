@@ -79,8 +79,15 @@ export default function GiftPopupPage() {
     setLoading(true);
     try {
       console.log('Fetching gift popup configuration...');
-      // Using development endpoint to bypass admin authentication during development
-      const response = await get<GiftPopupConfig>('/api/dev/gift-popup');
+      // Try the authenticated endpoint first, fall back to dev endpoint in development
+      let endpoint = '/api/admin/gift-popup';
+      
+      // In development, we might want to use the dev endpoint
+      if (import.meta.env.DEV) {
+        endpoint = '/api/dev/gift-popup';
+      }
+      
+      const response = await get<GiftPopupConfig>(endpoint);
       console.log('Gift popup config loaded:', response);
       // Ensure we have a valid GiftPopupConfig object
       if (response && typeof response === 'object') {
@@ -104,8 +111,15 @@ export default function GiftPopupPage() {
   const loadProducts = async () => {
     try {
       console.log('Fetching available products...');
-      // Using development endpoint to bypass admin authentication during development
-      const response = await get<Product[]>('/api/dev/gift-products');
+      // Try the authenticated endpoint first, fall back to dev endpoint in development
+      let endpoint = '/api/admin/gift-products';
+      
+      // In development, we might want to use the dev endpoint
+      if (import.meta.env.DEV) {
+        endpoint = '/api/dev/gift-products';
+      }
+      
+      const response = await get<Product[]>(endpoint);
       console.log(`Loaded ${response.length} products`);
       // Ensure we have a valid array of products
       if (Array.isArray(response)) {
@@ -144,8 +158,15 @@ export default function GiftPopupPage() {
         giftProducts: selectedProducts.map(p => p._id)
       };
       
-      // Using development endpoint to bypass admin authentication during development
-      const response = await put<GiftPopupConfig>('/api/dev/gift-popup', updatedConfig);
+      // Try the authenticated endpoint first, fall back to dev endpoint in development
+      let endpoint = '/api/admin/gift-popup';
+      
+      // In development, we might want to use the dev endpoint
+      if (import.meta.env.DEV) {
+        endpoint = '/api/dev/gift-popup';
+      }
+      
+      const response = await put<GiftPopupConfig>(endpoint, updatedConfig);
       
       // Ensure we have a valid response before updating state
       if (response && typeof response === 'object') {
