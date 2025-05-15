@@ -2318,6 +2318,12 @@ export async function registerRoutes(app: Application): Promise<Server> {
     res.status(500).json({ message: 'Internal server error', error: err.message });
   });
 
+  // Catch requests to /admin/popup and return an error to prevent serving HTML
+  app.get('/admin/popup', (req: Request, res: Response) => {
+    console.log('Request to /admin/popup received. This is not the correct endpoint for popup settings.');
+    res.status(400).json({ error: 'Invalid endpoint. Use /api/popup-settings for popup settings.' });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
