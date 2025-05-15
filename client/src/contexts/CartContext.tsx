@@ -92,12 +92,25 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     loadFreeProducts();
   }, []);
 
-  // Check for eligible free products when subtotal changes
+  // Check for eligible free products when subtotal changes and manage free products
   useEffect(() => {
     const eligible = freeProducts.filter(
       (product) => product && typeof product.minOrderValue === 'number' && product.minOrderValue <= subtotal
     );
     setEligibleFreeProducts(eligible);
+
+    // Get non-free items in cart
+    const nonFreeItems = cartItems.filter(item => !item.product?.isFreeProduct);
+
+    // If cart is empty (no non-free items), remove all free products
+    if (nonFreeItems.length === 0) {
+      cartItems.forEach(item => {
+        if (item.product?.isFreeProduct) {
+          removeItem(item.id);
+        }
+      });
+      return;
+    }
 
     // Automatically add eligible free products to cart
     eligible.forEach(async (product) => {
@@ -118,6 +131,13 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         } catch (error) {
           console.error('Failed to add free product:', error);
         }
+      }
+    });
+
+    // Remove non-eligible free products
+    cartItems.forEach(item => {
+      if (item.product?.isFreeProduct && !eligible.some(p => p._id === item.product._id)) {
+        removeItem(item.id);
       }
     });
   }, [subtotal, freeProducts, cartItems]);
@@ -282,7 +302,16 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     const previousItems = [...cartItems];
 
     try {
-      // Optimistically clear cart
+      // First remove all free products
+      const freeItemIds = cartItems
+        .filter(item => item.product?.isFreeProduct)
+        .map(item => item.id);
+      
+      for (const id of freeItemIds) {
+        await removeItem(id);
+      }
+
+      // Then clear remaining items
       setCartItems([]);
 
       // Clear in API
