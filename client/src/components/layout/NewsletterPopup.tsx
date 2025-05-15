@@ -79,6 +79,15 @@ export default function NewsletterPopup() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
+      
+      // Check if response is JSON
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        console.error('Non-JSON response:', text);
+        throw new Error('Server returned non-JSON response');
+      }
+      
       const data = await res.json();
       if (res.ok) {
         setMessage(data.message || 'Subscribed successfully');
@@ -87,7 +96,8 @@ export default function NewsletterPopup() {
         setMessage(data.message || 'Failed to subscribe');
       }
     } catch (err) {
-      setMessage('Network error');
+      console.error('Subscription error:', err);
+      setMessage('An error occurred. Please try again later.');
     }
   };
 

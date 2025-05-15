@@ -31,8 +31,12 @@ export default function Popup() {
     setLoading(true);
     fetch('/api/popup-settings')
       .then(async (res) => {
+        if (!res.ok) {
+          const error = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}, message: ${error}`);
+        }
         const data = await res.json();
-        if (res.ok && data) {
+        if (data) {
           setEnabled(!!data.enabled);
           if (data.startDate && data.endDate) {
             setRange([{ startDate: new Date(data.startDate), endDate: new Date(data.endDate), key: 'selection' }]);
@@ -41,16 +45,31 @@ export default function Popup() {
           setMode(data.bgImage?.startsWith('http') ? 'url' : 'upload');
           setUrlInput(data.bgImage || '');
         }
+        return data;
+      })
+      .catch((error) => {
+        console.error('Error fetching popup settings:', error);
+        setMessage(`Failed to load popup settings: ${error.message}`);
       })
       .finally(() => setLoading(false));
   }, []);
 
   // --- Fetch newsletter subscribers ---
   useEffect(() => {
-    fetch('/admin/api/newsletter/subscribers')
-      .then(res => res.json())
-      .then(data => setSubscribers(data))
-      .catch(() => {});
+    fetch('/api/newsletter/subscribers')
+      .then(async res => {
+        if (!res.ok) {
+          const error = await res.text();
+          console.error('Failed to fetch subscribers:', error);
+          return [];
+        }
+        return res.json();
+      })
+      .then(data => setSubscribers(data.data || data))
+      .catch(err => {
+        console.error('Error fetching subscribers:', err);
+        setSubscribers([]);
+      });
   }, []);
 
   // --- Edit and Save logic ---
