@@ -119,6 +119,7 @@ const bannerUpdateSchema = bannerObjectSchema.partial();
 import couponRoutes from './routes/couponRoutes';
 import giftCardRoutes from './routes/giftCardRoutes';
 import giftCardTemplateRoutes from './routes/giftCardTemplateRoutes';
+import giftPopupRoutes from './routes/giftPopupRoutes'; // Import gift popup routes
 import authRoutes from './routes/authRoutes'; // Import auth routes
 import scannerRoutes from './routes/scannerRoutes'; // Import scanner routes
 import testimonialRoutes from './routes/testimonialRoutes'; // Import testimonial routes
@@ -137,6 +138,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', couponRoutes);
   app.use('/api', giftCardRoutes);
   app.use('/api', giftCardTemplateRoutes);
+  app.use('/api', giftPopupRoutes); // Add gift popup routes
   app.use('/api', scannerRoutes);
   app.use('/api', testimonialRoutes);
   app.use('/api', freeProductRoutes);
