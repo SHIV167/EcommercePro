@@ -30,8 +30,8 @@ export async function getFreeProductById(req: Request, res: Response) {
 // Create a new free product
 export async function createFreeProduct(req: Request, res: Response) {
   try {
-    const { productId, minOrderValue } = req.body;
-    const freeProduct = new FreeProductModel({ productId, minOrderValue });
+    const { productId, minOrderValue, maxOrderValue, enabled = true } = req.body;
+    const freeProduct = new FreeProductModel({ productId, minOrderValue, maxOrderValue, enabled });
     await freeProduct.save();
     res.status(201).json(freeProduct);
   } catch (error) {
@@ -44,8 +44,8 @@ export async function createFreeProduct(req: Request, res: Response) {
 export async function updateFreeProduct(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { productId, minOrderValue } = req.body;
-    const freeProduct = await FreeProductModel.findByIdAndUpdate(id, { productId, minOrderValue }, { new: true });
+    const { productId, minOrderValue, maxOrderValue, enabled } = req.body;
+    const freeProduct = await FreeProductModel.findByIdAndUpdate(id, { productId, minOrderValue, maxOrderValue, enabled }, { new: true });
     if (!freeProduct) {
       return res.status(404).json({ message: 'Free product not found' });
     }

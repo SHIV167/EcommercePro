@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 // Using absolute import path instead of relative
 import { useApiClient } from '@/hooks/useApiClient';
 import { logApiResponse } from '@/utils/apiLogger';
+import { formatCurrency } from '@/lib/utils'; // For currency formatting
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -28,6 +30,8 @@ interface FreeProduct {
   _id: string;
   productId: string;
   minOrderValue: number;
+  maxOrderValue: number | null; // null means no upper limit
+  enabled: boolean;
   createdAt: string;
   product?: {
     name: string;
@@ -54,10 +58,13 @@ export default function FreeProductsPage() {
   const [formData, setFormData] = useState({
     productId: '',
     minOrderValue: 0,
+    maxOrderValue: null as number | null,
+    enabled: true,
   });
   const [formErrors, setFormErrors] = useState({
     productId: '',
     minOrderValue: '',
+    maxOrderValue: '',
   });
 
   // Load free products with product details
@@ -188,6 +195,7 @@ export default function FreeProductsPage() {
     const errors = {
       productId: '',
       minOrderValue: '',
+      maxOrderValue: '',
     };
     
     if (!formData.productId) {
@@ -197,9 +205,13 @@ export default function FreeProductsPage() {
     if (formData.minOrderValue <= 0) {
       errors.minOrderValue = 'Minimum order value must be greater than zero';
     }
+
+    if (formData.maxOrderValue !== null && formData.maxOrderValue <= formData.minOrderValue) {
+      errors.maxOrderValue = 'Maximum order value must be greater than minimum order value';
+    }
     
     setFormErrors(errors);
-    return !errors.productId && !errors.minOrderValue;
+    return !errors.productId && !errors.minOrderValue && !errors.maxOrderValue;
   };
 
   const handleOpenModal = (freeProduct: FreeProduct | null = null) => {
@@ -208,12 +220,16 @@ export default function FreeProductsPage() {
       setFormData({
         productId: freeProduct.productId,
         minOrderValue: freeProduct.minOrderValue,
+        maxOrderValue: freeProduct.maxOrderValue,
+        enabled: freeProduct.enabled,
       });
     } else {
       setEditingProduct(null);
       setFormData({
         productId: '',
         minOrderValue: 0,
+        maxOrderValue: null,
+        enabled: true,
       });
     }
     setModalOpen(true);
@@ -224,6 +240,7 @@ export default function FreeProductsPage() {
     setFormErrors({
       productId: '',
       minOrderValue: '',
+      maxOrderValue: '',
     });
   };
 
@@ -246,6 +263,26 @@ export default function FreeProductsPage() {
     } catch (error) {
       console.error('Error saving free product:', error);
       toast({ title: 'Failed to save free product', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async (id: string, newStatus: boolean) => {
+    setLoading(true);
+    try {
+      const response = await put(`/api/admin/free-products/${id}`, { enabled: newStatus });
+      toast({ 
+        title: `Free product ${newStatus ? 'enabled' : 'disabled'} successfully`,
+        variant: 'default' 
+      });
+      loadFreeProducts();
+    } catch (error) {
+      console.error('Error toggling free product status:', error);
+      toast({ 
+        title: `Failed to ${newStatus ? 'enable' : 'disable'} free product`, 
+        variant: 'destructive' 
+      });
     } finally {
       setLoading(false);
     }
@@ -286,6 +323,8 @@ export default function FreeProductsPage() {
               <TableRow>
                 <TableHead>Product</TableHead>
                 <TableHead>Minimum Order Value</TableHead>
+                <TableHead>Maximum Order Value</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Created At</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -311,10 +350,14 @@ export default function FreeProductsPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>₹{freeProduct.minOrderValue.toFixed(2)}</TableCell>
+                    <TableCell>{formatCurrency(freeProduct.minOrderValue)}</TableCell>
+                    <TableCell>{freeProduct.maxOrderValue ? formatCurrency(freeProduct.maxOrderValue) : 'No limit'}</TableCell>
                     <TableCell>
-                      {new Date(freeProduct.createdAt).toLocaleDateString()}
+                      <span className={`px-2 py-1 text-xs rounded-full ${freeProduct.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {freeProduct.enabled ? 'Active' : 'Inactive'}
+                      </span>
                     </TableCell>
+                    <TableCell>{new Date(freeProduct.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 
@@ -323,6 +366,13 @@ export default function FreeProductsPage() {
                           onClick={() => handleOpenModal(freeProduct)}
                         >
                           Edit
+                        </Button>
+                        <Button 
+                          variant={freeProduct.enabled ? "default" : "secondary"}
+                          size="sm"
+                          onClick={() => handleToggleStatus(freeProduct._id, !freeProduct.enabled)}
+                        >
+                          {freeProduct.enabled ? 'Disable' : 'Enable'}
                         </Button>
                         <Button 
                           variant="destructive" 
@@ -391,6 +441,37 @@ export default function FreeProductsPage() {
               {formErrors.minOrderValue && (
                 <p className="text-destructive text-sm">{formErrors.minOrderValue}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maxOrderValue">Maximum Order Value (₹) <span className="text-sm text-muted-foreground">(Optional, leave empty for no limit)</span></Label>
+              <Input
+                id="maxOrderValue"
+                type="number"
+                value={formData.maxOrderValue === null ? '' : formData.maxOrderValue}
+                onChange={(e) => {
+                  const value = e.target.value.trim() === '' ? null : parseFloat(e.target.value);
+                  setFormData({...formData, maxOrderValue: value});
+                }}
+                placeholder="No upper limit"
+              />
+              {formErrors.maxOrderValue && (
+                <p className="text-destructive text-sm">{formErrors.maxOrderValue}</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between space-y-0 py-4">
+              <Label htmlFor="enabled" className="flex-grow">Product Status</Label>
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="enabled"
+                  checked={formData.enabled}
+                  onCheckedChange={(checked) => setFormData({...formData, enabled: checked})}
+                />
+                <span className={formData.enabled ? 'text-green-600' : 'text-red-600'}>
+                  {formData.enabled ? 'Active' : 'Inactive'}
+                </span>
+              </div>
             </div>
           </div>
 

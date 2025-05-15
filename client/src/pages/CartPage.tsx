@@ -70,45 +70,49 @@ export default function CartPage() {
       
       <div className="bg-neutral-cream py-8">
         <div className="container mx-auto px-4">
-          <h1 className="font-heading text-3xl text-primary text-center">Your Cart</h1>
+          <h1 className="font-heading text-3xl text-primary text-center">Your Shopping Cart</h1>
+          <p className="text-center text-neutral-gray mt-2">Review your items and proceed to checkout</p>
         </div>
       </div>
       
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-8">
         {isEmpty ? (
-          <div className="text-center py-12">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-muted-foreground mx-auto mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="text-center py-16 max-w-lg mx-auto bg-white p-8 rounded-lg shadow-sm border border-neutral-sand">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-primary/30 mx-auto mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            <h2 className="font-heading text-2xl text-primary mb-4">Your cart is empty</h2>
-            <p className="text-neutral-gray mb-8">Looks like you haven't added any products to your cart yet.</p>
+            <h2 className="font-heading text-2xl text-primary mb-4 font-semibold">Your cart is empty</h2>
+            <p className="text-neutral-gray mb-8 text-lg">Looks like you haven't added any products to your cart yet.</p>
             <Button 
               asChild
-              className="bg-primary hover:bg-primary-light text-white"
+              className="bg-primary hover:bg-primary-light text-white text-lg py-6 px-8 rounded-full transition-transform hover:scale-105"
             >
-              <Link href="/collections/all">Continue Shopping</Link>
+              <Link href="/collections/all">Explore Products</Link>
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <div className="border border-neutral-sand rounded-md overflow-hidden">
-                <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
+                <div className="bg-neutral-cream p-4 border-b border-neutral-sand flex justify-between items-center">
                   <h2 className="font-heading text-lg text-primary">
                     Cart Items ({totalItems})
                   </h2>
+                  <span className="text-xs text-neutral-gray">Items are reserved for 60 minutes</span>
                 </div>
                 
                 <div className="divide-y divide-neutral-sand">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="p-4 md:p-6">
+                    <div key={item.id} className="p-4 hover:bg-neutral-50 transition-colors">
                       <div className="flex flex-col md:flex-row gap-4">
                         <div className="w-full md:w-24 h-24 bg-neutral-sand rounded-md overflow-hidden">
-                          <img
-                            src={item.product?.imageUrl || item.product?.images?.[0] || '/placeholder.jpg'}
-                            alt={item.product?.name || 'Product'}
-                            className="w-full h-full object-cover object-center"
-                          />
+                          <div className="relative h-full group">
+                            <img
+                              src={item.product?.imageUrl || item.product?.images?.[0] || '/placeholder.jpg'}
+                              alt={item.product?.name || 'Product'}
+                              className="w-full h-full object-cover object-center"
+                            />
+                          </div>
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between">
@@ -198,19 +202,26 @@ export default function CartPage() {
                 </div>
               </div>
               
-              <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-between">
+              <div className="mt-6 flex justify-between items-center">
                 <Button 
                   asChild
                   variant="outline"
-                  className="border-primary text-primary hover:bg-primary hover:text-white"
+                  className="border-primary text-primary hover:bg-primary hover:text-white text-sm"
                 >
-                  <Link href="/collections/all">Continue Shopping</Link>
+                  <Link href="/collections/all">← Continue Shopping</Link>
                 </Button>
+                
+                <div className="flex items-center gap-2 text-xs">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-neutral-gray">Secure checkout</span>
+                </div>
               </div>
             </div>
             
             <div>
-              <div className="border border-neutral-sand rounded-md overflow-hidden sticky top-4">
+              <div className="border border-neutral-sand rounded-lg overflow-hidden sticky top-4 shadow-sm bg-white">
                 <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
                   <h2 className="font-heading text-lg text-primary">Order Summary</h2>
                 </div>
@@ -226,7 +237,6 @@ export default function CartPage() {
                       variant="outline"
                       className="w-full border-primary text-primary hover:bg-primary-light hover:text-white my-3"
                       onClick={() => {
-                        // Ensure we're setting the state to true to trigger the popup
                         setOffersPopupOpen(true);
                       }}
                     >
@@ -235,9 +245,9 @@ export default function CartPage() {
                     
                     {appliedCoupon && (
                       <div className="flex justify-between items-center text-green-600">
-                        <span>Discount</span>
-                        <span>-{formatCurrency(appliedCoupon.discountValue)}</span>
-                      </div>
+                      <span>Discount</span>
+                      <span>-{formatCurrency(appliedCoupon.discountValue)}</span>
+                    </div>
                     )}
                     
                     <div className="flex justify-between items-center">
@@ -257,7 +267,7 @@ export default function CartPage() {
                   <div className="mt-6">
                     <Button 
                       asChild
-                      className="w-full bg-primary hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium"
+                      className="w-full bg-primary hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium mt-6"
                     >
                       <Link href="/checkout">Proceed to Checkout</Link>
                     </Button>
