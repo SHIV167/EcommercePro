@@ -161,39 +161,54 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
                   <Link href={`/products/${item.product?.slug ?? ""}`} onClick={onClose}>
                     <h4 className="text-sm font-medium text-gray-900">{item.product?.name ?? "Unknown Product"}</h4>
                   </Link>
-                  <div className="flex items-center gap-2 mt-1">
-                    <button
-                      className="w-6 h-6 flex items-center justify-center border rounded text-gray-600 hover:bg-gray-100"
-                      aria-label="Decrease quantity"
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      disabled={item.quantity <= 1}
-                    >
-                      -
-                    </button>
-                    <span className="px-2 text-sm">{item.quantity}</span>
-                    <button
-                      className="w-6 h-6 flex items-center justify-center border rounded text-gray-600 hover:bg-gray-100"
-                      aria-label="Increase quantity"
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    >
-                      +
-                    </button>
-                    <button
-                      className="ml-2 text-red-500 hover:text-red-700"
-                      aria-label="Remove item"
-                      onClick={() => removeItem(item.id)}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
+                  {!item.product?.isFreeProduct ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <button
+                        className="w-6 h-6 flex items-center justify-center border rounded text-gray-600 hover:bg-gray-100"
+                        aria-label="Decrease quantity"
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                      >
+                        -
+                      </button>
+                      <span className="px-2 text-sm">{item.quantity}</span>
+                      <button
+                        className="w-6 h-6 flex items-center justify-center border rounded text-gray-600 hover:bg-gray-100"
+                        aria-label="Increase quantity"
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      >
+                        +
+                      </button>
+                      <button
+                        className="ml-2 text-red-500 hover:text-red-700"
+                        aria-label="Remove item"
+                        onClick={() => removeItem(item.id)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-primary font-medium">Free Product</span>
+                      <button
+                        className="ml-2 text-red-500 hover:text-red-700"
+                        aria-label="Remove item"
+                        onClick={() => removeItem(item.id)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                   <p className="text-xs text-gray-500">
-                    {item.quantity} &times; {formatCurrency(item.product?.price ?? 0)}
+                    {item.quantity} &times; {item.product?.isFreeProduct ? "Free" : formatCurrency(item.product?.price ?? 0)}
                   </p>
                 </div>
                 <p className="text-sm font-medium text-gray-900">
-                  {formatCurrency((item.product?.price ?? 0) * item.quantity)}
+                  {item.product?.isFreeProduct ? "Free" : formatCurrency((item.product?.price ?? 0) * item.quantity)}
                 </p>
               </div>
             ))
