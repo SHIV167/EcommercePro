@@ -18,11 +18,41 @@ export default function Popup() {
 
   useEffect(() => {
     fetch('/api/popup-settings')
-      .then(res => res.json())
+      .then(async res => {
+        console.log('Popup fetch status:', res.status);
+        // Check if the response is ok and has content
+        if (res.ok) {
+          try {
+            const text = await res.text();
+            console.log('Raw response:', text);
+            if (!text) {
+              console.warn('Empty response received');
+              return { enabled: false, startDate: new Date(), endDate: new Date(), bgImage: '' };
+            }
+            return JSON.parse(text);
+          } catch (error) {
+            console.error('JSON parse error:', error);
+            return { enabled: false, startDate: new Date(), endDate: new Date(), bgImage: '' };
+          }
+        } else {
+          console.warn('Response not OK:', res.status);
+          return { enabled: false, startDate: new Date(), endDate: new Date(), bgImage: '' };
+        }
+      })
       .then(data => {
-        setEnabled(data.enabled);
-        setRange([{ startDate: new Date(data.startDate), endDate: new Date(data.endDate), key: 'selection' }]);
-        setBgImage(data.bgImage);
+        console.log('Processed data:', data);
+        // Safely extract data, considering it might be in a data property
+        const settingsData = data?.data || data || {};
+        setEnabled(!!settingsData.enabled);
+        setRange([{ 
+          startDate: new Date(settingsData.startDate || new Date()), 
+          endDate: new Date(settingsData.endDate || new Date()), 
+          key: 'selection' 
+        }]);
+        setBgImage(settingsData.bgImage || '');
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
       });
   }, []);
 

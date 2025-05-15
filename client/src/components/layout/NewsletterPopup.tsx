@@ -12,22 +12,36 @@ export default function NewsletterPopup() {
 
   useEffect(() => {
     fetch('/api/popup-settings')
-      .then(res => {
+      .then(async res => {
+        console.log('Newsletter popup fetch status:', res.status);
         // Check if response is OK and has content
-        if (res.ok && res.headers.get('content-length') !== '0') {
-          return res.json();
+        if (res.ok) {
+          try {
+            const text = await res.text();
+            console.log('Raw newsletter popup response:', text);
+            if (!text || text.trim() === '') {
+              console.warn('Empty popup settings response');
+              return { enabled: false };
+            }
+            return JSON.parse(text);
+          } catch (error) {
+            console.error('JSON parse error in newsletter popup:', error);
+            return { enabled: false };
+          }
+        } else {
+          console.warn('Popup settings response not OK:', res.status);
+          return { enabled: false };
         }
-        // Return default settings if empty response
-        console.warn('Empty or invalid popup settings response');
-        return { enabled: false };
       })
       .then(data => {
-        console.log('Popup settings from API:', data);
-        if (data) {
-          setBg(data.bgImage || '');
-          setEnabled(data.enabled || false);
-          setStart(data.startDate || null);
-          setEnd(data.endDate || null);
+        console.log('Processed popup settings from API:', data);
+        // Handle different response formats
+        const settingsData = data?.data || data || {};
+        if (settingsData) {
+          setBg(settingsData.bgImage || '');
+          setEnabled(!!settingsData.enabled);
+          setStart(settingsData.startDate || null);
+          setEnd(settingsData.endDate || null);
         }
       })
       .catch(error => {
