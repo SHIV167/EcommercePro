@@ -2252,11 +2252,24 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api/admin', scannerRoutes); 
   app.use('/api/admin', testimonialRoutes);
 
-  // Popup routes - public and admin
-  app.get('/api/popup-settings', getPopupSetting); // Public route for frontend
-  app.put('/api/popup-settings', updatePopupSetting); // Public PUT route for updates
-  app.get('/api/admin/popup', isAdminMiddleware, getPopupSetting); // Admin route
-  app.put('/api/admin/popup', isAdminMiddleware, updatePopupSetting); // Admin-only update
+  // ===== Popup route handling =====
+  // Must come BEFORE static file handling to prevent HTML responses
+  
+  // Admin popup routes (protected)
+  app.get('/api/admin/popup', isAdminMiddleware, getPopupSetting);
+  app.put('/api/admin/popup', isAdminMiddleware, updatePopupSetting);
+  
+  // Public popup routes (for the frontend)
+  app.get('/api/popup-settings', (req, res) => {
+    console.log('Public popup settings request');
+    return getPopupSetting(req, res);
+  });
+  
+  // Public PUT route also needs auth - frontend will use this when admin is logged in
+  app.put('/api/popup-settings', isAdminMiddleware, (req, res) => {
+    console.log('Public popup settings update');
+    return updatePopupSetting(req, res);
+  });
 
   app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({ message: 'OK' });
