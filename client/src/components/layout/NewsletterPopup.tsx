@@ -10,45 +10,57 @@ export default function NewsletterPopup() {
   const [end, setEnd] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  // Get the base API URL from environment variables or use relative path
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
   useEffect(() => {
-    fetch('/api/popup-settings')
-      .then(async res => {
-        console.log('Newsletter popup fetch status:', res.status);
-        // Check if response is OK and has content
-        if (res.ok) {
-          try {
-            const text = await res.text();
-            console.log('Raw newsletter popup response:', text);
-            if (!text || text.trim() === '') {
-              console.warn('Empty popup settings response');
-              return { enabled: false };
-            }
-            return JSON.parse(text);
-          } catch (error) {
-            console.error('JSON parse error in newsletter popup:', error);
-            return { enabled: false };
-          }
-        } else {
-          console.warn('Popup settings response not OK:', res.status);
-          return { enabled: false };
+    const fetchPopupSettings = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/popup-settings`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'include' // Important for cookies, authorization headers with HTTPS
+        });
+
+        console.log('Newsletter popup fetch status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.warn('Popup settings response not OK:', response.status, errorText.slice(0, 200) + (errorText.length > 200 ? '... [truncated]' : ''));
+          setEnabled(false);
+          return;
         }
-      })
-      .then(data => {
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          console.warn('Received non-JSON response:', contentType, text.slice(0, 200) + (text.length > 200 ? '... [truncated]' : ''));
+          setEnabled(false);
+          return;
+        }
+
+        const data = await response.json().catch(error => {
+          console.error('JSON parse error:', error);
+          throw new Error(`JSON parse error: ${error.message}`);
+        });
         console.log('Processed popup settings from API:', data);
+        
         // Handle different response formats
         const settingsData = data?.data || data || {};
-        if (settingsData) {
-          setBg(settingsData.bgImage || '');
-          setEnabled(!!settingsData.enabled);
-          setStart(settingsData.startDate || null);
-          setEnd(settingsData.endDate || null);
-        }
-      })
-      .catch(error => {
+        setBg(settingsData.bgImage || '');
+        setEnabled(!!settingsData.enabled);
+        setStart(settingsData.startDate || null);
+        setEnd(settingsData.endDate || null);
+        
+      } catch (error) {
         console.error('Error fetching popup settings:', error);
-        // Disable popup on error
         setEnabled(false);
-      });
+      }
+    };
+
+    fetchPopupSettings();
   }, []);
 
   useEffect(() => {
@@ -73,22 +85,34 @@ export default function NewsletterPopup() {
       setMessage('Please enter your email');
       return;
     }
+    
     try {
-      const res = await fetch('/api/newsletter/subscribe', {
+      const res = await fetch(`${API_BASE_URL}/api/newsletter/subscribe`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include', // Important for cookies, authorization headers with HTTPS
         body: JSON.stringify({ email }),
       });
+      
+      console.log('Subscription response status:', res.status);
       
       // Check if response is JSON
       const contentType = res.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const text = await res.text();
-        console.error('Non-JSON response:', text);
+        console.error('Non-JSON response:', contentType, text.slice(0, 200) + (text.length > 200 ? '... [truncated]' : ''));
         throw new Error('Server returned non-JSON response');
       }
       
-      const data = await res.json();
+      const data = await res.json().catch(error => {
+        console.error('JSON parse error:', error);
+        throw new Error(`JSON parse error: ${error.message}`);
+      });
+      console.log('Subscription response data:', data);
+      
       if (res.ok) {
         setMessage(data.message || 'Subscribed successfully');
         setTimeout(() => onClose(), 2000);

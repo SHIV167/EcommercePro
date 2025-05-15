@@ -26,10 +26,13 @@ export default function Popup() {
   const [message, setMessage] = useState<string | null>(null);
   const [subscribers, setSubscribers] = useState<{ email: string; subscribedAt: string }[]>([]);
 
+  // Get the base API URL from environment variables or use relative path
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
   // --- Fetch settings from API on mount ---
   useEffect(() => {
     setLoading(true);
-    fetch('/api/popup-settings')
+    fetch(`${API_BASE_URL}/api/popup-settings`)
       .then(async (res) => {
         if (!res.ok) {
           const error = await res.text();
@@ -56,7 +59,7 @@ export default function Popup() {
 
   // --- Fetch newsletter subscribers ---
   useEffect(() => {
-    fetch('/api/newsletter/subscribers')
+    fetch(`${API_BASE_URL}/api/newsletter/subscribers`)
       .then(async res => {
         if (!res.ok) {
           const error = await res.text();
@@ -90,7 +93,7 @@ export default function Popup() {
       return;
     }
     try {
-      const res = await fetch('/api/popup-settings', {
+      const res = await fetch(`${API_BASE_URL}/api/popup-settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
