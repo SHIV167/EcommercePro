@@ -16,9 +16,15 @@ export const apiRequest = async (url: string, options: RequestInit = {}) => {
 
   // Always include credentials for cookies
   options.credentials = 'include';
+
+  // Get API URL from environment variables
+  const apiUrl = import.meta.env.VITE_API_URL || '';
+  
+  // Ensure URL starts with API URL
+  const fullUrl = url.startsWith('http') ? url : `${apiUrl}${url}`;
   
   try {
-    const response = await fetch(url, options);
+    const response = await fetch(fullUrl, options);
     return response;
   } catch (error) {
     console.error('API request error:', error);
