@@ -3,6 +3,7 @@ import { Route, Switch, useLocation } from "wouter";
 import Header from "./components/layout/Header";
 import CheckoutHeader from "./components/layout/CheckoutHeader";
 import NewsletterPopup from "./components/layout/NewsletterPopup";
+import GiftPopup from "./components/GiftPopup";
 import Footer from "./components/layout/Footer";
 import { Toaster } from "./components/ui/toaster";
 import HomePage from "./pages/HomePage";
@@ -35,6 +36,7 @@ export default function App() {
     <div className="app">
       {isCheckout ? <CheckoutHeader /> : <Header />}
       {!isCheckout && <NewsletterPopup />}
+      {!isCheckout && <GiftPopup />}
       <Toaster />
       <main className={isCheckout ? "pt-[60px]" : "pt-[180px] mt-2"}>
         <Switch>

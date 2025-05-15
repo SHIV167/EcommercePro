@@ -25,11 +25,72 @@ export const apiRequest = async (url: string, options: RequestInit = {}) => {
   
   try {
     const response = await fetch(fullUrl, options);
+    
+    // Check if the response is ok
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `API request failed with status ${response.status}`);
+    }
+    
     return response;
   } catch (error) {
     console.error('API request error:', error);
     throw error;
   }
+};
+
+/**
+ * GET request helper
+ * @param url The URL to make the GET request to
+ * @returns Parsed JSON response
+ */
+export const get = async <T>(url: string): Promise<T> => {
+  const response = await apiRequest(url, { method: 'GET' });
+  return response.json();
+};
+
+/**
+ * POST request helper
+ * @param url The URL to make the POST request to
+ * @param data Data to send in the request body
+ * @returns Parsed JSON response
+ */
+export const post = async <T>(url: string, data: any): Promise<T> => {
+  const response = await apiRequest(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  return response.json();
+};
+
+/**
+ * PUT request helper
+ * @param url The URL to make the PUT request to
+ * @param data Data to send in the request body
+ * @returns Parsed JSON response
+ */
+export const put = async <T>(url: string, data: any): Promise<T> => {
+  const response = await apiRequest(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  return response.json();
+};
+
+/**
+ * DELETE request helper
+ * @param url The URL to make the DELETE request to
+ * @returns Parsed JSON response
+ */
+export const del = async <T>(url: string): Promise<T> => {
+  const response = await apiRequest(url, { method: 'DELETE' });
+  return response.json();
 };
 
 /**

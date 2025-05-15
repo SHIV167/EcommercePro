@@ -27,6 +27,7 @@ import bcrypt from "bcrypt";
 import jwt, { Secret } from "jsonwebtoken";
 import { getPopupSetting, updatePopupSetting } from "./controllers/popupSettingController";
 import { subscribeNewsletter, getNewsletterSubscribers } from "./controllers/newsletterController";
+import { getGiftPopupConfig, updateGiftPopupConfig, getGiftProducts } from "./controllers/giftPopupController";
 import fs from "fs";
 import path, { dirname } from "path";
 import multer from "multer";
@@ -2270,6 +2271,40 @@ export async function registerRoutes(app: Application): Promise<Server> {
     console.log('Public popup settings update');
     return updatePopupSetting(req, res);
   });
+
+  // ===== Gift Popup routes =====
+  // Admin gift popup routes (protected)
+  app.get('/api/admin/gift-popup', isAdminMiddleware, getGiftPopupConfig);
+  app.put('/api/admin/gift-popup', isAdminMiddleware, updateGiftPopupConfig);
+  app.get('/api/admin/gift-products', isAdminMiddleware, getGiftProducts);
+  
+  // Public gift popup routes (for the frontend)
+  app.get('/api/gift-popup', getGiftPopupConfig);
+  app.get('/api/gift-products', getGiftProducts);
+  
+  // Development test routes for admin panel (NOT FOR PRODUCTION)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Registering development test endpoints for gift popup');
+    // Non-authenticated versions for development/testing
+    app.get('/api/dev/gift-popup', getGiftPopupConfig);
+    app.put('/api/dev/gift-popup', updateGiftPopupConfig);
+    app.get('/api/dev/gift-products', (req, res) => {
+      console.log('Dev gift products API called');
+      return ProductModel.find({})
+        .select('_id name price images')
+        .then((products: any[]) => {
+          console.log(`Found ${products.length} products for dev API`);
+          res.json(products);
+        })
+        .catch((error: Error) => {
+          console.error('Error in dev gift products API:', error);
+          res.status(500).json({
+            message: 'Error fetching products',
+            error: error.message
+          });
+        });
+    });
+  }
 
   app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({ message: 'OK' });

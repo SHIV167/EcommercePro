@@ -6,12 +6,15 @@ interface CartItem {
   id: number;
   product: Product;
   quantity: number;
+  isGift?: boolean;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   addItem: (product: Product) => Promise<void>;
+  addGiftToCart: (product: Product & { isGift: boolean }) => Promise<void>;
   removeItem: (itemId: number) => Promise<void>;
+  removeItemFromCart: (productId: string) => Promise<void>;
   updateQuantity: (itemId: number, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
   subtotal: number;
@@ -19,12 +22,19 @@ interface CartContextType {
   isEmpty: boolean;
   freeProducts: Product[];
   eligibleFreeProducts: Product[];
+  cart: {
+    id: string | null;
+    totalPrice: number;
+    totalItems: number;
+  };
 }
 
 export const CartContext = createContext<CartContextType>({
   cartItems: [],
   addItem: async () => {},
+  addGiftToCart: async () => {},
   removeItem: async () => {},
+  removeItemFromCart: async () => {},
   updateQuantity: async () => {},
   clearCart: async () => {},
   subtotal: 0,
@@ -32,6 +42,11 @@ export const CartContext = createContext<CartContextType>({
   isEmpty: true,
   freeProducts: [],
   eligibleFreeProducts: [],
+  cart: {
+    id: null,
+    totalPrice: 0,
+    totalItems: 0
+  }
 });
 
 interface CartProviderProps {
@@ -325,19 +340,96 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     }
   };
 
+  // Add gift item to cart (for gift popup)
+  const addGiftToCart = async (product: Product & { isGift: boolean }) => {
+    const previousItems = [...cartItems];
+    try {
+      // Ensure cartId is available before proceeding
+      let currentCartId = cartId;
+      if (!currentCartId) {
+        const sessionId = localStorage.getItem("cartSessionId");
+        const cartResponse = await apiRequest("GET", `/api/cart?sessionId=${sessionId}`);
+        const cartData = await cartResponse.json();
+        setCartId(cartData.id);
+        currentCartId = cartData.id;
+      }
+      if (!currentCartId) throw new Error("Cart ID not initialized");
+
+      // Create optimistic update with gift flag
+      const newItem: CartItem = {
+        id: Date.now(), // Temporary ID
+        product: product,
+        quantity: 1,
+        isGift: true
+      };
+
+      setCartItems([...cartItems, newItem]);
+
+      // Send to backend
+      const response = await apiRequest("POST", `/api/cart/${currentCartId}/items`, {
+        productId: (product as any)._id || (product as any).id,
+        quantity: 1,
+        isGift: true
+      });
+
+      if (!response.ok) {
+        // Revert on failure
+        setCartItems(previousItems);
+        throw new Error("Failed to add gift item");
+      }
+
+      // Update cart with server response
+      const updatedCart = await response.json();
+      if (updatedCart.items) {
+        setCartItems(updatedCart.items);
+      }
+    } catch (error) {
+      console.error("Failed to add gift item:", error);
+      // Revert to previous state
+      setCartItems(previousItems);
+    }
+  };
+
+  // Remove item by product ID (for gift popup)
+  const removeItemFromCart = async (productId: string) => {
+    const previousItems = [...cartItems];
+    try {
+      // Find the item with this product ID
+      const itemToRemove = cartItems.find(
+        item => (item.product as any)._id === productId || (item.product as any).id === productId
+      );
+
+      if (!itemToRemove) return;
+
+      // Call the existing removeItem function
+      await removeItem(itemToRemove.id);
+    } catch (error) {
+      console.error("Failed to remove item by product ID:", error);
+      // Revert to previous state
+      setCartItems(previousItems);
+    }
+  };
+
   return (
     <CartContext.Provider
       value={{
         cartItems,
         addItem,
+        addGiftToCart,
         removeItem,
+        removeItemFromCart,
         updateQuantity,
         clearCart,
         subtotal,
         totalItems,
-        isEmpty,
+        isEmpty: cartItems.length === 0,
         freeProducts,
         eligibleFreeProducts,
+        cart: {
+          id: cartId || '',
+          totalPrice: subtotal,
+          totalItems
+        }
       }}
     >
       {children}
