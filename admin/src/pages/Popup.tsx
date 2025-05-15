@@ -59,12 +59,33 @@ export default function Popup() {
   // fetch newsletter subscribers
   useEffect(() => {
     apiRequest('GET', '/api/newsletter/subscribers')
-      .then(res => res.json())
+      .then(async res => {
+        try {
+          // Get response as text first
+          const text = await res.text();
+          console.log('Newsletter response:', text);
+          if (!text) {
+            console.warn('Empty newsletter response');
+            return { success: false, data: [] };
+          }
+          return JSON.parse(text);
+        } catch (error) {
+          console.error('Newsletter parsing error:', error);
+          return { success: false, data: [] };
+        }
+      })
       .then(data => {
-        setSubscribers(data);
+        console.log('Processed newsletter data:', data);
+        // Extract subscribers from response
+        const subscribersData = data?.data || [];
+        setSubscribers(Array.isArray(subscribersData) ? subscribersData : []);
         setSubsLoading(false);
       })
-      .catch(() => setSubsLoading(false));
+      .catch((error) => {
+        console.error('Newsletter fetch error:', error);
+        setSubscribers([]);
+        setSubsLoading(false);
+      });
   }, []);
 
   const toggleEnabled = () => {
