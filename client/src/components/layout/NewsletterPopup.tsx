@@ -16,7 +16,10 @@ export default function NewsletterPopup() {
   useEffect(() => {
     const fetchPopupSettings = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/popup-settings`, {
+        const apiUrl = `${API_BASE_URL}/api/popup-settings`;
+        console.log('Fetching popup settings from:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -87,7 +90,10 @@ export default function NewsletterPopup() {
     }
     
     try {
-      const res = await fetch(`${API_BASE_URL}/api/newsletter/subscribe`, {
+      const apiUrl = `${API_BASE_URL}/api/newsletter/subscribe`;
+      console.log('Subscribing to newsletter at:', apiUrl);
+      
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
