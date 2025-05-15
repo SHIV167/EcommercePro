@@ -2252,9 +2252,10 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api/admin', scannerRoutes); 
   app.use('/api/admin', testimonialRoutes);
 
-  // Popup routes
-  app.get('/api/admin/popup', isAdminMiddleware, getPopupSetting);
-  app.put('/api/admin/popup', isAdminMiddleware, updatePopupSetting);
+  // Popup routes - public and admin
+  app.get('/api/popup-settings', getPopupSetting); // Public route for frontend
+  app.get('/api/admin/popup', isAdminMiddleware, getPopupSetting); // Admin route
+  app.put('/api/admin/popup', isAdminMiddleware, updatePopupSetting); // Admin-only update
 
   app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({ message: 'OK' });
