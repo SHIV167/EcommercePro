@@ -131,28 +131,47 @@ export default function AccountPage() {
         <meta name="description" content="Manage your account and view your orders." />
       </Helmet>
       
-      <div className="bg-neutral-cream py-8">
+      <div className="bg-neutral-cream py-12">
         <div className="container mx-auto px-4">
-          <h1 className="font-heading text-3xl text-primary text-center">My Account</h1>
+          <h1 className="font-heading text-4xl text-primary text-center mb-2">My Account</h1>
+          {user?.name && (
+            <p className="text-center text-neutral-gray mb-0">Welcome back, {user.name}!</p>
+          )}
         </div>
       </div>
       
-      <div className="container mx-auto px-4 py-12">
+      <div className="container max-w-5xl mx-auto px-4 py-12 -mt-8">
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="w-full border-b border-neutral-sand bg-transparent justify-start mb-8 rounded-none">
-            <TabsTrigger value="profile" className="font-heading text-primary data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none py-3 px-6">Profile</TabsTrigger>
-            <TabsTrigger value="orders" className="font-heading text-primary data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none py-3 px-6">Orders</TabsTrigger>
-            <TabsTrigger value="addresses" className="font-heading text-primary data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none py-3 px-6">Addresses</TabsTrigger>
+          <TabsList className="w-full bg-white shadow-sm rounded-lg justify-center mb-8 p-1 gap-2">
+            <TabsTrigger 
+              value="profile" 
+              className="font-heading text-sm text-primary data-[state=active]:bg-primary data-[state=active]:text-white rounded-md flex-1 max-w-[200px] py-3"
+            >
+              Profile
+            </TabsTrigger>
+            <TabsTrigger 
+              value="orders" 
+              className="font-heading text-sm text-primary data-[state=active]:bg-primary data-[state=active]:text-white rounded-md flex-1 max-w-[200px] py-3"
+            >
+              Orders
+            </TabsTrigger>
+            <TabsTrigger 
+              value="addresses" 
+              className="font-heading text-sm text-primary data-[state=active]:bg-primary data-[state=active]:text-white rounded-md flex-1 max-w-[200px] py-3"
+            >
+              Addresses
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile" className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="md:col-span-2">
-                <div className="border border-neutral-sand rounded-md overflow-hidden">
-                  <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
-                    <h2 className="font-heading text-lg text-primary">Profile Information</h2>
+                <div className="bg-white shadow-md rounded-lg overflow-hidden">
+                  <div className="bg-primary/5 p-6 border-b border-neutral-sand">
+                    <h2 className="font-heading text-xl text-primary">Profile Information</h2>
+                    <p className="text-sm text-neutral-gray mt-1">Manage your personal information</p>
                   </div>
-                  <div className="p-6">
+                  <div className="p-8">
                     {editingProfile ? (
                       <form onSubmit={handleProfileEdit} className="space-y-4">
                         <input
@@ -183,18 +202,18 @@ export default function AccountPage() {
                         </div>
                       </form>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-neutral-gray mb-1">Name</label>
-                          <p className="font-medium">{user?.name || "Not provided"}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="bg-neutral-50 rounded-lg p-6">
+                          <label className="block text-sm font-medium text-neutral-gray mb-2">Name</label>
+                          <p className="font-medium text-lg">{user?.name || "Not provided"}</p>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-neutral-gray mb-1">Email</label>
-                          <p className="font-medium">{user?.email}</p>
+                        <div className="bg-neutral-50 rounded-lg p-6">
+                          <label className="block text-sm font-medium text-neutral-gray mb-2">Email</label>
+                          <p className="font-medium text-lg">{user?.email}</p>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-neutral-gray mb-1">Phone</label>
-                          <p className="font-medium">{user?.phone || "Not provided"}</p>
+                        <div className="bg-neutral-50 rounded-lg p-6">
+                          <label className="block text-sm font-medium text-neutral-gray mb-2">Phone</label>
+                          <p className="font-medium text-lg">{user?.phone || "Not provided"}</p>
                         </div>
                       </div>
                     )}
@@ -211,9 +230,10 @@ export default function AccountPage() {
                     )}
                   </div>
                 </div>
-                <div className="mt-6 border border-neutral-sand rounded-md overflow-hidden">
-                  <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
-                    <h2 className="font-heading text-lg text-primary">Change Password</h2>
+                <div className="mt-8 bg-white shadow-md rounded-lg overflow-hidden">
+                  <div className="bg-primary/5 p-6 border-b border-neutral-sand">
+                    <h2 className="font-heading text-xl text-primary">Change Password</h2>
+                    <p className="text-sm text-neutral-gray mt-1">Update your account password</p>
                   </div>
                   <div className="p-6">
                     {changingPassword ? (
@@ -260,9 +280,10 @@ export default function AccountPage() {
                 </div>
               </div>
               <div>
-                <div className="border border-neutral-sand rounded-md overflow-hidden">
-                  <div className="bg-neutral-cream p-4 border-b border-neutral-sand">
-                    <h2 className="font-heading text-lg text-primary">Account Actions</h2>
+                <div className="bg-white shadow-md rounded-lg overflow-hidden sticky top-8">
+                  <div className="bg-primary/5 p-6 border-b border-neutral-sand">
+                    <h2 className="font-heading text-xl text-primary">Account Actions</h2>
+                    <p className="text-sm text-neutral-gray mt-1">Manage your account settings</p>
                   </div>
                   <div className="p-6">
                     <Button 
