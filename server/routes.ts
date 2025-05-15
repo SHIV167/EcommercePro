@@ -322,8 +322,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
 
   // Popup settings routes
-  app.get('/api/popup-settings', getPopupSetting);
-  app.put('/api/popup-settings', updatePopupSetting);
+  // Popup routes moved to the end of the file to avoid duplication
 
   // Newsletter subscription routes
   app.post('/api/newsletter/subscribe', subscribeNewsletter);
