@@ -582,6 +582,44 @@ export default function CheckoutPage() {
                 </div>
                 <div className="p-4">
                   <div className="space-y-4">
+                    {/* Product List */}
+                    <div className="divide-y divide-neutral-sand">
+                      {cartItems.map((item) => (
+                        <div key={item.id} className="flex items-start gap-4 py-4 first:pt-0 last:pb-4">
+                          {item.product?.imageUrl && (
+                            <img 
+                              src={item.product.imageUrl} 
+                              alt={item.product.name} 
+                              className="w-20 h-20 object-cover rounded bg-neutral-50"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-gray-900 leading-snug mb-1">
+                              {item.product?.name}
+                            </h4>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs text-gray-500 bg-neutral-50 px-2 py-1 rounded">
+                                Qty: {item.quantity}
+                              </span>
+                              {item.product?.isFreeProduct && (
+                                <span className="text-xs text-primary bg-primary/5 px-2 py-1 rounded font-medium">
+                                  Free Gift
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {item.product?.isFreeProduct ? (
+                                <span className="text-primary">Free</span>
+                              ) : (
+                                formatCurrency((item.product?.price ?? 0) * item.quantity)
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Order Summary */}
                     <div className="flex justify-between items-center">
                       <span className="text-neutral-gray">Subtotal</span>
                       <span className="font-medium">{formatCurrency(subtotal)}</span>
