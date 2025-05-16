@@ -6,6 +6,7 @@ import { Product, Review } from "@shared/schema";
 type EnrichedReview = Review & { _id?: string; userName?: string };
 import ReviewForm from "@/components/product/ReviewForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { TabsContentProps } from "@radix-ui/react-tabs";
 import { Button } from "@/components/ui/button";
 import RatingStars from "@/components/products/RatingStars";
 import ProductCollection from "@/components/home/ProductCollection";
@@ -467,133 +468,216 @@ export default function ProductPage() {
           </div>
         </div>
         
-        {/* Tabs - Description, Reviews, etc. */}
-        <div className="mt-8 sm:mt-16">
+        {/* Tabs - Description, Ingredients, How to Use, Reviews */}
+        <div className="mt-12">
           <Tabs defaultValue="description" className="w-full">
-            <div className="relative">
-              <div className="overflow-x-auto pb-1 -mx-4 px-4">
-                <TabsList className="border-b border-neutral-sand w-max min-w-full justify-start space-x-2 sm:space-x-4">
-                  <TabsTrigger 
-                    value="description" 
-                    className="font-heading text-sm sm:text-base px-2 sm:px-4 py-2 whitespace-nowrap"
-                  >
-                    Description
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="reviews" 
-                    className="font-heading text-sm sm:text-base px-2 sm:px-4 py-2 whitespace-nowrap"
-                  >
-                    Reviews ({reviews.length})
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="ingredients" 
-                    className="font-heading text-sm sm:text-base px-2 sm:px-4 py-2 whitespace-nowrap"
-                  >
-                    Ingredients
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="how-to-use" 
-                    className="font-heading text-sm sm:text-base px-2 sm:px-4 py-2 whitespace-nowrap"
-                  >
-                    How to Use
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+            <div className="border-b border-gray-200">
+              <TabsList className="bg-transparent h-auto p-0 w-full justify-start space-x-0">
+                <TabsTrigger 
+                  value="description" 
+                  className="relative font-medium text-sm sm:text-base px-4 py-3 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                >
+                  Description
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="ingredients" 
+                  className="relative font-medium text-sm sm:text-base px-4 py-3 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                >
+                  Ingredients
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="how-to-use" 
+                  className="relative font-medium text-sm sm:text-base px-4 py-3 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                >
+                  How to Use
+                </TabsTrigger>
+
+              </TabsList>
             </div>
             
-            <TabsContent value="description" className="pt-4 sm:pt-6">
-              <div className="prose prose-sm sm:prose-base max-w-none text-neutral-gray px-2 sm:px-0">
-                <div className="prose-p:mb-4 prose-p:leading-relaxed">
-                  {product!.description.split('\n').map((paragraph, i) => (
-                    <p key={i} className="mb-4 last:mb-0">{paragraph}</p>
-                  ))}
+            <TabsContent value="description" className="pt-6">
+              <div className="prose max-w-none text-gray-700">
+                <h3 className="text-xl font-medium text-gray-900 mb-4">Product Description</h3>
+                <p className="mb-4">
+                  Bringadi Intensive Hair Treatment Oil is a premium Ayurvedic hair oil formulated with natural ingredients 
+                  to promote hair growth, reduce hair fall, and improve overall hair health. This intensive treatment oil 
+                  is perfect for all hair types and is especially beneficial for those experiencing hair thinning or hair loss.
+                </p>
+                <ul className="list-disc pl-5 space-y-2 mb-6">
+                  <li>Reduces hair fall and promotes new hair growth</li>
+                  <li>Strengthens hair roots and prevents breakage</li>
+                  <li>Nourishes the scalp and improves blood circulation</li>
+                  <li>Prevents premature graying of hair</li>
+                  <li>Suitable for all hair types</li>
+                </ul>
+                
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="font-medium text-gray-900 mb-2">Key Benefits:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-start">
+                      <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Reduces hair fall by up to 90% with regular use</span>
+                    </div>
+                    <div className="flex items-start">
+                      <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Promotes new hair growth</span>
+                    </div>
+                    <div className="flex items-start">
+                      <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Strengthens hair roots</span>
+                    </div>
+                    <div className="flex items-start">
+                      <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Improves scalp health</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>
             
-            <TabsContent value="reviews" className="pt-4 sm:pt-6">
-              {reviewsLoading ? (
-                <div className="animate-pulse space-y-4 px-2 sm:px-0">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="border-b border-neutral-sand/50 pb-4">
-                      <div className="flex items-center mb-2">
-                        <div className="h-4 w-24 bg-neutral-sand/50 rounded"></div>
-                        <div className="h-3 w-16 bg-neutral-sand/30 rounded ml-auto"></div>
-                      </div>
-                      <div className="h-3 w-32 bg-neutral-sand/30 rounded mb-3"></div>
-                      <div className="space-y-2">
-                        <div className="h-3 w-full bg-neutral-sand/30 rounded"></div>
-                        <div className="h-3 w-4/5 bg-neutral-sand/30 rounded"></div>
-                      </div>
-                    </div>
-                  ))}
+            <TabsContent value="ingredients" className="pt-6">
+              <div className="prose max-w-none text-gray-700">
+                <h3 className="text-xl font-medium text-gray-900 mb-4">Ingredients</h3>
+                <p className="mb-4">
+                  Our Bringadi Intensive Hair Treatment Oil is made with 100% natural and organic ingredients, 
+                  carefully selected for their hair-nourishing properties:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 mb-6">
+                  <li><strong>Bhringraj:</strong> Stimulates hair growth and prevents premature graying</li>
+                  <li><strong>Amla:</strong> Nourishes hair and prevents dandruff</li>
+                  <li><strong>Brahmi:</strong> Strengthens hair follicles and reduces hair fall</li>
+                  <li><strong>Neem:</strong> Prevents scalp infections and dandruff</li>
+                  <li><strong>Coconut Oil:</strong> Deeply conditions hair and prevents protein loss</li>
+                  <li><strong>Almond Oil:</strong> Nourishes and adds shine to hair</li>
+                  <li><strong>Fenugreek:</strong> Strengthens hair roots and promotes hair growth</li>
+                </ul>
+                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                  <h4 className="font-medium text-yellow-800 mb-2">100% Natural & Organic</h4>
+                  <p className="text-yellow-700 text-sm">
+                    Free from parabens, sulfates, artificial fragrances, and harsh chemicals. Safe for all hair types.
+                  </p>
                 </div>
-              ) : reviews.length > 0 ? (
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="how-to-use" className="pt-6">
+              <div className="prose max-w-none text-gray-700">
+                <h3 className="text-xl font-medium text-gray-900 mb-4">How to Use</h3>
                 <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-2 sm:px-0">
-                    <h3 className="text-lg font-medium text-primary">
-                      Customer Reviews ({reviews.length})
-                    </h3>
-                    {isAuthenticated && !showReviewForm && (
-                      <Button 
-                        onClick={() => setShowReviewForm(true)}
-                        className="bg-primary hover:bg-primary-light text-white text-sm sm:text-base py-2 px-4 w-full sm:w-auto"
-                      >
-                        Write a Review
-                      </Button>
-                    )}
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium mr-4">1</div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Apply to Scalp</h4>
+                      <p className="mt-1 text-gray-600">
+                        Take a small amount of Bringadi Intensive Hair Treatment Oil and apply it directly to your scalp. 
+                        Use your fingertips to gently massage the oil into your scalp in circular motions for 5-10 minutes.
+                      </p>
+                    </div>
                   </div>
                   
-                  {showReviewForm && isAuthenticated && product?._id && (
-                    <div className="mb-8 bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-neutral-sand/50">
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-medium text-lg">Write a Review</h4>
-                        <button 
-                          onClick={() => setShowReviewForm(false)}
-                          className="text-neutral-500 hover:text-neutral-700"
-                          aria-label="Close review form"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                      <div className="border-none p-0">
-                        <ReviewForm 
-                          productId={product!._id} 
-                          onClose={() => setShowReviewForm(false)}
-                        />
-                      </div>
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium mr-4">2</div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Apply to Hair</h4>
+                      <p className="mt-1 text-gray-600">
+                        After massaging your scalp, apply the remaining oil to the length of your hair, focusing on the ends. 
+                        For best results, use a wide-tooth comb to distribute the oil evenly.
+                      </p>
                     </div>
-                  )}
+                  </div>
                   
-                  <div className="space-y-6">
-                    {reviews.map((review: Review) => (
-                      <div key={review._id} className="border-b border-neutral-sand/50 pb-6 last:border-0 last:pb-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                          <RatingStars rating={review.rating} size="md" />
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {new Date(review.createdAt).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                            })}
-                          </p>
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium mr-4">3</div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Leave On</h4>
+                      <p className="mt-1 text-gray-600">
+                        Leave the oil on for at least 1-2 hours, or for best results, leave it overnight. 
+                        For intensive treatment, you can wrap your hair in a warm towel or use a shower cap.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium mr-4">4</div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Wash Off</h4>
+                      <p className="mt-1 text-gray-600">
+                        Wash your hair with a mild shampoo. You might need to shampoo twice to remove all the oil. 
+                        Follow with your regular conditioner.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-8 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                  <h4 className="font-medium text-blue-800 mb-2">For Best Results:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-blue-700 text-sm">
+                    <li>Use 2-3 times a week for best results</li>
+                    <li>Be consistent with the treatment for at least 3 months to see visible results</li>
+                    <li>Store in a cool, dry place away from direct sunlight</li>
+                  </ul>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="reviews" className="pt-6">
+              <div className="px-2 sm:px-0">
+                {reviewsLoading ? (
+                  <div className="animate-pulse space-y-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="h-8 w-8 rounded-full bg-neutral-200"></div>
+                          <div className="h-4 w-24 bg-neutral-200 rounded"></div>
+                          <div className="h-4 w-16 bg-neutral-200 rounded"></div>
                         </div>
-                        <h4 className="font-medium text-sm sm:text-base text-primary mb-1">
-                          {review.userName || 'Anonymous Customer'}
-                        </h4>
-                        <p className="text-sm sm:text-base text-neutral-700 leading-relaxed">
-                          {review.comment}
-                        </p>
+                        <div className="h-4 bg-neutral-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-neutral-200 rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-8">
+                    <p className="text-red-500">Error loading reviews. Please try again later.</p>
+                  </div>
+                ) : reviews && reviews.length > 0 ? (
+                  <div className="space-y-6">
+                    {reviews.map((review) => (
+                      <div key={review._id} className="border-b border-neutral-100 pb-6 last:border-0 last:pb-0">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-medium text-neutral-900">
+                              {review.userName || 'Anonymous'}
+                            </h4>
+                            <div className="flex items-center mt-1">
+                              <RatingStars rating={review.rating} size="md" />
+                              <span className="ml-2 text-sm text-neutral-500">
+                                {new Date(review.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-neutral-700 mt-2">{review.comment}</p>
                         {review.images && review.images.length > 0 && (
-                          <div className="mt-3 flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
-                            {review.images.map((img: string, i: number) => (
+                          <div className="mt-3 flex gap-2 overflow-x-auto">
+                            {review.images.map((img, i) => (
                               <div key={i} className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded border border-neutral-200 overflow-hidden">
                                 <img 
                                   src={img} 
                                   alt={`Review image ${i + 1}`}
                                   className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/images/placeholder.svg';
+                                  }}
                                 />
                               </div>
                             ))}
@@ -602,72 +686,73 @@ export default function ProductPage() {
                       </div>
                     ))}
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 px-4">
-                  <div className="max-w-md mx-auto">
-                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-medium text-primary mb-2">No Reviews Yet</h3>
-                    <p className="text-neutral-600 mb-6">Be the first to share your thoughts about this product!</p>
-                    
-                    {isAuthenticated ? (
-                      showReviewForm && product?._id ? (
-                        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-neutral-sand/50 max-w-2xl mx-auto">
-                          <div className="flex justify-between items-center mb-4">
-                            <h4 className="font-medium text-lg">Write a Review</h4>
-                            <button 
-                              onClick={() => setShowReviewForm(false)}
-                              className="text-neutral-500 hover:text-neutral-700"
-                              aria-label="Close review form"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
-                          <div className="border-none p-0">
-                            <ReviewForm 
-                              productId={product!._id} 
-                              onClose={() => setShowReviewForm(false)}
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <Button 
-                          onClick={() => setShowReviewForm(true)}
-                          className="bg-primary hover:bg-primary-light text-white py-2.5 px-6 text-base"
-                        >
-                          Write a Review
-                        </Button>
-                      )
-                    ) : (
-                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        <Button 
-                          asChild
-                          className="bg-primary hover:bg-primary-light text-white py-2.5 px-6 text-base"
-                        >
-                          <a href={`/login?redirect=/products/${slug}`}>
-                            Login to Review
-                          </a>
-                        </Button>
-                        <Button 
-                          asChild
-                          variant="outline"
-                          className="border-primary text-primary hover:bg-primary/5 py-2.5 px-6 text-base"
-                        >
-                          <a href={`/register?redirect=/products/${slug}`}>
-                            Create Account
-                          </a>
-                        </Button>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="max-w-md mx-auto">
+                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
                       </div>
-                    )}
+                      <h3 className="text-lg font-medium text-primary mb-2">No Reviews Yet</h3>
+                      <p className="text-neutral-600 mb-6">Be the first to share your thoughts about this product!</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+                
+                {isAuthenticated && !showReviewForm && (
+                  <div className="text-center mt-8">
+                    <Button 
+                      onClick={() => setShowReviewForm(true)}
+                      className="bg-primary hover:bg-primary-dark text-white py-2.5 px-6 text-base"
+                    >
+                      Write a Review
+                    </Button>
+                  </div>
+                )}
+                
+                {showReviewForm && isAuthenticated && product?._id && (
+                  <div className="mt-8 bg-white p-6 rounded-lg border border-neutral-200 max-w-2xl mx-auto">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-medium">Write a Review</h3>
+                      <button 
+                        onClick={() => setShowReviewForm(false)}
+                        className="text-neutral-500 hover:text-neutral-700"
+                        aria-label="Close review form"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <ReviewForm 
+                      productId={product._id}
+                      onClose={() => setShowReviewForm(false)}
+                    />
+                  </div>
+                )}
+                
+                {!isAuthenticated && (
+                  <div className="mt-8 text-center">
+                    <p className="text-neutral-600 mb-4">Sign in to leave a review</p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button 
+                        asChild
+                        variant="outline"
+                        className="border-primary text-primary hover:bg-primary/5 py-2.5 px-6 text-base"
+                      >
+                        <a href={`/login?redirect=/products/${slug}`}>Sign In</a>
+                      </Button>
+                      <Button 
+                        asChild
+                        className="bg-primary hover:bg-primary-dark text-white py-2.5 px-6 text-base"
+                      >
+                        <a href={`/register?redirect=/products/${slug}`}>Create Account</a>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </TabsContent>
             
             <TabsContent value="ingredients" className="pt-4 sm:pt-6">
@@ -765,8 +850,149 @@ export default function ProductPage() {
             </TabsContent>
           </Tabs>
         </div>
-        
-        
+
+        {/* Reviews Section */}
+        <div className="mt-16">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="font-heading text-2xl text-primary">Customer Reviews</h2>
+            {reviews.length > 0 && (
+              <div className="flex items-center">
+                <RatingStars 
+                  rating={reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length} 
+                  size="lg" 
+                />
+                <span className="ml-2 text-gray-600">
+                  {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {reviewsLoading ? (
+            <div className="animate-pulse space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-8 w-8 rounded-full bg-neutral-200"></div>
+                    <div className="h-4 w-24 bg-neutral-200 rounded"></div>
+                    <div className="h-4 w-16 bg-neutral-200 rounded"></div>
+                  </div>
+                  <div className="h-4 bg-neutral-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-neutral-200 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-red-500">Error loading reviews. Please try again later.</p>
+            </div>
+          ) : reviews && reviews.length > 0 ? (
+            <div className="space-y-8">
+              {reviews.map((review) => (
+                <div key={review._id} className="border-b border-neutral-100 pb-6 last:border-0 last:pb-0">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h4 className="font-medium text-neutral-900">
+                        {review.userName || 'Anonymous'}
+                      </h4>
+                      <div className="flex items-center mt-1">
+                        <RatingStars rating={review.rating} size="md" />
+                        <span className="ml-2 text-sm text-neutral-500">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-neutral-700 mt-2">{review.comment}</p>
+                  {review.images && review.images.length > 0 && (
+                    <div className="mt-3 flex gap-2 overflow-x-auto">
+                      {review.images.map((img, i) => (
+                        <div key={i} className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded border border-neutral-200 overflow-hidden">
+                          <img 
+                            src={img} 
+                            alt={`Review image ${i + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/images/placeholder.svg';
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="max-w-md mx-auto">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-primary mb-2">No Reviews Yet</h3>
+                <p className="text-neutral-600 mb-6">Be the first to share your thoughts about this product!</p>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-8">
+            {isAuthenticated ? (
+              showReviewForm ? (
+                <div className="bg-white p-6 rounded-lg border border-neutral-200 max-w-2xl mx-auto">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium">Write a Review</h3>
+                    <button 
+                      onClick={() => setShowReviewForm(false)}
+                      className="text-neutral-500 hover:text-neutral-700"
+                      aria-label="Close review form"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  {product?._id && (
+                    <ReviewForm 
+                      productId={product._id}
+                      onClose={() => setShowReviewForm(false)}
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="text-center">
+                  <Button 
+                    onClick={() => setShowReviewForm(true)}
+                    className="bg-primary hover:bg-primary-dark text-white py-2.5 px-6 text-base"
+                  >
+                    Write a Review
+                  </Button>
+                </div>
+              )
+            ) : (
+              <div className="text-center">
+                <p className="text-neutral-600 mb-4">Sign in to leave a review</p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button 
+                    asChild
+                    variant="outline"
+                    className="border-primary text-primary hover:bg-primary/5 py-2.5 px-6 text-base"
+                  >
+                    <a href={`/login?redirect=/products/${slug}`}>Sign In</a>
+                  </Button>
+                  <Button 
+                    asChild
+                    className="bg-primary hover:bg-primary-dark text-white py-2.5 px-6 text-base"
+                  >
+                    <a href={`/register?redirect=/products/${slug}`}>Create Account</a>
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         
         {/* Related Products */}
         <div className="mt-16">
