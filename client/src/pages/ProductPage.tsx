@@ -295,8 +295,8 @@ const ProductPage: React.FC = () => {
                 </div>
                 {/* Action Buttons */}
                 <div className="flex space-x-4 mt-4">
-                  <Button variant="default" onClick={() => handleAddToCart()}>Add To Cart</Button>
-                  <Button variant="secondary" onClick={() => handleBuyNow()}>Buy Now</Button>
+                  <Button className="w-80 py-6" variant="default" onClick={() => handleAddToCart()}>Add To Cart</Button>
+                  <Button className="w-80 py-6" variant="secondary" onClick={() => handleBuyNow()}>Buy Now</Button>
                 </div>
                 <SocialShare url={window.location.href} title={extendedProduct!.name} />
               </div>
