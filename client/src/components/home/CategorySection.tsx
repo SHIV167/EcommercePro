@@ -108,7 +108,7 @@ export default function CategorySection() {
         >
           {displayCategories.map((category) => (
             <SwiperSlide key={category._id || category.slug}>
-              <Link href={`/collections/${category.slug}`} className="group block">
+              <Link href={`/categories/${category.slug}`} className="group block">
                 <div className="flex flex-col items-center">
                   <div className="mb-4 flex items-center justify-center">
                     <div className="h-28 w-28 md:h-32 md:w-32 rounded-full border-2 border-gold flex items-center justify-center bg-white shadow-md transition-transform duration-300 group-hover:scale-105">
