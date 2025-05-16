@@ -49,7 +49,7 @@ export default function Footer() {
     return (
       <button
         onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
-        className="fixed left-6 bottom-6 z-50 bg-black text-white p-2 rounded-full shadow-lg hover:bg-accent transition-all"
+        className="fixed left-6 bottom-16 z-50 bg-black text-white p-1 rounded-full shadow-lg hover:bg-accent transition-all"
         aria-label="Scroll to top"
         style={{opacity: 0.85}}
       >
@@ -116,7 +116,7 @@ export default function Footer() {
                 <li><Link href="#" className="text-white/70 hover:text-white text-sm">Delivery & Returns</Link></li>
               </ul>
               
-              <h3 className="text-lg font-medium mt-6 mb-4">SIGN UP FOR OUR NEWSLETTER!</h3>
+              {/* <h3 className="text-lg font-medium mt-6 mb-4">SIGN UP FOR OUR NEWSLETTER!</h3>
               <form onSubmit={handleSubscribe} className="flex">
                 <input 
                   type="email" 
@@ -147,7 +147,7 @@ export default function Footer() {
                   And{" "}
                   <Link href="#" className="underline">Terms of Use</Link>.
                 </label>
-              </div>
+              </div> */}
             </div>
           </div>
           
@@ -225,7 +225,7 @@ function ScrollToTopButton() {
       className={`fixed z-[9999] bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-all
         ${isMobile 
           ? 'right-4 bottom-24 p-3 w-12 h-12' 
-          : 'right-6 bottom-20 p-3 w-12 h-12'}`}
+          : 'right-6 bottom-20 p-1 w-12 h-12'}`}
       aria-label="Scroll to top"
       style={{
         display: 'flex',

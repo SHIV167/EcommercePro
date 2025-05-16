@@ -570,12 +570,12 @@ const ProductPage: React.FC = () => {
             {/* Bestsellers */}
             <section className="py-8">
               <div className="container mx-auto px-4 py-6 rounded">
-                <ProductCollection title="Bestsellers" collectionSlug="bestsellers" />
+                <ProductCollection title="You May Also Like" collectionSlug="bestsellers" />
               </div>
             </section>
 
             {/* Sticky Add to Cart */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden">
+            {/* <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden">
               <div className="container mx-auto flex items-center justify-between">
                 <div>
                   <span className="text-sm text-gray-500">Price</span>
@@ -585,7 +585,7 @@ const ProductPage: React.FC = () => {
                   Add to Cart
                 </Button>
               </div>
-            </div>
+            </div> */}
             <StickyAddToCart product={extendedProduct!} quantity={quantity} setQuantity={setQuantity} onAddToCart={handleAddToCart} />
           </div>
         </>
