@@ -23,6 +23,8 @@ export const productSchema = z.object({
   videoUrl: z.string().optional(),
   minOrderValue: z.number().optional(), // For free products
   isFreeProduct: z.boolean().optional(), // Flag for free products
+  ingredients: z.string().optional(), // Product ingredients
+  usageFrequency: z.string().optional(), // Recommended usage frequency
 });
 export type Product = z.infer<typeof productSchema>;
 
@@ -82,6 +84,7 @@ export type Review = {
   productId: string;
   rating: number;
   comment: string;
+  images?: string[];
   createdAt: Date;
   userName?: string;
 };

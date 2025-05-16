@@ -188,25 +188,55 @@ export default function Footer() {
 
 function ScrollToTopButton() {
   const [show, setShow] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
   useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > 100);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
+    // Check if mobile view
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Initial check
+    checkIfMobile();
+    
+    // Add resize listener
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Scroll handler
+    const onScroll = () => {
+      // Only show after scrolling down a bit
+      setShow(window.scrollY > 300);
+    };
+    
+    window.addEventListener('scroll', onScroll, { passive: true });
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+      window.removeEventListener('scroll', onScroll);
+    };
   }, []);
+  
   if (!show) return null;
+  
   return (
     <button
       onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
-      className="fixed right-4 bottom-1/3 md:right-6 md:bottom-20 z-[9999] bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition-all"
+      className={`fixed z-[9999] bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-all
+        ${isMobile 
+          ? 'right-4 bottom-24 p-3 w-12 h-12' 
+          : 'right-6 bottom-20 p-3 w-12 h-12'}`}
       aria-label="Scroll to top"
       style={{
-        opacity: 1,
-        width: '45px',
-        height: '45px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        border: '2px solid white'
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        opacity: 1,
+        width: '45px',
+        height: '45px',
+        border: '2px solid white',
+        transition: 'all 0.2s ease'
       }}
     >
       <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M12 19V5m0 0l-7 7m7-7l7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>

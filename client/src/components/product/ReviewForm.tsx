@@ -10,6 +10,7 @@ import { X } from "lucide-react";
 interface ReviewFormProps {
   productId: string;
   onClose: () => void;
+  className?: string;
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onClose }) => {

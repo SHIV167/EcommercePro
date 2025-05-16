@@ -24,6 +24,9 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [scannerEntry, setScannerEntry] = useState<any | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
   const { addItem } = useCart();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
@@ -84,6 +87,51 @@ export default function ProductPage() {
     }
     
     (toast as any)(`Added to cart`);
+  };
+
+  // Auto-advance slides on mobile only
+  useEffect(() => {
+    if (product?.images && product.images.length > 1) {
+      const isMobile = window.innerWidth < 768; // 768px is the md breakpoint in Tailwind
+      
+      if (isMobile) {
+        const timer = setInterval(() => {
+          setSelectedImageIndex(prev => (prev + 1) % product.images.length);
+        }, 3000);
+        
+        return () => clearInterval(timer);
+      }
+    }
+  }, [product?.images]);
+  
+  // Handle touch events for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.touches[0].clientX);
+  };
+  
+  const handleTouchEnd = () => {
+    if (!product?.images) return;
+    
+    const difference = touchStartX - touchEndX;
+    
+    // Minimum swipe distance
+    if (Math.abs(difference) > 50) {
+      if (difference > 0) {
+        // Swipe left - next image
+        setSelectedImageIndex(prev => (prev + 1) % product.images.length);
+      } else {
+        // Swipe right - previous image
+        setSelectedImageIndex(prev => (prev - 1 + product.images.length) % product.images.length);
+      }
+    }
+    
+    // Reset touch positions
+    setTouchStartX(0);
+    setTouchEndX(0);
   };
 
   const handleBuyNow = async (product: Product) => {
@@ -197,25 +245,89 @@ export default function ProductPage() {
         <div className="flex flex-col md:flex-row gap-8">
           {/* Product Image */}
           <div className="w-full md:w-1/2">
-            <div className="border border-neutral-sand p-8 rounded-md">
-              <img
-                src={product!.images?.[selectedImageIndex] || product!.imageUrl}
-                alt={product!.name}
-                className="w-full h-auto max-h-[500px] object-contain mx-auto"
-              />
-              {product!.images && product!.images.length > 1 && (
-                <div className="flex mt-4 space-x-2 justify-center">
-                  {product!.images.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img}
-                      alt={`${product!.name} ${idx + 1}`}
-                      onClick={() => setSelectedImageIndex(idx)}
-                      className={`w-16 h-16 object-cover cursor-pointer rounded ${idx === selectedImageIndex ? 'ring-2 ring-primary' : 'ring-1 ring-neutral-sand'}`}
-                    />
-                  ))}
+            <div className="border border-neutral-sand p-2 sm:p-4 md:p-8 rounded-md overflow-hidden">
+              <div className="relative w-full aspect-square max-h-[70vh] flex flex-col">
+                {/* Mobile Slider */}
+                <div 
+                  className="md:hidden relative w-full h-full"
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  <div 
+                    className="flex transition-transform duration-300 ease-in-out w-full h-full"
+                    style={{
+                      transform: `translateX(-${selectedImageIndex * 100}%`,
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${product!.images?.length || 1}, 100%)`
+                    }}
+                  >
+                    {product!.images?.map((img, idx) => (
+                      <div key={idx} className="w-full h-full flex items-center justify-center flex-shrink-0">
+                        <img
+                          src={img}
+                          alt={`${product!.name} ${idx + 1}`}
+                          className="max-w-full max-h-full w-auto h-auto object-contain"
+                        />
+                      </div>
+                    )) || (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <img
+                          src={product!.imageUrl}
+                          alt={product!.name}
+                          className="max-w-full max-h-full w-auto h-auto object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Slider Dots */}
+                  {product!.images && product!.images.length > 1 && (
+                    <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
+                      {product!.images.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedImageIndex(idx)}
+                          className={`w-2 h-2 rounded-full transition-colors ${idx === selectedImageIndex ? 'bg-primary' : 'bg-gray-300'}`}
+                          aria-label={`Go to slide ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+                
+                {/* Desktop View */}
+                <div className="hidden md:flex flex-col h-full w-full">
+                  <div className="flex-1 flex items-center justify-center overflow-hidden mb-4">
+                    <img
+                      src={product!.images?.[selectedImageIndex] || product!.imageUrl}
+                      alt={product!.name}
+                      className="max-w-full max-h-full w-auto h-auto object-contain"
+                    />
+                  </div>
+                  {product!.images && product!.images.length > 1 && (
+                    <div className="mt-2 overflow-x-auto pb-2">
+                      <div className="flex space-x-3 justify-center">
+                        {product!.images.map((img, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setSelectedImageIndex(idx)}
+                            className={`w-16 h-16 flex-shrink-0 rounded-md overflow-hidden border-2 transition-all ${idx === selectedImageIndex ? 'border-primary' : 'border-gray-200 hover:border-gray-300'}`}
+                          >
+                            <img
+                              src={img}
+                              alt={`${product!.name} ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
           
@@ -244,9 +356,9 @@ export default function ProductPage() {
             </div>
             
             <div className="mb-8">
-              <div className="flex items-center mb-4">
-                <label htmlFor="quantity" className="mr-4 text-neutral-gray">Quantity:</label>
-                <div className="flex items-center border border-neutral-sand rounded-md">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+                <label htmlFor="quantity" className="text-neutral-gray text-sm sm:text-base">Quantity:</label>
+                <div className="flex items-center border border-neutral-sand rounded-md w-fit">
                   <button
                     onClick={() => handleQuantityChange(quantity - 1)}
                     className="w-10 h-10 flex items-center justify-center text-foreground"
@@ -264,7 +376,7 @@ export default function ProductPage() {
                     max="10"
                     value={quantity}
                     onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
-                    className="w-12 text-center border-x border-neutral-sand focus:outline-none"
+                    className="w-10 sm:w-12 text-center border-x border-neutral-sand focus:outline-none text-sm sm:text-base"
                   />
                   <button
                     onClick={() => handleQuantityChange(quantity + 1)}
@@ -279,17 +391,17 @@ export default function ProductPage() {
                 </div>
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   onClick={handleAddToCart}
-                  className="w-full bg-black hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium"
+                  className="w-full bg-black hover:bg-primary-light text-white uppercase tracking-wider py-4 sm:py-6 font-medium text-sm sm:text-base"
                   disabled={product!.stock <= 0}
                 >
                   {product!.stock <= 0 ? "Out of Stock" : "Add to Cart"}
                 </Button>
                 <Button
                   onClick={() => handleBuyNow(product!)}
-                  className="w-full bg-primary hover:bg-primary-light text-white uppercase tracking-wider py-6 font-medium"
+                  className="w-full bg-primary hover:bg-primary-light text-white uppercase tracking-wider py-4 sm:py-6 font-medium text-sm sm:text-base"
                 >
                   Buy Now
                 </Button>
@@ -356,123 +468,299 @@ export default function ProductPage() {
         </div>
         
         {/* Tabs - Description, Reviews, etc. */}
-        <div className="mt-16">
-          <Tabs defaultValue="description">
-            <TabsList className="border-b border-neutral-sand w-full justify-start">
-              <TabsTrigger value="description" className="font-heading text-primary">Description</TabsTrigger>
-              <TabsTrigger value="reviews" className="font-heading text-primary">Reviews ({reviews.length})</TabsTrigger>
-              <TabsTrigger value="ingredients" className="font-heading text-primary">Ingredients</TabsTrigger>
-              <TabsTrigger value="how-to-use" className="font-heading text-primary">How to Use</TabsTrigger>
-            </TabsList>
+        <div className="mt-8 sm:mt-16">
+          <Tabs defaultValue="description" className="w-full">
+            <div className="relative">
+              <div className="overflow-x-auto pb-1 -mx-4 px-4">
+                <TabsList className="border-b border-neutral-sand w-max min-w-full justify-start space-x-2 sm:space-x-4">
+                  <TabsTrigger 
+                    value="description" 
+                    className="font-heading text-sm sm:text-base px-2 sm:px-4 py-2 whitespace-nowrap"
+                  >
+                    Description
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="reviews" 
+                    className="font-heading text-sm sm:text-base px-2 sm:px-4 py-2 whitespace-nowrap"
+                  >
+                    Reviews ({reviews.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="ingredients" 
+                    className="font-heading text-sm sm:text-base px-2 sm:px-4 py-2 whitespace-nowrap"
+                  >
+                    Ingredients
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="how-to-use" 
+                    className="font-heading text-sm sm:text-base px-2 sm:px-4 py-2 whitespace-nowrap"
+                  >
+                    How to Use
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+            </div>
             
-            <TabsContent value="description" className="pt-6">
-              <div className="prose prose-sm max-w-none text-neutral-gray">
-                <p>{product!.description}</p>
+            <TabsContent value="description" className="pt-4 sm:pt-6">
+              <div className="prose prose-sm sm:prose-base max-w-none text-neutral-gray px-2 sm:px-0">
+                <div className="prose-p:mb-4 prose-p:leading-relaxed">
+                  {product!.description.split('\n').map((paragraph, i) => (
+                    <p key={i} className="mb-4 last:mb-0">{paragraph}</p>
+                  ))}
+                </div>
               </div>
             </TabsContent>
             
-            <TabsContent value="reviews" className="pt-6">
+            <TabsContent value="reviews" className="pt-4 sm:pt-6">
               {reviewsLoading ? (
-                <div className="animate-pulse space-y-4">
+                <div className="animate-pulse space-y-4 px-2 sm:px-0">
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="border-b border-neutral-sand pb-4">
-                      <div className="h-4 w-24 bg-neutral-sand mb-2"></div>
-                      <div className="h-3 w-12 bg-neutral-sand mb-4"></div>
-                      <div className="h-16 w-full bg-neutral-sand"></div>
+                    <div key={i} className="border-b border-neutral-sand/50 pb-4">
+                      <div className="flex items-center mb-2">
+                        <div className="h-4 w-24 bg-neutral-sand/50 rounded"></div>
+                        <div className="h-3 w-16 bg-neutral-sand/30 rounded ml-auto"></div>
+                      </div>
+                      <div className="h-3 w-32 bg-neutral-sand/30 rounded mb-3"></div>
+                      <div className="space-y-2">
+                        <div className="h-3 w-full bg-neutral-sand/30 rounded"></div>
+                        <div className="h-3 w-4/5 bg-neutral-sand/30 rounded"></div>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : reviews.length > 0 ? (
                 <div className="space-y-6">
-                  {isAuthenticated && !showReviewForm && (
-                    <div className="flex justify-end mb-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-2 sm:px-0">
+                    <h3 className="text-lg font-medium text-primary">
+                      Customer Reviews ({reviews.length})
+                    </h3>
+                    {isAuthenticated && !showReviewForm && (
                       <Button 
                         onClick={() => setShowReviewForm(true)}
-                        className="bg-primary hover:bg-primary-light text-white"
+                        className="bg-primary hover:bg-primary-light text-white text-sm sm:text-base py-2 px-4 w-full sm:w-auto"
                       >
                         Write a Review
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   
                   {showReviewForm && isAuthenticated && product?._id && (
-                    <div className="mb-8">
-                      <ReviewForm 
-                        productId={product!._id} 
-                        onClose={() => setShowReviewForm(false)} 
-                      />
+                    <div className="mb-8 bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-neutral-sand/50">
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-medium text-lg">Write a Review</h4>
+                        <button 
+                          onClick={() => setShowReviewForm(false)}
+                          className="text-neutral-500 hover:text-neutral-700"
+                          aria-label="Close review form"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="border-none p-0">
+                        <ReviewForm 
+                          productId={product!._id} 
+                          onClose={() => setShowReviewForm(false)}
+                        />
+                      </div>
                     </div>
                   )}
                   
-                  {reviews.map((review) => (
-                    <div key={review._id} className="border-b border-neutral-sand pb-6">
-                      <RatingStars rating={review.rating} size="md" />
-                      <p className="text-sm text-muted-foreground mt-1 mb-2">
-                        By {review.userName || 'Anonymous Customer'} • {new Date(review.createdAt).toLocaleDateString()}
-                      </p>
-                      <p className="text-neutral-gray">{review.comment}</p>
-                    </div>
-                  ))}
+                  <div className="space-y-6">
+                    {reviews.map((review: Review) => (
+                      <div key={review._id} className="border-b border-neutral-sand/50 pb-6 last:border-0 last:pb-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                          <RatingStars rating={review.rating} size="md" />
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            {new Date(review.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                        <h4 className="font-medium text-sm sm:text-base text-primary mb-1">
+                          {review.userName || 'Anonymous Customer'}
+                        </h4>
+                        <p className="text-sm sm:text-base text-neutral-700 leading-relaxed">
+                          {review.comment}
+                        </p>
+                        {review.images && review.images.length > 0 && (
+                          <div className="mt-3 flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
+                            {review.images.map((img: string, i: number) => (
+                              <div key={i} className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded border border-neutral-200 overflow-hidden">
+                                <img 
+                                  src={img} 
+                                  alt={`Review image ${i + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-neutral-gray mb-4">This product has no reviews yet. Be the first to leave a review!</p>
-                  {isAuthenticated ? (
-                    showReviewForm && product?._id ? (
-                      <ReviewForm 
-                        productId={product!._id} 
-                        onClose={() => setShowReviewForm(false)} 
-                      />
+                <div className="text-center py-8 px-4">
+                  <div className="max-w-md mx-auto">
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-primary mb-2">No Reviews Yet</h3>
+                    <p className="text-neutral-600 mb-6">Be the first to share your thoughts about this product!</p>
+                    
+                    {isAuthenticated ? (
+                      showReviewForm && product?._id ? (
+                        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-neutral-sand/50 max-w-2xl mx-auto">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="font-medium text-lg">Write a Review</h4>
+                            <button 
+                              onClick={() => setShowReviewForm(false)}
+                              className="text-neutral-500 hover:text-neutral-700"
+                              aria-label="Close review form"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="border-none p-0">
+                            <ReviewForm 
+                              productId={product!._id} 
+                              onClose={() => setShowReviewForm(false)}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <Button 
+                          onClick={() => setShowReviewForm(true)}
+                          className="bg-primary hover:bg-primary-light text-white py-2.5 px-6 text-base"
+                        >
+                          Write a Review
+                        </Button>
+                      )
                     ) : (
-                      <Button 
-                        onClick={() => setShowReviewForm(true)}
-                        className="bg-primary hover:bg-primary-light text-white"
-                      >
-                        Write a Review
-                      </Button>
-                    )
-                  ) : (
-                    <Button className="bg-primary hover:bg-primary-light text-white" asChild>
-                      <a href={`/login?redirect=/products/${slug}`}>Login to Write a Review</a>
-                    </Button>
-                  )}
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <Button 
+                          asChild
+                          className="bg-primary hover:bg-primary-light text-white py-2.5 px-6 text-base"
+                        >
+                          <a href={`/login?redirect=/products/${slug}`}>
+                            Login to Review
+                          </a>
+                        </Button>
+                        <Button 
+                          asChild
+                          variant="outline"
+                          className="border-primary text-primary hover:bg-primary/5 py-2.5 px-6 text-base"
+                        >
+                          <a href={`/register?redirect=/products/${slug}`}>
+                            Create Account
+                          </a>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </TabsContent>
             
-            <TabsContent value="ingredients" className="pt-6">
-              <div className="prose prose-sm max-w-none text-neutral-gray">
-                <p>
-                  Our products are crafted with authentic Ayurvedic ingredients sourced directly 
-                  from trusted suppliers across India. Each ingredient is carefully selected for 
-                  its potency and purity, and is processed according to traditional Ayurvedic methods.
-                </p>
-                <p>
-                  The key ingredients in this product include [placeholder for specific product ingredients], 
-                  known for their [placeholder for benefits].
-                </p>
-                <p>
-                  All Kama Ayurveda products are free from parabens, petroleum derivatives, synthetic colors, 
-                  and fragrances. Our formulations are cruelty-free and environmentally conscious.
-                </p>
+            <TabsContent value="ingredients" className="pt-4 sm:pt-6">
+              <div className="prose prose-sm sm:prose-base max-w-none text-neutral-gray px-2 sm:px-0">
+                <div className="space-y-4">
+                  <p className="leading-relaxed">
+                    Our products are crafted with authentic Ayurvedic ingredients sourced directly 
+                    from trusted suppliers across India. Each ingredient is carefully selected for 
+                    its potency and purity, and is processed according to traditional Ayurvedic methods.
+                  </p>
+                  
+                  <div className="bg-neutral-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-primary mb-2">Key Ingredients:</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {product?.ingredients?.split(',').map((ingredient: string, i: number) => (
+                        <li key={i} className="text-sm sm:text-base">{ingredient.trim()}</li>
+                      )) || <li>No specific ingredients listed</li>}
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-amber-50 p-4 rounded-lg border-l-4 border-amber-400">
+                    <h4 className="font-medium text-amber-800 mb-1">Free From:</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm sm:text-base">
+                      <span className="flex items-center">
+                        <svg className="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        No Parabens
+                      </span>
+                      <span className="flex items-center">
+                        <svg className="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        No Sulfates
+                      </span>
+                      <span className="flex items-center">
+                        <svg className="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        No Mineral Oil
+                      </span>
+                      <span className="flex items-center">
+                        <svg className="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Cruelty Free
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </TabsContent>
             
-            <TabsContent value="how-to-use" className="pt-6">
-              <div className="prose prose-sm max-w-none text-neutral-gray">
-                <p>
-                  For optimal results, follow these simple steps:
-                </p>
-                <ol>
-                  <li>Start with clean skin/hair</li>
-                  <li>Apply a small amount of product</li>
-                  <li>Gently massage in circular motions</li>
-                  <li>Leave on for recommended time if applicable</li>
-                  <li>Follow with complementary products in your routine</li>
-                </ol>
-                <p>
-                  For detailed instructions specific to this product, please refer to the packaging.
-                </p>
+            <TabsContent value="how-to-use" className="pt-4 sm:pt-6">
+              <div className="prose prose-sm sm:prose-base max-w-none text-neutral-gray px-2 sm:px-0">
+                <div className="space-y-6">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-800 mb-3">For Best Results:</h4>
+                    <ol className="space-y-3">
+                      <li className="flex items-start">
+                        <span className="flex items-center justify-center bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex-shrink-0 mr-2 text-sm font-medium">1</span>
+                        <span>Start with clean, dry skin/hair</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="flex items-center justify-center bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex-shrink-0 mr-2 text-sm font-medium">2</span>
+                        <span>Take a small amount of product (about the size of a [coin/pea/almond])</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="flex items-center justify-center bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex-shrink-0 mr-2 text-sm font-medium">3</span>
+                        <span>Gently massage in circular motions until fully absorbed</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="flex items-center justify-center bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex-shrink-0 mr-2 text-sm font-medium">4</span>
+                        <span>Use {product?.usageFrequency || 'as needed'} for best results</span>
+                      </li>
+                    </ol>
+                  </div>
+                  
+                  <div className="bg-amber-50 p-4 rounded-lg border-l-4 border-amber-400">
+                    <h4 className="font-medium text-amber-800 mb-2">Important Notes:</h4>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      <li>For external use only</li>
+                      <li>Avoid contact with eyes</li>
+                      <li>Discontinue use if irritation occurs</li>
+                      <li>Store in a cool, dry place away from direct sunlight</li>
+                      <li>Keep out of reach of children</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="text-sm text-neutral-500 italic">
+                    <p>For detailed instructions specific to this product, please refer to the packaging or consult with an Ayurvedic practitioner.</p>
+                  </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>

@@ -75,6 +75,7 @@ export default function NewsletterPopup() {
     setShow(true);
   }, [enabled, start, end]);
 
+  // Show popup based on the show state only
   if (!show) return null;
 
   const onClose = () => {
@@ -132,28 +133,68 @@ export default function NewsletterPopup() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 h-screen">
-      <div className="bg-white rounded-lg overflow-hidden max-w-md w-full relative flex flex-col items-center justify-center"
-           style={{
-             backgroundImage: bg ? `url(${bg})` : 'url(/images/newsletter-bg.jpg)',
-             backgroundSize: 'cover',
-             height: '50vh'
-           }}>
-        <button onClick={onClose} className="absolute top-2 right-2 text-black">✕</button>
-        <div className="p-6 bg-white bg-opacity-90">
-          <h2 className="text-2xl mb-4">Subscribe to our Newsletter</h2>
-          <form onSubmit={onSubmit} className="flex flex-col items-center justify-center space-y-4">
-            <input
-              type="email"
-              placeholder="Your email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              className="border p-2 rounded mb-4"
-            />
-            <button type="submit" className="bg-primary text-white p-2 rounded">Subscribe</button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 h-screen p-4 overflow-y-auto">
+      <div 
+        className="relative flex flex-col items-center justify-center w-full mx-auto bg-white rounded-lg shadow-xl overflow-hidden"
+        style={{
+          backgroundImage: bg ? `url(${bg})` : 'url(/images/newsletter-bg.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          minHeight: 'min(50vh, 400px)',
+          maxHeight: '90vh',
+          width: '100%',
+          maxWidth: 'min(90vw, 500px)'
+        }}
+      >
+        {/* Close Button */}
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-all"
+          aria-label="Close newsletter popup"
+        >
+          ✕
+        </button>
+        
+        {/* Content */}
+        <div className="w-full p-4 sm:p-6 bg-white bg-opacity-90">
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-3 sm:mb-4">
+            Subscribe to our Newsletter
+          </h2>
+          
+          <form onSubmit={onSubmit} className="w-full max-w-xs mx-auto space-y-3 sm:space-y-4">
+            <div className="relative w-full">
+              <input
+                type="email"
+                placeholder="Your email address"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
+                style={{
+                  minHeight: '48px',
+                  WebkitAppearance: 'none',
+                  appearance: 'none'
+                }}
+              />
+            </div>
+            
+            <button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary-dark text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary text-sm sm:text-base"
+            >
+              Subscribe
+            </button>
           </form>
-          {message && <div className="mt-4 text-center text-sm text-white bg-black bg-opacity-50 p-2 rounded">{message}</div>}
+          
+          {message && (
+            <div className="mt-3 sm:mt-4 text-center text-sm text-white bg-black bg-opacity-70 p-2 rounded-lg">
+              {message}
+            </div>
+          )}
+          
+          <p className="mt-3 text-xs text-center text-gray-600">
+            We respect your privacy. Unsubscribe at any time.
+          </p>
         </div>
       </div>
     </div>

@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 interface StickyAddToCartProps {
   product: any;
   quantity: number;
@@ -5,47 +7,112 @@ interface StickyAddToCartProps {
   onAddToCart: () => void;
 }
 
+// Function to handle mobile visibility
+const setupMobileVisibility = () => {
+  const mobileContainer = document.getElementById('mobile-add-to-cart-container');
+  if (!mobileContainer) return;
+
+  const checkScreenSize = () => {
+    if (window.innerWidth < 768) { // Show only on mobile (under 768px)
+      mobileContainer.style.display = 'flex';
+      mobileContainer.style.justifyContent = 'center';
+      mobileContainer.style.alignItems = 'center';
+    } else {
+      mobileContainer.style.display = 'none';
+    }
+  };
+
+  // Initial check
+  checkScreenSize();
+
+  // Add event listener for window resize
+  window.addEventListener('resize', checkScreenSize);
+
+  // Cleanup function
+  return () => window.removeEventListener('resize', checkScreenSize);
+};
+
 export default function StickyAddToCart({ product, quantity, setQuantity, onAddToCart }: StickyAddToCartProps) {
+  // Set up mobile visibility on component mount
+  useEffect(() => {
+    const cleanup = setupMobileVisibility();
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, []);
   // Show only if product is loaded
   if (!product) return null;
 
   return (
     <>
-      {/* Mobile sticky Add to Cart button */}
+      {/* Mobile sticky Add to Cart button - only shown on mobile */}
       <div 
-        className="fixed bottom-0 left-0 right-0 md:hidden" 
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg"
         style={{
+          display: 'none', // Hide by default
+          padding: '8px',
+          boxSizing: 'border-box',
           width: '100%',
-          zIndex: 999,
-          backgroundColor: '#fff',
-          borderTop: '1px solid #eee',
-          boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
+          maxWidth: '100%',
+          overflow: 'hidden',
         }}
+        id="mobile-add-to-cart-container"
       >
-        <div style={{ padding: '8px' }}>
-          <button
-            onClick={onAddToCart}
-            style={{
-              width: '100%',
-              height: '40px',
-              backgroundColor: '#3f91eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontWeight: 500,
-              fontSize: '14px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            Add to Cart
-          </button>
-        </div>
+        <button
+          onClick={onAddToCart}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            width: '100%',
+            maxWidth: '100%',
+            height: '44px',
+            backgroundColor: '#3f91eb',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontWeight: 600,
+            fontSize: '15px',
+            letterSpacing: '0.3px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            padding: '0 10px',
+            boxSizing: 'border-box',
+            WebkitTapHighlightColor: 'transparent',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            transition: 'all 0.2s ease',
+          }}
+          onTouchStart={(e) => {
+            // Add active state for better touch feedback
+            const target = e.currentTarget;
+            target.style.transform = 'scale(0.98)';
+            target.style.opacity = '0.9';
+            
+            // Reset after animation completes
+            setTimeout(() => {
+              target.style.transform = '';
+              target.style.opacity = '';
+            }, 150);
+          }}
+        >
+          <span style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            maxWidth: '100%',
+            display: 'inline-block',
+            padding: '0 4px',
+          }}>
+            Add to Cart • ₹{product.price}
+          </span>
+        </button>
       </div>
       
-      {/* Desktop version */}
+      {/* Desktop version - only shown on desktop */}
       <div className="fixed bottom-0 left-0 right-0 hidden md:flex bg-white shadow-2xl border border-neutral-sand rounded-t-xl items-center gap-4 px-6 py-4 w-full max-w-2xl mx-auto" style={{ zIndex: 999 }}>
         <img
           src={product.images?.[0] || product.imageUrl}
