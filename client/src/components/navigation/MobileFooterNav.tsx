@@ -92,6 +92,12 @@ const MobileFooterNav: React.FC = () => {
   const [location] = useLocation();
   const isActive = (path: string) => location === path;
   
+  // Hide on product pages to prevent conflict with sticky Add to Cart
+  const isProductPage = location.includes('/products/') || location.includes('/product/');
+  
+  // Don't render on product pages to avoid conflict with sticky Add to Cart
+  if (isProductPage) return null;
+  
   return (
     <FooterNav>
       <Link href="/">

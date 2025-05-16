@@ -1,6 +1,3 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-
 interface StickyAddToCartProps {
   product: any;
   quantity: number;
@@ -9,53 +6,79 @@ interface StickyAddToCartProps {
 }
 
 export default function StickyAddToCart({ product, quantity, setQuantity, onAddToCart }: StickyAddToCartProps) {
-  const [visible, setVisible] = useState(true);
-
   // Show only if product is loaded
   if (!product) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full z-10 md:z-50 flex items-center justify-center pointer-events-none">
-      <div className="bg-white shadow-2xl border border-neutral-sand rounded-t-xl flex items-center gap-2 md:gap-4 px-2 md:px-6 py-2 md:py-4 w-full max-w-2xl mx-auto pointer-events-auto animate-slideup">
+    <>
+      {/* Mobile sticky Add to Cart button */}
+      <div 
+        className="fixed bottom-0 left-0 right-0 md:hidden" 
+        style={{
+          width: '100%',
+          zIndex: 999,
+          backgroundColor: '#fff',
+          borderTop: '1px solid #eee',
+          boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
+        }}
+      >
+        <div style={{ padding: '8px' }}>
+          <button
+            onClick={onAddToCart}
+            style={{
+              width: '100%',
+              height: '40px',
+              backgroundColor: '#3f91eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontWeight: 500,
+              fontSize: '14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            Add to Cart
+          </button>
+        </div>
+      </div>
+      
+      {/* Desktop version */}
+      <div className="fixed bottom-0 left-0 right-0 hidden md:flex bg-white shadow-2xl border border-neutral-sand rounded-t-xl items-center gap-4 px-6 py-4 w-full max-w-2xl mx-auto" style={{ zIndex: 999 }}>
         <img
           src={product.images?.[0] || product.imageUrl}
           alt={product.name}
-          className="hidden md:block w-10 h-10 md:w-14 md:h-14 rounded object-cover border"
+          className="w-14 h-14 rounded object-cover border"
         />
-        <div className="hidden md:block flex-1 min-w-0">
+        <div className="flex-1 min-w-0">
           <div className="font-semibold truncate text-base text-primary">{product.name}</div>
           <div className="text-base font-bold text-green-700 md:text-lg">₹{product.price}</div>
         </div>
-        <div className="hidden md:flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <button
-            className="w-10 h-10 md:w-8 md:h-8 rounded-full bg-neutral-100 flex items-center justify-center text-lg font-bold text-primary border hover:bg-neutral-200"
+            className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-lg font-bold text-primary border hover:bg-neutral-200"
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
             aria-label="Decrease quantity"
             type="button"
           >-</button>
           <span className="w-8 text-center font-semibold">{quantity}</span>
           <button
-            className="w-10 h-10 md:w-8 md:h-8 rounded-full bg-neutral-100 flex items-center justify-center text-lg font-bold text-primary border hover:bg-neutral-200"
+            className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-lg font-bold text-primary border hover:bg-neutral-200"
             onClick={() => setQuantity(Math.min(10, quantity + 1))}
             aria-label="Increase quantity"
             type="button"
           >+</button>
         </div>
-        <Button
-          size="lg"
-          className="h-[80px] md:h-12 ml-0 md:ml-4 px-4 md:px-8 bg-primary hover:bg-primary-dark text-white font-bold shadow-md w-full md:w-auto"
+        <button
+          className="h-12 ml-4 px-8 bg-primary hover:bg-primary-dark text-white font-bold"
           onClick={onAddToCart}
+          style={{ backgroundColor: '#3f91eb', border: 'none', borderRadius: '4px' }}
         >
           Add to Cart
-        </Button>
+        </button>
       </div>
-      <style>{`
-        @keyframes slideup {
-          from { transform: translateY(100%); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-slideup { animation: slideup 0.4s cubic-bezier(.4,2,.6,1) both; }
-      `}</style>
-    </div>
+    </>
   );
 }

@@ -60,7 +60,7 @@ export default function Footer() {
 
   return (
     <div>
-      <footer className="bg-black text-white pt-12 pb-6">
+      <footer className="bg-black text-white pt-12 pb-6 hidden md:block">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
             {/* Shop Links */}
@@ -197,9 +197,17 @@ function ScrollToTopButton() {
   return (
     <button
       onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
-      className="fixed left-6 bottom-6 z-50 bg-black text-white p-2 rounded-full shadow-lg hover:bg-accent transition-all"
+      className="fixed right-4 bottom-1/3 md:right-6 md:bottom-20 z-[9999] bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition-all"
       aria-label="Scroll to top"
-      style={{opacity: 0.85}}
+      style={{
+        opacity: 1,
+        width: '45px',
+        height: '45px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '2px solid white'
+      }}
     >
       <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M12 19V5m0 0l-7 7m7-7l7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
     </button>
