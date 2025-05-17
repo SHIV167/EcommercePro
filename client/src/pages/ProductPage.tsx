@@ -345,38 +345,38 @@ const ProductPage: React.FC = () => {
             <div className="mt-12 max-w-5xl mx-auto p-6">
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Offers Section */}
-                <div className="w-full md:w-1/2 border-1 border-gray-800 rounded p-4 mb-6 bg-white">
+                <div className="w-full md:w-1/2 border rounded p-4 mb-6 bg-white">
                   <h2 className="text-xl font-heading text-center mb-4">Offers</h2>
                   <ul className="space-y-3">
                     <li className="flex items-center">
-                      <span className="text-gray-400 mr-2 w-6 text-center">➤</span>
+                      <span className="text-gray-400 mr-2 w-6 text-center"><img src="/uploads/minicart-offer.svg" alt="offer icon" className="w-4 h-4"/>➤</span>
                       <span className="text-sm">Choose any 1 complimentary gift worth upto Rs.2298 on orders above Rs.4000</span>
                     </li>
                     <li className="flex items-center">
-                      <span className="text-gray-400 mr-2 w-6 text-center">➤</span>
+                      <span className="text-gray-400 mr-2 w-6 text-center"><img src="/uploads/minicart-offer.svg" alt="offer icon" className="w-4 h-4"/>➤</span>
                       <span className="text-sm">Choose any 2 complimentary gifts worth upto Rs.3998 on orders above Rs.6000</span>
                     </li>
                     <li className="flex items-center">
-                      <span className="text-gray-400 mr-2 w-6 text-center">➤</span>
+                      <span className="text-gray-400 mr-2 w-6 text-center"><img src="/uploads/minicart-offer.svg" alt="offer icon" className="w-4 h-4"/>➤</span>
                       <span className="text-sm">Add Complementary NEW Premium Sample on every order!</span>
                     </li>
                     <li className="flex items-center">
-                      <span className="text-gray-400 mr-2 w-6 text-center">➤</span>
+                      <span className="text-gray-400 mr-2 w-6 text-center"><img src="/uploads/minicart-offer.svg" alt="offer icon" className="w-4 h-4"/>➤</span>
                       <span className="text-sm">10% off on first order above Rs.1500 (Use Code: KAMA10)</span>
                     </li>
                     <li className="flex items-center">
-                      <span className="text-gray-400 mr-2 w-6 text-center">➤</span>
+                      <span className="text-gray-400 mr-2 w-6 text-center"><img src="/uploads/minicart-offer.svg" alt="offer icon" className="w-4 h-4"/>➤</span>
                       <span className="text-sm">Upto Rs.768 cashback on "Exclusive Offer"</span>
                     </li>
                     <li className="flex items-center">
-                      <span className="text-gray-400 mr-2 w-6 text-center">➤</span>
+                      <span className="text-gray-400 mr-2 w-6 text-center"><img src="/uploads/minicart-offer.svg" alt="offer icon" className="w-4 h-4"/>➤</span>
                       <span className="text-sm">Enjoy 30% "Premium Rewards" points on purchases with American Express®</span>
                     </li>
                   </ul>
                 </div>
 
                 {/* Check Pincode Availability */}
-                <div className="w-full md:w-1/2 border-1 border-gray-800 rounded p-4 mb-6 bg-white">
+                <div className="w-full md:w-1/2 border rounded p-4 mb-6 bg-white">
                   <h2 className="text-xl font-heading text-center mb-4">Check Pincode Availability</h2>
                   <div className="flex items-center justify-center mb-3">
                     <input 
