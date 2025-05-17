@@ -905,9 +905,21 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.put("/api/products/:id", uploadLocal.array('images', 5), async (req, res) => {
     console.log('[PRODUCT UPDATE] Incoming request:', {
       params: req.params,
-      body: req.body,
+      body: {
+        ...req.body,
+        howToUse: req.body.howToUse,
+        howToUseVideo: req.body.howToUseVideo,
+        howToUseSteps: req.body.howToUseSteps
+      },
       files: req.files,
       headers: req.headers
+    });
+    
+    // Debug log specifically for howToUse data
+    console.log('[DEBUG] HOW TO USE DATA:', {
+      howToUse: req.body.howToUse,
+      howToUseVideo: req.body.howToUseVideo,
+      howToUseSteps: req.body.howToUseSteps
     });
     try {
       const productId = req.params.id;
@@ -965,6 +977,13 @@ export async function registerRoutes(app: Application): Promise<Server> {
         }
       }
       
+      // Log the extracted data before creating the final update object
+      console.log('[DEBUG] Extracted data for update:', {
+        howToUseSteps,
+        howToUse: productData.howToUse || '',
+        howToUseVideo: productData.howToUseVideo || ''
+      });
+      
       const updateData = { 
         ...productData, 
         images, 
@@ -975,6 +994,13 @@ export async function registerRoutes(app: Application): Promise<Server> {
         howToUse: productData.howToUse || '',
         howToUseVideo: productData.howToUseVideo || ''
       };
+      
+      // Log the final update data object before saving to DB
+      console.log('[DEBUG] Final update data:', {
+        howToUseSteps: updateData.howToUseSteps,
+        howToUse: updateData.howToUse,
+        howToUseVideo: updateData.howToUseVideo
+      });
       const updatedProduct = await storage.updateProduct(productId, updateData);
       console.log('[PRODUCT UPDATE] Success:', updatedProduct);
       return res.status(200).json(updatedProduct);

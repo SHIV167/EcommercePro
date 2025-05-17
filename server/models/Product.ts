@@ -12,6 +12,12 @@ export interface Ingredient {
   imageUrl?: string;
 }
 
+export interface HowToUseStep {
+  stepNumber: number;
+  title: string;
+  description: string;
+}
+
 export interface IProduct extends Document {
   name: string;
   sku: string;
@@ -34,6 +40,9 @@ export interface IProduct extends Document {
   faqs?: FAQ[];
   ingredients?: string;
   structuredIngredients?: Ingredient[];
+  howToUse?: string;
+  howToUseVideo?: string;
+  howToUseSteps?: HowToUseStep[];
 }
 
 const FAQSchema = new Schema({
@@ -46,6 +55,12 @@ const IngredientSchema = new Schema({
   description: { type: String, required: true },
   benefits: { type: String },
   imageUrl: { type: String }
+}, { _id: false });
+
+const HowToUseStepSchema = new Schema({
+  stepNumber: { type: Number, required: true },
+  title: { type: String, required: true },
+  description: { type: String, required: true }
 }, { _id: false });
 
 const ProductSchema: Schema = new Schema({
@@ -70,6 +85,9 @@ const ProductSchema: Schema = new Schema({
   faqs: { type: [FAQSchema], default: [] },
   ingredients: { type: String },
   structuredIngredients: { type: [IngredientSchema], default: [] },
+  howToUse: { type: String },
+  howToUseVideo: { type: String },
+  howToUseSteps: { type: [HowToUseStepSchema], default: [] },
 });
 
 export default mongoose.model<IProduct>('Product', ProductSchema);

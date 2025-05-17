@@ -168,18 +168,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
         }
         
         // Append How to Use data
-        if (data.howToUse) {
-          formData.append('howToUse', data.howToUse);
-        }
+        formData.append('howToUse', data.howToUse || '');
+        formData.append('howToUseVideo', data.howToUseVideo || '');
         
-        if (data.howToUseVideo) {
-          formData.append('howToUseVideo', data.howToUseVideo);
-        }
-        
-        // Append How to Use Steps as JSON string
-        if (data.howToUseSteps && data.howToUseSteps.length > 0) {
-          formData.append('howToUseSteps', JSON.stringify(data.howToUseSteps));
-        }
+        // Append How to Use Steps as JSON string - always include this even if empty
+        console.log('HOW TO USE STEPS TO SAVE:', data.howToUseSteps);
+        const howToUseStepsJson = JSON.stringify(data.howToUseSteps || []);
+        console.log('HOW TO USE STEPS JSON:', howToUseStepsJson);
+        formData.append('howToUseSteps', howToUseStepsJson);
 
         // Send request (POST or PUT)
         const method = product ? 'PUT' : 'POST';

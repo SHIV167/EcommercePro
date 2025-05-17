@@ -214,11 +214,40 @@ export class MongoDBStorage implements IStorage {
     if (Array.isArray(images)) {
       images = images.map(toPublicUrl);
     }
+    
+    // Debug the incoming data to help troubleshoot
+    console.log('[DEBUG] MongoDBStorage.updateProduct - Data before update:', {
+      howToUse: productData.howToUse,
+      howToUseVideo: productData.howToUseVideo,
+      howToUseStepsCount: productData.howToUseSteps?.length
+    });
+    
+    // Ensure HOW TO USE fields are explicitly included in the update
+    const updateData = {
+      ...productData,
+      imageUrl,
+      images,
+      // Explicitly set these fields to ensure they're updated
+      howToUse: productData.howToUse,
+      howToUseVideo: productData.howToUseVideo,
+      howToUseSteps: productData.howToUseSteps
+    };
+    
     const updatedProduct = await ProductModel.findByIdAndUpdate(
       id,
-      { $set: { ...productData, imageUrl, images } },
+      { $set: updateData },
       { new: true }
     );
+    
+    // Debug the result
+    if (updatedProduct) {
+      console.log('[DEBUG] MongoDBStorage.updateProduct - Updated product:', {
+        howToUse: updatedProduct.howToUse,
+        howToUseVideo: updatedProduct.howToUseVideo,
+        howToUseStepsCount: updatedProduct.howToUseSteps?.length
+      });
+    }
+    
     return updatedProduct ? convertToObject<Product>(updatedProduct) : undefined;
   }
 
@@ -448,17 +477,31 @@ export class MongoDBStorage implements IStorage {
   }
 
   // Review operations
-  async getProductReviews(productId: string): Promise<IReview[]> {
+  async getProductReviews(productId: string): Promise<Review[]> {
     const reviews = await ReviewModel.find({ productId });
-    return reviews.map((r: IReview) => convertToObject<IReview>(r));
+    return reviews.map((r: IReview) => {
+      // Convert MongoDB document to Review type
+      const review = convertToObject<IReview>(r);
+      return {
+        ...review,
+        _id: review._id?.toString(),
+      } as unknown as Review;
+    });
   }
 
-  async getUserReviews(userId: string): Promise<IReview[]> {
+  async getUserReviews(userId: string): Promise<Review[]> {
     const reviews = await ReviewModel.find({ userId });
-    return reviews.map((r: IReview) => convertToObject<IReview>(r));
+    return reviews.map((r: IReview) => {
+      // Convert MongoDB document to Review type
+      const review = convertToObject<IReview>(r);
+      return {
+        ...review,
+        _id: review._id?.toString(),
+      } as unknown as Review;
+    });
   }
 
-  async createReview(review: Partial<IReview>): Promise<IReview> {
+  async createReview(review: InsertReview): Promise<Review> {
     const id = new mongoose.Types.ObjectId().toHexString();
     const newReview = new ReviewModel({
       ...review,
@@ -466,16 +509,26 @@ export class MongoDBStorage implements IStorage {
       createdAt: new Date()
     });
     await newReview.save();
-    return convertToObject<IReview>(newReview);
+    const savedReview = convertToObject<IReview>(newReview);
+    return {
+      ...savedReview,
+      _id: savedReview._id?.toString(),
+    } as unknown as Review;
   }
 
-  async updateReview(id: string, review: Partial<IReview>): Promise<IReview | undefined> {
+  async updateReview(id: string, review: Partial<InsertReview>): Promise<Review | undefined> {
     const updatedReview = await ReviewModel.findByIdAndUpdate(
       id,
       { $set: review },
       { new: true }
     );
-    return updatedReview ? convertToObject<IReview>(updatedReview) : undefined;
+    if (!updatedReview) return undefined;
+    
+    const convertedReview = convertToObject<IReview>(updatedReview);
+    return {
+      ...convertedReview,
+      _id: convertedReview._id?.toString(),
+    } as unknown as Review;
   }
 
   async deleteReview(id: string): Promise<boolean> {
