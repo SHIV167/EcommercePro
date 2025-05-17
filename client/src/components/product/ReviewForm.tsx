@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { toast } from "sonner";
+import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -36,19 +37,58 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onClose }) => {
       // Invalidate and refetch product reviews
       queryClient.invalidateQueries({ queryKey: [`/api/products/${productId}/reviews`] });
       queryClient.invalidateQueries({ queryKey: [`/api/products/${productId}`] });
-      toast.success("Thank you! Your review has been submitted successfully.");
+      
+      toast.success("Review Submitted", {
+        description: "Thank you for your valuable feedback!",
+        icon: <CheckCircle className="w-5 h-5 text-green-500" />,
+        className: "bg-white border border-green-100 shadow-lg",
+        duration: 5000,
+        position: 'top-center',
+        action: {
+          label: 'Dismiss',
+          onClick: () => {}
+        }
+      });
+      
       onClose();
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to submit review. Please try again.");
+      toast.error("Submission Failed", {
+        description: error.message || "Failed to submit review. Please try again.",
+        icon: <XCircle className="w-5 h-5 text-red-500" />,
+        className: "bg-white border border-red-100 shadow-lg",
+        duration: 5000,
+        position: 'top-center',
+        action: {
+          label: 'Retry',
+          onClick: () => handleRetry()
+        }
+      });
       setIsSubmitting(false);
     }
   });
 
+  const handleRetry = () => {
+    if (comment.trim().length >= 5) {
+      setIsSubmitting(true);
+      reviewMutation.mutate({
+        productId,
+        rating,
+        comment: comment.trim()
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (comment.trim().length < 5) {
-      toast.error("Please write a detailed review with at least 5 characters.");
+      toast.warning("Review Too Short", {
+        description: "Please write a detailed review with at least 5 characters.",
+        icon: <AlertCircle className="w-5 h-5 text-yellow-500" />,
+        className: "bg-white border border-yellow-100 shadow-lg",
+        position: 'top-center',
+        duration: 3000
+      });
       return;
     }
     
