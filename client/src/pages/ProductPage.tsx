@@ -380,8 +380,12 @@ const ProductPage: React.FC = () => {
                 {extendedProduct?.structuredIngredients && extendedProduct.structuredIngredients.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-items-center">
                     {extendedProduct.structuredIngredients.map((ingredient, idx) => (
-                      <div key={idx} className="flex flex-col items-center text-center">
-                        <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
+                      <div 
+                        key={idx} 
+                        className="flex flex-col items-center text-center group relative"
+                        title={`${ingredient.description || ''} ${ingredient.benefits ? `Benefits: ${ingredient.benefits}` : ''}`}
+                      >
+                        <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center group-hover:ring-2 group-hover:ring-amber-400 transition-all duration-200">
                           <img 
                             src={ingredient.imageUrl || '/images/ingredients/ginger.jpg'} 
                             alt={ingredient.name} 
@@ -389,6 +393,21 @@ const ProductPage: React.FC = () => {
                           />
                         </div>
                         <span className="text-sm font-medium">{ingredient.name}</span>
+                        
+                        {/* Ingredient Details Tooltip - Only shows on hover */}
+                        {(ingredient.description || ingredient.benefits) && (
+                          <div className="absolute opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 bottom-full mb-2 w-48 bg-white p-2 rounded shadow-lg text-left z-10">
+                            {ingredient.description && (
+                              <p className="text-xs text-gray-700 mb-1">{ingredient.description}</p>
+                            )}
+                            {ingredient.benefits && (
+                              <>
+                                <p className="text-xs font-medium mt-1">Benefits:</p>
+                                <p className="text-xs text-gray-700">{ingredient.benefits}</p>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
