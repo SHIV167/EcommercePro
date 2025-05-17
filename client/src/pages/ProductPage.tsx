@@ -18,6 +18,7 @@ import SocialShare from "@/components/products/SocialShare";
 import ProductFAQ from "@/components/product/ProductFAQ";
 import '@/styles/product-faq.css';
 import BlogSection from '@/components/home/BlogSection';
+import { VALID_PINCODES, DELIVERY_ESTIMATION_DAYS } from '@/lib/settings';
 
 // Extend Review type with server-enriched fields
 type EnrichedReview = Review & { _id?: string; userName?: string };
@@ -26,6 +27,8 @@ const ProductPage: React.FC = () => {
   const { slug } = useParams();
   const [location, navigate] = useLocation();
   const [quantity, setQuantity] = useState(1);
+  const [pincode, setPincode] = useState("");
+  const [pincodeAvailability, setPincodeAvailability] = useState<{ available: boolean; message: string; deliveryDays?: number } | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [scannerEntry, setScannerEntry] = useState<any | null>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -144,6 +147,33 @@ const ProductPage: React.FC = () => {
     }
     if (touchEndX - touchStartX > 50 && product?.images) {
       setSelectedImageIndex(prev => (prev - 1 + product.images.length) % product.images.length);
+    }
+  };
+  
+  // Check pincode availability
+  const checkPincodeAvailability = () => {
+    if (!pincode || pincode.trim() === "") {
+      toast({ title: "Please enter a pincode", variant: "destructive" });
+      return;
+    }
+    
+    if (VALID_PINCODES.includes(pincode.trim())) {
+      // Determine delivery estimate based on pincode
+      const isFastDeliveryPincode = pincode.startsWith("400"); // Assuming 400* are fast delivery areas
+      const deliveryDays = isFastDeliveryPincode 
+        ? DELIVERY_ESTIMATION_DAYS.FAST_DAYS 
+        : DELIVERY_ESTIMATION_DAYS.STANDARD_DAYS;
+      
+      setPincodeAvailability({
+        available: true,
+        message: "Delivery available in your area!",
+        deliveryDays
+      });
+    } else {
+      setPincodeAvailability({
+        available: false,
+        message: "Sorry, we don't deliver to this pincode yet."
+      });
     }
   };
 
@@ -351,14 +381,32 @@ const ProductPage: React.FC = () => {
                   <div className="flex items-center justify-center mb-3">
                     <input 
                       type="text" 
+                      value={pincode}
+                      onChange={(e) => setPincode(e.target.value)}
                       placeholder="Enter your pincode" 
                       className="border border-gray-200 rounded-l px-3 py-2 w-full focus:outline-none"
+                      maxLength={6}
                     />
-                    <button className="bg-gray-800 text-white px-4 py-2 rounded-r hover:bg-gray-700 transition">
+                    <button 
+                      onClick={checkPincodeAvailability}
+                      className="bg-gray-800 text-white px-4 py-2 rounded-r hover:bg-gray-700 transition"
+                    >
                       Check
                     </button>
                   </div>
-                  <p className="text-xs text-center text-gray-500 mb-4">Guaranteed Shipping Within 24 hours</p>
+                  
+                  {pincodeAvailability && (
+                    <div className={`mt-2 mb-4 p-2 rounded text-center text-sm ${pincodeAvailability.available ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                      <p className="font-medium">{pincodeAvailability.message}</p>
+                      {pincodeAvailability.available && pincodeAvailability.deliveryDays && (
+                        <p className="mt-1">
+                          Estimated delivery in <span className="font-bold">{pincodeAvailability.deliveryDays}</span> business {pincodeAvailability.deliveryDays === 1 ? 'day' : 'days'}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
+                  <p className="text-xs text-center text-gray-500 mb-4">Guaranteed Shipping Within 24 hours for eligible areas</p>
                   
                   <div className="mt-6 border-t border-gray-100 pt-4">
                     <h3 className="text-lg font-medium mb-2 text-center">Rewards</h3>
@@ -569,7 +617,7 @@ const ProductPage: React.FC = () => {
               </section>
 
               {/* Benefits Section */}
-              <section className="mb-16 border border-black rounded-md py-6 px-5">
+              <section className="mb-16 border  rounded-md py-6 px-5">
                 <h2 className="text-2xl font-heading text-center mb-8">Benefits</h2>
                 
                 {/* General benefits text if available */}
