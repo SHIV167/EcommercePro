@@ -87,21 +87,39 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-popup';
       }
       
-      const response = await get<GiftPopupConfig>(endpoint);
-      console.log('Gift popup config loaded:', response);
+      const response = await get<{data: GiftPopupConfig; status: number; message?: string}>(endpoint);
+      console.log('Gift popup config API response:', response);
+      
+      // Handle API error responses
+      if (response.status >= 400) {
+        throw new Error(response.message || 'Error loading configuration');
+      }
+      
       // Ensure we have a valid GiftPopupConfig object
-      if (response && typeof response === 'object') {
-        setConfig(response as GiftPopupConfig);
+      if (response.data && typeof response.data === 'object') {
+        console.log('Setting gift popup config:', response.data);
+        setConfig(response.data as GiftPopupConfig);
       } else {
         console.error('Invalid gift popup config format:', response);
         throw new Error('Invalid gift popup configuration format');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading gift popup config:', error);
       toast({
         title: 'Failed to load gift popup configuration',
-        description: 'Please check server logs for details',
+        description: error.message || 'Please try refreshing the page',
         variant: 'destructive'
+      });
+      
+      // Set default values to prevent UI from breaking
+      setConfig({
+        title: 'Claim Your Complimentary Gift',
+        subTitle: 'Choose Any 2',
+        active: false,
+        minCartValue: 1000,
+        maxCartValue: null,
+        maxSelectableGifts: 2,
+        giftProducts: []
       });
     } finally {
       setLoading(false);
@@ -111,6 +129,7 @@ export default function GiftPopupPage() {
   const loadProducts = async () => {
     try {
       console.log('Fetching available products...');
+      setLoading(true);
       // Try the authenticated endpoint first, fall back to dev endpoint in development
       let endpoint = '/api/admin/gift-products';
       
@@ -119,32 +138,62 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-products';
       }
       
-      const response = await get<Product[]>(endpoint);
-      console.log(`Loaded ${response.length} products`);
+      const response = await get<{data: Product[]; status: number}>(endpoint);
+      console.log('Products API response:', response);
+      
+      // Handle API error responses
+      if (response.status >= 400) {
+        throw new Error('Failed to load products data');
+      }
+      
       // Ensure we have a valid array of products
-      if (Array.isArray(response)) {
-        setProducts(response as Product[]);
+      if (response.data && Array.isArray(response.data)) {
+        console.log(`Loaded ${response.data.length} products`);
+        setProducts(response.data);
       } else {
         console.error('Invalid products format:', response);
         setProducts([]);
+        toast({
+          title: 'Data format error',
+          description: 'Product data is not in the expected format',
+          variant: 'destructive'
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading products:', error);
-      toast({
+      toast({ 
         title: 'Failed to load products',
-        description: 'Please check server logs for details',
-        variant: 'destructive'
+        description: error.message || 'Please check your connection and try again',
+        variant: 'destructive' 
       });
+      setProducts([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Validate minimum selectable gifts
+      // Validate inputs before submitting
+      if (!config.title.trim()) {
+        throw new Error('Popup title is required');
+      }
+      
+      // Ensure minCartValue is a valid number
+      if (isNaN(config.minCartValue) || config.minCartValue < 0) {
+        throw new Error('Minimum cart value must be a positive number');
+      }
+      
+      // Ensure maxSelectableGifts is a valid number
+      if (isNaN(config.maxSelectableGifts) || config.maxSelectableGifts < 1) {
+        throw new Error('Maximum selectable gifts must be at least 1');
+      }
+      
+      // Validate minimum selectable gifts doesn't exceed available products
       if (config.maxSelectableGifts > selectedProducts.length && selectedProducts.length > 0) {
         toast({
-          title: 'Error',
+          title: 'Invalid configuration',
           description: `Maximum selectable gifts (${config.maxSelectableGifts}) cannot exceed the number of available gift products (${selectedProducts.length})`,
           variant: 'destructive'
         });
@@ -152,11 +201,23 @@ export default function GiftPopupPage() {
         return;
       }
       
-      // Update gift products array with selected product IDs
+      // Safely prepare the gift products array
+      const giftProductIds = Array.isArray(selectedProducts) 
+        ? selectedProducts.map(p => p._id).filter(Boolean)
+        : [];
+      
+      // Create a cleaned config object with validated data
       const updatedConfig = {
         ...config,
-        giftProducts: selectedProducts.map(p => p._id)
+        title: config.title.trim(),
+        subTitle: config.subTitle.trim(),
+        minCartValue: Number(config.minCartValue),
+        maxCartValue: config.maxCartValue === null ? null : Number(config.maxCartValue),
+        maxSelectableGifts: Number(config.maxSelectableGifts),
+        giftProducts: giftProductIds
       };
+      
+      console.log('Saving gift popup configuration:', updatedConfig);
       
       // Try the authenticated endpoint first, fall back to dev endpoint in development
       let endpoint = '/api/admin/gift-popup';
@@ -166,24 +227,34 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-popup';
       }
       
-      const response = await put<GiftPopupConfig>(endpoint, updatedConfig);
+      const response = await put<{data: GiftPopupConfig; status: number; message?: string}>(endpoint, updatedConfig);
+      console.log('Gift popup save response:', response);
+      
+      // Check for API error responses
+      if (response.status >= 400) {
+        throw new Error(response.message || 'Error saving configuration');
+      }
       
       // Ensure we have a valid response before updating state
-      if (response && typeof response === 'object') {
-        setConfig(response as GiftPopupConfig);
+      if (response.data && typeof response.data === 'object') {
+        setConfig(response.data as GiftPopupConfig);
+        
+        toast({
+          title: 'Gift popup configuration saved successfully',
+          variant: 'default'
+        });
+        
+        // Reload the configuration to ensure we have the latest data
+        await loadConfig();
       } else {
         console.error('Invalid response format:', response);
         throw new Error('Invalid response format from server');
       }
-      
-      toast({
-        title: 'Gift popup configuration saved successfully',
-        variant: 'default'
-      });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving gift popup config:', error);
       toast({
-        title: 'Failed to save gift popup configuration',
+        title: 'Failed to save configuration',
+        description: error.message || 'An unexpected error occurred',
         variant: 'destructive'
       });
     } finally {
@@ -192,12 +263,32 @@ export default function GiftPopupPage() {
   };
 
   const handleProductSelect = (product: Product) => {
-    if (selectedProducts.some(p => p._id === product._id)) {
-      // Remove if already selected
-      setSelectedProducts(selectedProducts.filter(p => p._id !== product._id));
-    } else {
-      // Add if not selected
-      setSelectedProducts([...selectedProducts, product]);
+    try {
+      // Check if the product is already selected
+      const isSelected = selectedProducts.some(p => p._id === product._id);
+      
+      // Create a safe copy of the current gift products array
+      const currentGiftProducts = Array.isArray(config.giftProducts) ? [...config.giftProducts] : [];
+      
+      // Toggle selection status with proper error handling
+      const updatedGiftProducts = isSelected 
+        ? currentGiftProducts.filter(id => id !== product._id)
+        : [...currentGiftProducts, product._id];
+      
+      // Update config with the new gift products array
+      setConfig({
+        ...config,
+        giftProducts: updatedGiftProducts
+      });
+      
+      console.log(`Product ${isSelected ? 'removed from' : 'added to'} gift selection:`, product.name);
+    } catch (error) {
+      console.error('Error handling product selection:', error);
+      toast({
+        title: 'Error selecting product',
+        description: 'There was a problem updating the product selection',
+        variant: 'destructive'
+      });
     }
   };
 
