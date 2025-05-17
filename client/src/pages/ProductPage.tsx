@@ -374,8 +374,40 @@ const ProductPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Ingredients Section */}
-              <section className="py-6 my-8 px-4 bg-gray-50">
+             
+
+              {/* Clinically Tested Section */}
+              <section className="mb-10">
+                <h2 className="text-xl font-heading text-center mb-4">Clinically Tested To</h2>
+                <ul className="ml-2">
+                  <li className="flex items-center">
+                    <span className="text-black mr-2">•</span>
+                    <span className="text-sm">Clinically Tested To Protect From UVA & UVB rays</span>
+                  </li>
+                </ul>
+                <p className="text-xs text-gray-500 mt-2 ml-4">Based on clinical trials conducted over 30 days*</p>
+              </section>
+
+              {/* Natural Sunscreen Ingredients */}
+              <section className="mb-12">
+                <h2 className="text-xl font-heading text-center mb-4">Natural Sunscreen Top Ingredients</h2>
+                <div className="mb-4">
+                  <p className="text-sm mb-3">A light organic sunscreen containing natural origin, UV protection minerals such as <strong>Titanium Dioxide</strong> and <strong>Zinc Dioxide</strong> which protect the sun rays back from exposed skin. <strong>Natural Glycerine</strong> and <strong>Olive Oil</strong> condition skin without making it greasy. Nourishing <strong>Shea Butter</strong> protects, hydrates, repairs blemishes and other signs of sun damage. <strong>Pure essential oils</strong> - <strong>Nutmeg, Ginger and Lime</strong> have the anti-aging and fruity aromas.</p>
+                  
+                  <div className="border-2 border-black rounded py-5 my-6 px-6 relative">
+                    <span className="absolute left-3 top-0 text-4xl font-bold text-amber-500">&ldquo;</span>
+                    <p className="text-sm italic text-center px-8">
+                      Did you know that Natural Sun Protection contains the natural mineral Zinc Oxide known as Yasad Bhasma, which protects from both UVA & UVB rays?
+                    </p>
+                    <span className="absolute right-3 bottom-0 text-4xl font-bold text-amber-500">&rdquo;</span>
+                  </div>
+                </div>
+              </section>
+              
+              {/* Original Sections */}
+              <h2 className="text-2xl font-heading text-primary mb-6 mt-10">Product Details</h2>
+               {/* Ingredients Section */}
+               <section className="py-6 my-8 px-4 bg-gray-50">
                 <h2 className="text-xl font-heading text-center mb-8">Ingredients</h2>
                 {extendedProduct?.structuredIngredients && extendedProduct.structuredIngredients.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-items-center">
@@ -464,64 +496,7 @@ const ProductPage: React.FC = () => {
                   </div>
                 )}
               </section>
-
-              {/* Clinically Tested Section */}
-              <section className="mb-10">
-                <h2 className="text-xl font-heading text-center mb-4">Clinically Tested To</h2>
-                <ul className="ml-2">
-                  <li className="flex items-center">
-                    <span className="text-black mr-2">•</span>
-                    <span className="text-sm">Clinically Tested To Protect From UVA & UVB rays</span>
-                  </li>
-                </ul>
-                <p className="text-xs text-gray-500 mt-2 ml-4">Based on clinical trials conducted over 30 days*</p>
-              </section>
-
-              {/* Natural Sunscreen Ingredients */}
-              <section className="mb-12">
-                <h2 className="text-xl font-heading text-center mb-4">Natural Sunscreen Top Ingredients</h2>
-                <div className="mb-4">
-                  <p className="text-sm mb-3">A light organic sunscreen containing natural origin, UV protection minerals such as <strong>Titanium Dioxide</strong> and <strong>Zinc Dioxide</strong> which protect the sun rays back from exposed skin. <strong>Natural Glycerine</strong> and <strong>Olive Oil</strong> condition skin without making it greasy. Nourishing <strong>Shea Butter</strong> protects, hydrates, repairs blemishes and other signs of sun damage. <strong>Pure essential oils</strong> - <strong>Nutmeg, Ginger and Lime</strong> have the anti-aging and fruity aromas.</p>
-                  
-                  <div className="border-2 border-black rounded py-5 my-6 px-6 relative">
-                    <span className="absolute left-3 top-0 text-4xl font-bold text-amber-500">&ldquo;</span>
-                    <p className="text-sm italic text-center px-8">
-                      Did you know that Natural Sun Protection contains the natural mineral Zinc Oxide known as Yasad Bhasma, which protects from both UVA & UVB rays?
-                    </p>
-                    <span className="absolute right-3 bottom-0 text-4xl font-bold text-amber-500">&rdquo;</span>
-                  </div>
-                </div>
-              </section>
               
-              {/* Original Sections */}
-              <h2 className="text-2xl font-heading text-primary mb-6 mt-10">Product Details</h2>
-              
-              {/* Ingredients Section */}
-              <section className="mb-10 bg-[hsla(0, 9%, 94%, .4)]">
-                <h2 className="text-xl font-heading text-primary mb-6">Ingredients</h2>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Lemon" className="w-40 h-50 rounded-full object-contain mb-2" />
-                    <span className="text-sm text-center">Lemon</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Honey" className="w-40 h-50 rounded-full object-contain mb-2" />
-                    <span className="text-sm text-center">Honey</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Milk" className="w-40 h-50 rounded-full object-contain mb-2" />
-                    <span className="text-sm text-center">Milk</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Vitamin E" className="w-40 h-50 rounded-full object-contain mb-2" />
-                    <span className="text-sm text-center">Vitamin E</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Aloe Vera" className="w-40 h-50 rounded-full object-contain mb-2" />
-                    <span className="text-sm text-center">Aloe Vera</span>
-                  </div>
-                </div>
-              </section>
 
               {/* How to Use Section */}
               <section className="mb-10">
@@ -529,38 +504,62 @@ const ProductPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row items-stretch border border-gray-100 rounded overflow-hidden">
                   {/* YouTube Video on the left */}
                   <div className="w-full md:w-1/2 bg-black">
-                    <iframe 
-                      className="w-full h-full min-h-[300px]"
-                      src="https://www.youtube.com/embed/X4ZEVGac_VA" 
-                      title="Product Usage Video"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
+                    {extendedProduct?.howToUseVideo ? (
+                      <iframe 
+                        className="w-full h-full min-h-[300px]"
+                        src={extendedProduct.howToUseVideo} 
+                        title="Product Usage Video"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    ) : (
+                      <div className="w-full h-full min-h-[300px] flex items-center justify-center text-white">
+                        <p>No usage video available</p>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Steps on the right */}
-                  <div className="w-full md:w-1/2 bg-white p-4">
-                    <div>
-                      <div className="mb-4">
-                        <h3 className="text-base font-medium mb-1">Step 1: Prepare for the Day</h3>
-                        <p className="text-sm text-gray-600">Take one capsule with water 30 minutes before breakfast to help control cravings and maintain healthy energy levels.</p>
+                  <div className="w-full md:w-1/2 p-6 bg-white">
+                    <h3 className="text-xl font-medium mb-4">Follow these steps:</h3>
+                    
+                    {/* General instructions if available */}
+                    {extendedProduct?.howToUse && (
+                      <div className="mb-4 pb-4 border-b border-gray-100">
+                        <p className="text-sm text-gray-700">{extendedProduct.howToUse}</p>
                       </div>
-                      
-                      <div className="border-b border-gray-200 my-3"></div>
-                      
-                      <div className="mb-4">
-                        <h3 className="text-base font-medium mb-1">Step 2: Keep It Going</h3>
-                        <p className="text-sm text-gray-600">Take another capsule 30 minutes before dinner to continue supporting your appetite control.</p>
+                    )}
+                    
+                    {/* Step by step instructions if available */}
+                    {extendedProduct?.howToUseSteps && extendedProduct.howToUseSteps.length > 0 ? (
+                      <div className="space-y-6">
+                        {/* Sort steps by step number */}
+                        {[...extendedProduct.howToUseSteps]
+                          .sort((a, b) => a.stepNumber - b.stepNumber)
+                          .map((step, index) => (
+                            <div key={index}>
+                              <h4 className="font-bold">Step {step.stepNumber}: {step.title}</h4>
+                              <p className="text-sm text-gray-700 mt-1">{step.description}</p>
+                            </div>
+                          ))
+                        }
                       </div>
-                      
-                      <div className="border-b border-gray-200 my-3"></div>
-                      
-                      <div className="mb-1">
-                        <h3 className="text-base font-medium mb-1">Step 3: Make It a Habit</h3>
-                        <p className="text-sm text-gray-600">Add Curtail to your daily routine along with a healthy food and way of life for the best results.</p>
-                      </div>
-                    </div>
+                    ) : (
+                      /* No structured steps, show a placeholder or fallback */
+                      !extendedProduct?.howToUse && (
+                        <div className="space-y-6">
+                          <div>
+                            <h4 className="font-bold">Step 1: Prepare for the Day</h4>
+                            <p className="text-sm text-gray-700 mt-1">Take one capsule with water 30 minutes before breakfast to help control sugar cravings throughout the day.</p>
+                          </div>
+                          <div>
+                            <h4 className="font-bold">Step 2: Morning Application</h4>
+                            <p className="text-sm text-gray-700 mt-1">Apply a small amount of the product to clean, dry skin before sun exposure. Reapply every 2-3 hours for continuous protection.</p>
+                          </div>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </section>

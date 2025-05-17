@@ -68,6 +68,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           images: product.images || [],
           faqs: product.faqs || [],
           structuredIngredients: product.structuredIngredients || [],
+          howToUse: product.howToUse || "",
+          howToUseVideo: product.howToUseVideo || "",
+          howToUseSteps: product.howToUseSteps || [],
         }
       : {
           sku: "",
@@ -87,10 +90,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           images: [],
           faqs: [],
           structuredIngredients: [],
+          howToUse: "",
+          howToUseVideo: "",
+          howToUseSteps: [],
         },
   });
   
-  // Setup field arrays for managing FAQs and ingredients
+  // Setup field arrays for managing FAQs, ingredients, and how-to-use steps
   const { fields: faqFields, append: appendFaq, remove: removeFaq } = useFieldArray({
     control: form.control,
     name: "faqs",
@@ -99,6 +105,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({
     control: form.control,
     name: "structuredIngredients",
+  });
+  
+  const { fields: howToUseStepFields, append: appendHowToUseStep, remove: removeHowToUseStep } = useFieldArray({
+    control: form.control,
+    name: "howToUseSteps",
   });
 
   // Handle form submit including images
@@ -773,6 +784,152 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                   <Plus className="h-4 w-4 mr-2" />
                   Add Ingredient
                 </Button>
+              </CardContent>
+            </Card>
+            
+            {/* How to Use Section */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>How to Use</CardTitle>
+                <CardDescription>Provide instructions on how to use the product</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="howToUse"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>General Usage Instructions</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Provide general instructions on how to use the product"
+                            {...field}
+                            className="min-h-[100px]"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="howToUseVideo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Video URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="YouTube or other video URL demonstrating usage"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          For YouTube videos, use the embed URL format (e.g., https://www.youtube.com/embed/VIDEO_ID)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Step-by-Step Instructions</FormLabel>
+                    </div>
+                    
+                    {howToUseStepFields.length > 0 && (
+                      <div className="space-y-4">
+                        {howToUseStepFields.map((field, index) => (
+                          <div key={field.id} className="p-4 border rounded-md relative">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-2 top-2 h-8 w-8 p-0"
+                              onClick={() => removeHowToUseStep(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            
+                            <div className="grid gap-4">
+                              <div className="grid gap-2">
+                                <FormField
+                                  control={form.control}
+                                  name={`howToUseSteps.${index}.stepNumber`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Step Number</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          min="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                          value={field.value || 1}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              
+                              <div className="grid gap-2">
+                                <FormField
+                                  control={form.control}
+                                  name={`howToUseSteps.${index}.title`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Step Title</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="e.g., Prepare for the Day"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              
+                              <div className="grid gap-2">
+                                <FormField
+                                  control={form.control}
+                                  name={`howToUseSteps.${index}.description`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Step Description</FormLabel>
+                                      <FormControl>
+                                        <Textarea
+                                          placeholder="Detailed instructions for this step"
+                                          {...field}
+                                          className="min-h-[80px]"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => appendHowToUseStep({ stepNumber: howToUseStepFields.length + 1, title: '', description: '' })}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Step
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
