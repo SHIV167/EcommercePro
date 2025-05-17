@@ -426,27 +426,27 @@ const ProductPage: React.FC = () => {
               <h2 className="text-2xl font-heading text-primary mb-6 mt-10">Product Details</h2>
               
               {/* Ingredients Section */}
-              <section className="mb-10">
+              <section className="mb-10 bg-[hsla(0, 9%, 94%, .4)]">
                 <h2 className="text-xl font-heading text-primary mb-6">Ingredients</h2>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Lemon" className="w-16 h-16 object-contain mb-2" />
+                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Lemon" className="w-50 h-50 rounded-full object-contain mb-2" />
                     <span className="text-sm text-center">Lemon</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Honey" className="w-16 h-16 object-contain mb-2" />
+                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Honey" className="w-50 h-50 rounded-full object-contain mb-2" />
                     <span className="text-sm text-center">Honey</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Milk" className="w-16 h-16 object-contain mb-2" />
+                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Milk" className="w-50 h-50 rounded-full object-contain mb-2" />
                     <span className="text-sm text-center">Milk</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Vitamin E" className="w-16 h-16 object-contain mb-2" />
+                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Vitamin E" className="w-50 h-50 rounded-full object-contain mb-2" />
                     <span className="text-sm text-center">Vitamin E</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Aloe Vera" className="w-16 h-16 object-contain mb-2" />
+                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Aloe Vera" className="w-50 h-50 rounded-full object-contain mb-2" />
                     <span className="text-sm text-center">Aloe Vera</span>
                   </div>
                 </div>
@@ -499,7 +499,7 @@ const ProductPage: React.FC = () => {
                 <h2 className="text-2xl font-heading text-center mb-8">Benefits</h2>
                 
                 {/* Benefit 1 - Natural & Safe */}
-                <div className="flex flex-col md:flex-row mb-6">
+                <div className="flex flex-col md:flex-row mb-6 bg-[hsla(0, 9%, 94%, .6)]">
                   <div className="md:w-1/2 p-6 bg-gray-50 flex flex-col justify-center">
                     <h3 className="text-lg font-medium mb-2">99.3% Natural, Safe for Children & Daily Use</h3>
                     <p className="text-sm text-gray-600">This 99% base natural sunscreen for face is safe for children above 3 years old and for daily use for protection with fewer allergies.</p>
@@ -510,7 +510,7 @@ const ProductPage: React.FC = () => {
                 </div>
                 
                 {/* Benefit 2 - SPF Protection */}
-                <div className="flex flex-col md:flex-row mb-6">
+                <div className="flex flex-col md:flex-row mb-6 bg-[hsla(35, 63%, 95%, .6)]">
                   <div className="md:w-1/2 order-1 md:order-2 p-6 bg-white flex flex-col justify-center">
                     <h3 className="text-lg font-medium mb-2">SPF 21 & PA++ Sun Protection</h3>
                     <p className="text-sm text-gray-600">Titanium dioxide and Zinc Oxide are naturally occurring UV protection minerals that when nano-micronized provide SPF 21 and PA++ sun protection.</p>
@@ -521,7 +521,7 @@ const ProductPage: React.FC = () => {
                 </div>
                 
                 {/* Benefit 3 - Repair */}
-                <div className="flex flex-col md:flex-row mb-6">
+                <div className="flex flex-col md:flex-row mb-6 bg-[hsla(0, 9%, 94%, .6)]">
                   <div className="md:w-1/2 p-6 bg-gray-50 flex flex-col justify-center">
                     <h3 className="text-lg font-medium mb-2">Repairs Sunspots & Conditions Skin</h3>
                     <p className="text-sm text-gray-600">These butter extracts are aged and matured together, deeply nourishing and thus in condition the skin without making it feeling greasy, making it the perfect natural sunscreen for oily skin.</p>
@@ -532,7 +532,7 @@ const ProductPage: React.FC = () => {
                 </div>
                 
                 {/* Benefit 4 - Non-Nano */}
-                <div className="flex flex-col md:flex-row">
+                <div className="flex flex-col md:flex-row bg-[hsla(35, 63%, 95%, .6)]">
                   <div className="md:w-1/2 order-1 md:order-2 p-6 bg-white flex flex-col justify-center">
                     <h3 className="text-lg font-medium mb-2">Non-Nano Formulation Based Sun Protector</h3>
                     <p className="text-sm text-gray-600">Non-Nano ZnO Oxide is the basic active minerals and filters out UVA & UVB rays protecting the skin from penetration and harm.</p>
