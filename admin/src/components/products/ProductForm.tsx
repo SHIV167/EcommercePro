@@ -15,6 +15,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { productSchema, categorySchema, faqSchema } from "../../../../shared/schema";
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { CodeEditor } from "../ui/code-editor";
+import { nanoid } from "nanoid";
 type Product = z.infer<typeof productSchema>;
 type Category = z.infer<typeof categorySchema>;
 import { MongoProduct, MongoCategory } from "../../types/mongo";
@@ -33,6 +35,30 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>(product?.images || []);
+  
+  // Setup custom HTML sections field array
+  const [customSectionTemplates, setCustomSectionTemplates] = useState<{id: string, title: string, content: string}[]>([
+    {
+      id: 'clinically-tested',
+      title: 'Clinically Tested To',
+      content: `<div>
+  <h3 class="text-xl font-medium mb-4">Clinically Tested To</h3>
+  <ul class="list-disc pl-5 space-y-2">
+    <li>Clinically Tested To Protect From UVA & UVB rays</li>
+    <li>Based on clinical trials conducted over 30 days!</li>
+  </ul>
+  
+  <h3 class="text-xl font-medium mt-8 mb-4">Natural Sunscreen Top Ingredients</h3>
+  <p class="mb-4">A light organic sunscreen containing natural origin UV protection minerals such as <strong>Titanium Dioxide</strong> and <strong>Zinc Dioxide</strong> which protect the sun rays back from exposed skin. <strong>Natural Glycerine</strong> and <strong>Olive Oil</strong> condition skin without making it greasy. Nourishing <strong>Shea Butter</strong> protects, hydrates, repairs blemishes and other signs of sun damage. <strong>Pure essential oils</strong> - <strong>Nutmeg, Ginger and Lime</strong> have the anti-aging and fruity aromas.</p>
+  
+  <div class="border border-gray-200 p-4 my-6 bg-gray-50">
+    <blockquote class="italic text-center">
+      Did you know that Natural Sun Protection contains the natural mineral Zinc Oxide known as Yasad Bhsma, which protects from both UVA & UVB rays?
+    </blockquote>
+  </div>
+</div>`
+    },
+  ]);
 
   // Get categories for the form
   const { data: categoriesData, isLoading: isCategoriesLoading } = useQuery({
@@ -119,6 +145,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   const { fields: benefitFields, append: appendBenefit, remove: removeBenefit } = useFieldArray({
     control: form.control,
     name: "structuredBenefits",
+  });
+
+  const { fields: customSectionFields, append: appendCustomSection, remove: removeCustomSection } = useFieldArray({
+    control: form.control,
+    name: "customSections",
   });
 
   // Handle form submit including images
@@ -812,6 +843,150 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                   <Plus className="h-4 w-4 mr-2" />
                   Add Ingredient
                 </Button>
+              </CardContent>
+            </Card>
+            
+            {/* Custom HTML Sections */}
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle>Custom HTML Sections</CardTitle>
+                <CardDescription>
+                  Create rich HTML sections like "Clinically Tested To" or "Ingredients List"
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {fields.customSections?.map((section, index) => (
+                    <div key={section.id} className="border rounded-lg p-4 relative">
+                      <div className="absolute top-2 right-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeCustomSection(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid gap-4 mb-4">
+                        <FormField
+                          control={form.control}
+                          name={`customSections.${index}.title`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Section Title</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="e.g., Clinically Tested To" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`customSections.${index}.displayOrder`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Display Order</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                />
+                              </FormControl>
+                              <FormDescription>Determines the order of sections (lower numbers appear first)</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name={`customSections.${index}.enabled`}
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                  Enable this section
+                                </FormLabel>
+                                <FormDescription>
+                                  When disabled, this section will not be shown on the product page.
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name={`customSections.${index}.htmlContent`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>HTML Content</FormLabel>
+                            <FormControl>
+                              <CodeEditor
+                                value={field.value}
+                                onChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  ))}
+
+                  <div className="pt-2">
+                    <div className="flex flex-col space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendCustomSection({
+                          id: nanoid(),
+                          title: '',
+                          htmlContent: '',
+                          displayOrder: fields.customSections?.length || 0,
+                          enabled: true
+                        })}
+                        className="w-full"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Custom Section
+                      </Button>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {customSectionTemplates.map(template => (
+                          <Button
+                            key={template.id}
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => appendCustomSection({
+                              id: nanoid(),
+                              title: template.title,
+                              htmlContent: template.content,
+                              displayOrder: fields.customSections?.length || 0,
+                              enabled: true
+                            })}
+                          >
+                            + {template.title} Template
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
             

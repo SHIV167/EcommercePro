@@ -19,9 +19,19 @@ import ProductFAQ from "@/components/product/ProductFAQ";
 import '@/styles/product-faq.css';
 import BlogSection from '@/components/home/BlogSection';
 import { VALID_PINCODES, DELIVERY_ESTIMATION_DAYS } from '@/lib/settings';
+import '@/styles/custom-html-sections.css';
 
 // Extend Review type with server-enriched fields
 type EnrichedReview = Review & { _id?: string; userName?: string };
+
+// Type for custom HTML sections
+type CustomSection = {
+  id: string;
+  title: string;
+  htmlContent: string;
+  displayOrder: number;
+  enabled: boolean;
+};
 
 const ProductPage: React.FC = () => {
   const { slug } = useParams();
@@ -63,7 +73,8 @@ const ProductPage: React.FC = () => {
     ...product, 
     reviews, 
     relatedProducts: ((product as any)?.relatedProducts || []) as Product[],
-    faqs: product?.faqs || [] // Use product FAQs from the database
+    faqs: product?.faqs || [], // Use product FAQs from the database
+    customSections: ((product as any)?.customSections || []) as CustomSection[]
   } : null;
 
   const ExtendedReviewForm = ReviewForm as unknown as React.FC<{ productId: string; onClose: () => void; onSubmit: (review: EnrichedReview) => void; }>;
@@ -369,7 +380,7 @@ const ProductPage: React.FC = () => {
                       <span className="text-sm">Upto Rs.768 cashback on "Exclusive Offer"</span>
                     </li>
                     <li className="flex items-center">
-                      <span className="text-gray-400 mr-2 w-6 text-center"><img src="/uploads/minicart-offer.svg" alt="offer icon" className="w-4 h-4"/></span>
+                      <span className="text-gray-400 mr-2 w-6 text-center"><img src="/uploads/minicart-offer.svg" alt="offer icon" className="w-4 h-4"/>➤</span>
                       <span className="text-sm">Enjoy 30% "Premium Rewards" points on purchases with American Express®</span>
                     </li>
                   </ul>
@@ -645,6 +656,22 @@ const ProductPage: React.FC = () => {
                 )}
               </div>
             </section>
+
+            {/* Custom HTML Sections */}
+            {extendedProduct && extendedProduct.customSections && extendedProduct.customSections.length > 0 && (
+              <section className="py-8 max-w-4xl mx-auto">
+                {extendedProduct.customSections
+                  .filter(section => section.enabled)
+                  .sort((a, b) => a.displayOrder - b.displayOrder)
+                  .map((section) => (
+                    <div key={section.id} className="custom-html-section mb-8 p-6 border rounded-md bg-white">
+                      <h2 className="text-2xl font-heading text-primary mb-4">{section.title}</h2>
+                      <div className="custom-html-content prose max-w-none" dangerouslySetInnerHTML={{ __html: section.htmlContent }} />
+                    </div>
+                  ))
+                }
+              </section>
+            )}
 
             {/* FAQ Section */}
             <section className="py-12 max-w-4xl mx-auto px-8 border rounded-md my-10 bg-white">

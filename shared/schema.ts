@@ -60,6 +60,16 @@ export const productSchema = z.object({
       answer: z.string().min(1, "Answer is required"),
     })
   ).optional().default([]), // Product FAQs
+  // Custom HTML sections
+  customSections: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      htmlContent: z.string(),
+      displayOrder: z.number().default(0),
+      enabled: z.boolean().default(true)
+    })
+  ).optional().default([]), // For custom HTML sections like "Clinically Tested To" 
   ingredients: z.string().optional(), // Simple text ingredients
   structuredIngredients: z.array(
     z.object({
