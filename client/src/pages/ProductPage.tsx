@@ -375,17 +375,17 @@ const ProductPage: React.FC = () => {
               </div>
 
               {/* Ingredients Section */}
-              <section className="py-6 my-8 border-2 border-black rounded-md px-4">
-                <h2 className="text-xl font-heading text-center mb-6 mt-2">Ingredients</h2>
+              <section className="py-6 my-8 px-4 bg-gray-50">
+                <h2 className="text-xl font-heading text-center mb-8">Ingredients</h2>
                 {extendedProduct?.structuredIngredients && extendedProduct.structuredIngredients.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 justify-items-center">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-items-center">
                     {extendedProduct.structuredIngredients.map((ingredient, idx) => (
                       <div key={idx} className="flex flex-col items-center text-center">
-                        <div className="w-24 h-24 mb-2 flex items-center justify-center">
+                        <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
                           <img 
                             src={ingredient.imageUrl || '/images/ingredients/ginger.jpg'} 
                             alt={ingredient.name} 
-                            className="w-full h-full object-contain" 
+                            className="w-20 h-20 object-cover rounded-full" 
                           />
                         </div>
                         <span className="text-sm font-medium">{ingredient.name}</span>
@@ -393,36 +393,54 @@ const ProductPage: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 justify-items-center">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-items-center">
                     <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-2 flex items-center justify-center">
-                        <img src="/images/ingredients/ginger.jpg" alt="Lemon" className="w-full h-full object-contain" />
+                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
+                        <img src="/images/ingredients/ginger.jpg" alt="Ginger" className="w-20 h-20 object-cover rounded-full" />
                       </div>
-                      <span className="text-sm font-medium">Lemon</span>
+                      <span className="text-sm font-medium">Ginger</span>
                     </div>
                     <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-2 flex items-center justify-center">
-                        <img src="/images/ingredients/ginger.jpg" alt="Honey" className="w-full h-full object-contain" />
+                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
+                        <img src="/images/ingredients/olive-oil.jpg" alt="Olive Oil" className="w-20 h-20 object-cover rounded-full" />
                       </div>
-                      <span className="text-sm font-medium">Honey</span>
+                      <span className="text-sm font-medium">Olive Oil</span>
                     </div>
                     <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-2 flex items-center justify-center">
-                        <img src="/images/ingredients/ginger.jpg" alt="Milk" className="w-full h-full object-contain" />
+                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
+                        <img src="/images/ingredients/shea-butter.jpg" alt="Shea Butter" className="w-20 h-20 object-cover rounded-full" />
                       </div>
-                      <span className="text-sm font-medium">Milk</span>
+                      <span className="text-sm font-medium">Shea Butter</span>
                     </div>
                     <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-2 flex items-center justify-center">
-                        <img src="/images/ingredients/ginger.jpg" alt="Vitamin E" className="w-full h-full object-contain" />
+                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
+                        <img src="/images/ingredients/zinc-oxide.jpg" alt="Zinc Oxide" className="w-20 h-20 object-cover rounded-full" />
                       </div>
-                      <span className="text-sm font-medium">Vitamin E</span>
+                      <span className="text-sm font-medium">Zinc Oxide</span>
                     </div>
                     <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-2 flex items-center justify-center">
-                        <img src="/images/ingredients/ginger.jpg" alt="Aloe Vera" className="w-full h-full object-contain" />
+                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
+                        <img src="/images/ingredients/glycerin.jpg" alt="Natural Glycerin" className="w-20 h-20 object-cover rounded-full" />
                       </div>
-                      <span className="text-sm font-medium">Aloe Vera</span>
+                      <span className="text-sm font-medium">Natural Glycerin</span>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
+                        <img src="/images/ingredients/titanium-dioxide.jpg" alt="Titanium Dioxide" className="w-20 h-20 object-cover rounded-full" />
+                      </div>
+                      <span className="text-sm font-medium">Titanium Dioxide</span>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
+                        <img src="/images/ingredients/lime.jpg" alt="Lime" className="w-20 h-20 object-cover rounded-full" />
+                      </div>
+                      <span className="text-sm font-medium">Lime</span>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
+                        <img src="/images/ingredients/nutmeg.jpg" alt="Nutmeg" className="w-20 h-20 object-cover rounded-full" />
+                      </div>
+                      <span className="text-sm font-medium">Nutmeg</span>
                     </div>
                   </div>
                 )}
