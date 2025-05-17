@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import React from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Product as BaseProduct, Review } from "@shared/schema";
+import { Product as BaseProduct, Review, Ingredient } from "@shared/schema";
 import { Product, FAQ } from "@/types/product";
 import ReviewForm from "@/components/product/ReviewForm";
 import { Button } from "@/components/ui/button";
@@ -373,6 +373,42 @@ const ProductPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Ingredients Section */}
+              <section className="py-12 max-w-4xl mx-auto px-8 border-2 border-black rounded-md my-8 bg-white">
+                <h2 className="text-2xl font-heading text-primary mb-6 text-center">Ingredients</h2>
+                {extendedProduct?.structuredIngredients && extendedProduct.structuredIngredients.length > 0 ? (
+                  <div className="space-y-8">
+                    {extendedProduct.structuredIngredients.map((ingredient, idx) => (
+                      <div key={idx} className="flex flex-col md:flex-row gap-6 border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+                        {ingredient.imageUrl && (
+                          <div className="w-full md:w-1/4 flex justify-center">
+                            <img 
+                              src={ingredient.imageUrl} 
+                              alt={ingredient.name} 
+                              className="w-24 h-24 object-cover rounded-full border border-gray-200 shadow-sm" 
+                            />
+                          </div>
+                        )}
+                        <div className="w-full md:w-3/4">
+                          <h3 className="text-lg font-medium mb-2">{ingredient.name}</h3>
+                          <p className="text-gray-700 mb-3">{ingredient.description}</p>
+                          {ingredient.benefits && (
+                            <div>
+                              <h4 className="font-medium text-sm mb-2">Benefits:</h4>
+                              <p className="text-sm text-gray-600">{ingredient.benefits}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-6 bg-gray-50 rounded-md">
+                    <p className="text-gray-600">No ingredients information available for this product.</p>
+                  </div>
+                )}
+              </section>
 
               {/* Clinically Tested Section */}
               <section className="mb-10">

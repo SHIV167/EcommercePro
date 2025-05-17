@@ -67,6 +67,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           imageUrl: product.imageUrl || "",
           images: product.images || [],
           faqs: product.faqs || [],
+          structuredIngredients: product.structuredIngredients || [],
         }
       : {
           sku: "",
@@ -85,13 +86,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           imageUrl: "",
           images: [],
           faqs: [],
+          structuredIngredients: [],
         },
   });
   
-  // Setup a field array for managing FAQs
+  // Setup field arrays for managing FAQs and ingredients
   const { fields: faqFields, append: appendFaq, remove: removeFaq } = useFieldArray({
     control: form.control,
     name: "faqs",
+  });
+  
+  const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({
+    control: form.control,
+    name: "structuredIngredients",
   });
 
   // Handle form submit including images
@@ -142,6 +149,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
         // Append FAQs as JSON string
         if (data.faqs && data.faqs.length > 0) {
           formData.append('faqs', JSON.stringify(data.faqs));
+        }
+        
+        // Append structured ingredients as JSON string
+        if (data.structuredIngredients && data.structuredIngredients.length > 0) {
+          formData.append('structuredIngredients', JSON.stringify(data.structuredIngredients));
         }
 
         // Send request (POST or PUT)
@@ -620,6 +632,146 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add FAQ
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Ingredients Section */}
+          <div className="col-span-full mt-6">
+            <Card>
+              <CardHeader className="bg-muted/50">
+                <CardTitle className="text-lg font-medium">Product Ingredients</CardTitle>
+                <CardDescription>
+                  Add the key ingredients and their details to display on the product page.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <FormField
+                  control={form.control}
+                  name="ingredients"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>General Ingredients List</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          rows={3} 
+                          {...field} 
+                          placeholder="List all ingredients separated by commas"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Add a general list of ingredients that will be shown on the product page
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {ingredientFields.length === 0 ? (
+                  <div className="text-center p-4 border border-dashed rounded-md mt-6">
+                    <p className="text-muted-foreground mb-2">No structured ingredients added yet</p>
+                    <p className="text-sm text-muted-foreground">Add featured ingredients with detailed information to highlight on the product page.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 mt-6">
+                    <h3 className="text-base font-medium mb-2">Featured Ingredients</h3>
+                    {ingredientFields.map((field, index) => (
+                      <div key={field.id} className="p-4 border rounded-md relative">
+                        <button 
+                          type="button" 
+                          className="absolute top-2 right-2 text-destructive hover:text-destructive/90"
+                          onClick={() => removeIngredient(index)}
+                          aria-label="Remove Ingredient"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="space-y-1">
+                            <label htmlFor={`structuredIngredients.${index}.name`} className="text-sm font-medium">
+                              Ingredient Name
+                            </label>
+                            <input
+                              {...form.register(`structuredIngredients.${index}.name`)}
+                              id={`structuredIngredients.${index}.name`}
+                              placeholder="Enter ingredient name"
+                              className="w-full p-2 border rounded-md text-sm"
+                            />
+                            {form.formState.errors?.structuredIngredients?.[index]?.name && (
+                              <p className="text-destructive text-xs mt-1">
+                                {form.formState.errors.structuredIngredients[index]?.name?.message}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <label htmlFor={`structuredIngredients.${index}.imageUrl`} className="text-sm font-medium">
+                              Image URL
+                            </label>
+                            <input
+                              {...form.register(`structuredIngredients.${index}.imageUrl`)}
+                              id={`structuredIngredients.${index}.imageUrl`}
+                              placeholder="URL to ingredient image"
+                              className="w-full p-2 border rounded-md text-sm"
+                            />
+                            {form.formState.errors?.structuredIngredients?.[index]?.imageUrl && (
+                              <p className="text-destructive text-xs mt-1">
+                                {form.formState.errors.structuredIngredients[index]?.imageUrl?.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-1 mt-3">
+                          <label htmlFor={`structuredIngredients.${index}.description`} className="text-sm font-medium">
+                            Description
+                          </label>
+                          <textarea
+                            {...form.register(`structuredIngredients.${index}.description`)}
+                            id={`structuredIngredients.${index}.description`}
+                            placeholder="Describe what this ingredient is and its origin"
+                            rows={2}
+                            className="w-full p-2 border rounded-md text-sm resize-none"
+                          />
+                          {form.formState.errors?.structuredIngredients?.[index]?.description && (
+                            <p className="text-destructive text-xs mt-1">
+                              {form.formState.errors.structuredIngredients[index]?.description?.message}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div className="space-y-1 mt-3">
+                          <label htmlFor={`structuredIngredients.${index}.benefits`} className="text-sm font-medium">
+                            Benefits
+                          </label>
+                          <textarea
+                            {...form.register(`structuredIngredients.${index}.benefits`)}
+                            id={`structuredIngredients.${index}.benefits`}
+                            placeholder="List the benefits of this ingredient"
+                            rows={2}
+                            className="w-full p-2 border rounded-md text-sm resize-none"
+                          />
+                          {form.formState.errors?.structuredIngredients?.[index]?.benefits && (
+                            <p className="text-destructive text-xs mt-1">
+                              {form.formState.errors.structuredIngredients[index]?.benefits?.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => appendIngredient({ name: '', description: '', benefits: '', imageUrl: '' })}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Ingredient
                 </Button>
               </CardContent>
             </Card>

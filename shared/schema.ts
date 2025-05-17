@@ -7,31 +7,82 @@ export const faqSchema = z.object({
 });
 export type FAQ = z.infer<typeof faqSchema>;
 
+// Ingredients schema
+export const ingredientSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  imageUrl: z.string().optional(),
+  benefits: z.string().optional()
+});
+export type Ingredient = z.infer<typeof ingredientSchema>;
+
+// How To Use schema
+export const howToUseStepSchema = z.object({
+  stepNumber: z.number(),
+  title: z.string(),
+  description: z.string(),
+});
+export type HowToUseStep = z.infer<typeof howToUseStepSchema>;
+
+// Benefits schema
+export const benefitSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  imageUrl: z.string().optional()
+});
+export type Benefit = z.infer<typeof benefitSchema>;
+
 // Product Zod schema and TypeScript type
 export const productSchema = z.object({
   _id: z.string().optional(), // MongoDB ObjectId as string
   sku: z.string(),
-  name: z.string(),
-  description: z.string(),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().min(1, "Description is required"),
   shortDescription: z.string().optional(),
-  price: z.number(),
+  price: z.number().min(0, "Price must be greater than or equal to 0"),
   discountedPrice: z.number().optional().nullable(),
   imageUrl: z.string(),
   stock: z.number(),
   rating: z.number().optional(),
   totalReviews: z.number().optional(),
   slug: z.string(),
-  categoryId: z.string(), // MongoDB ObjectId as string
+  categoryId: z.string().min(1, "Category is required"), // MongoDB ObjectId as string
   featured: z.boolean().optional(),
   bestseller: z.boolean().optional(),
   isNew: z.boolean().optional(),
   createdAt: z.date().optional(),
-  images: z.array(z.string()).optional().default([]),
+  updatedAt: z.date().optional(),
+  images: z.array(z.string()).min(1, "At least one image is required").optional().default([]),
   videoUrl: z.string().optional(),
-  faqs: z.array(faqSchema).optional().default([]), // Product FAQs
+  faqs: z.array(
+    z.object({
+      question: z.string().min(1, "Question is required"),
+      answer: z.string().min(1, "Answer is required"),
+    })
+  ).optional().default([]), // Product FAQs
+  ingredients: z.string().optional(), // Simple text ingredients
+  structuredIngredients: z.array(
+    z.object({
+      name: z.string().min(1, "Ingredient name is required"),
+      description: z.string().min(1, "Description is required"),
+      benefits: z.string().optional(),
+      imageUrl: z.string().optional(),
+    })
+  ).optional().default([]), // Structured ingredients
+  howToUse: z.string().optional(), // Simple text how-to-use
+  howToUseVideo: z.string().optional(),
+  howToUseSteps: z.array(
+    z.object({
+      stepNumber: z.number().min(1, "Step number is required"),
+      title: z.string().min(1, "Step title is required"),
+      description: z.string().min(1, "Step description is required"),
+    })
+  ).optional(), // Structured how-to-use steps
+  // Video URL for how-to-use is defined above
+  benefits: z.string().optional(), // Simple text benefits
+  structuredBenefits: z.array(benefitSchema).optional().default([]), // Structured benefits
   minOrderValue: z.number().optional(), // For free products
   isFreeProduct: z.boolean().optional(), // Flag for free products
-  ingredients: z.string().optional(), // Product ingredients
   usageFrequency: z.string().optional(), // Recommended usage frequency
 });
 export type Product = z.infer<typeof productSchema>;
