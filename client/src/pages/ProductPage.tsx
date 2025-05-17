@@ -345,7 +345,7 @@ const ProductPage: React.FC = () => {
             <div className="mt-12 max-w-5xl mx-auto p-6">
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Offers Section */}
-                <div className="w-full md:w-1/2 border-2 border-gray-800 rounded p-4 mb-6 bg-white">
+                <div className="w-full md:w-1/2 border-1 border-gray-800 rounded p-4 mb-6 bg-white">
                   <h2 className="text-xl font-heading text-center mb-4">Offers</h2>
                   <ul className="space-y-3">
                     <li className="flex items-center">
@@ -376,7 +376,7 @@ const ProductPage: React.FC = () => {
                 </div>
 
                 {/* Check Pincode Availability */}
-                <div className="w-full md:w-1/2 border-2 border-gray-800 rounded p-4 mb-6 bg-white">
+                <div className="w-full md:w-1/2 border-1 border-gray-800 rounded p-4 mb-6 bg-white">
                   <h2 className="text-xl font-heading text-center mb-4">Check Pincode Availability</h2>
                   <div className="flex items-center justify-center mb-3">
                     <input 
@@ -455,99 +455,49 @@ const ProductPage: React.FC = () => {
               {/* Original Sections */}
               <h2 className="text-2xl font-heading text-primary mb-6 mt-10">Product Details</h2>
                {/* Ingredients Section */}
-               <section className="py-6 my-8 px-4 bg-gray-50">
-                <h2 className="text-xl font-heading text-center mb-8">Ingredients</h2>
-                {extendedProduct?.structuredIngredients && extendedProduct.structuredIngredients.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-items-center">
-                    {extendedProduct.structuredIngredients.map((ingredient, idx) => (
-                      <div 
-                        key={idx} 
-                        className="flex flex-col items-center text-center group relative"
-                        title={`${ingredient.description || ''} ${ingredient.benefits ? `Benefits: ${ingredient.benefits}` : ''}`}
-                      >
-                        <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center group-hover:ring-2 group-hover:ring-amber-400 transition-all duration-200">
-                          <img 
-                            src={ingredient.imageUrl || '/images/ingredients/ginger.jpg'} 
-                            alt={ingredient.name} 
-                            className="w-20 h-20 object-cover rounded-full" 
-                          />
-                        </div>
-                        <span className="text-sm font-medium">{ingredient.name}</span>
-                        
-                        {/* Ingredient Details Tooltip - Only shows on hover */}
-                        {(ingredient.description || ingredient.benefits) && (
-                          <div className="absolute opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 bottom-full mb-2 w-48 bg-white p-2 rounded shadow-lg text-left z-10">
-                            {ingredient.description && (
-                              <p className="text-xs text-gray-700 mb-1">{ingredient.description}</p>
-                            )}
-                            {ingredient.benefits && (
-                              <>
-                                <p className="text-xs font-medium mt-1">Benefits:</p>
-                                <p className="text-xs text-gray-700">{ingredient.benefits}</p>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-items-center">
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
-                        <img src="/images/ingredients/ginger.jpg" alt="Ginger" className="w-20 h-20 object-cover rounded-full" />
-                      </div>
-                      <span className="text-sm font-medium">Ginger</span>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
-                        <img src="/images/ingredients/olive-oil.jpg" alt="Olive Oil" className="w-20 h-20 object-cover rounded-full" />
-                      </div>
-                      <span className="text-sm font-medium">Olive Oil</span>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
-                        <img src="/images/ingredients/shea-butter.jpg" alt="Shea Butter" className="w-20 h-20 object-cover rounded-full" />
-                      </div>
-                      <span className="text-sm font-medium">Shea Butter</span>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
-                        <img src="/images/ingredients/zinc-oxide.jpg" alt="Zinc Oxide" className="w-20 h-20 object-cover rounded-full" />
-                      </div>
-                      <span className="text-sm font-medium">Zinc Oxide</span>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
-                        <img src="/images/ingredients/glycerin.jpg" alt="Natural Glycerin" className="w-20 h-20 object-cover rounded-full" />
-                      </div>
-                      <span className="text-sm font-medium">Natural Glycerin</span>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
-                        <img src="/images/ingredients/titanium-dioxide.jpg" alt="Titanium Dioxide" className="w-20 h-20 object-cover rounded-full" />
-                      </div>
-                      <span className="text-sm font-medium">Titanium Dioxide</span>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
-                        <img src="/images/ingredients/lime.jpg" alt="Lime" className="w-20 h-20 object-cover rounded-full" />
-                      </div>
-                      <span className="text-sm font-medium">Lime</span>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center">
-                        <img src="/images/ingredients/nutmeg.jpg" alt="Nutmeg" className="w-20 h-20 object-cover rounded-full" />
-                      </div>
-                      <span className="text-sm font-medium">Nutmeg</span>
-                    </div>
-                  </div>
-                )}
-              </section>
+               {extendedProduct?.structuredIngredients && extendedProduct.structuredIngredients.length > 0 && (
+                <section className="py-6 my-8 px-4 bg-gray-50">
+                 <h2 className="text-xl font-heading text-center mb-8">Ingredients</h2>
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 justify-items-center">
+                   {extendedProduct.structuredIngredients.map((ingredient, idx) => (
+                     <div 
+                       key={idx} 
+                       className="flex flex-col items-center text-center group relative"
+                       title={`${ingredient.description || ''} ${ingredient.benefits ? `Benefits: ${ingredient.benefits}` : ''}`}
+                     >
+                       <div className="w-24 h-24 mb-3 rounded-full bg-white overflow-hidden flex items-center justify-center group-hover:ring-2 group-hover:ring-amber-400 transition-all duration-200">
+                         <img 
+                           src={ingredient.imageUrl || '/images/ingredients/ginger.jpg'} 
+                           alt={ingredient.name} 
+                           className="w-20 h-20 object-cover rounded-full" 
+                         />
+                       </div>
+                       <span className="text-sm font-medium">{ingredient.name}</span>
+                       
+                       {/* Ingredient Details Tooltip - Only shows on hover */}
+                       {(ingredient.description || ingredient.benefits) && (
+                         <div className="absolute opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 bottom-full mb-2 w-48 bg-white p-2 rounded shadow-lg text-left z-10">
+                           {ingredient.description && (
+                             <p className="text-xs text-gray-700 mb-1">{ingredient.description}</p>
+                           )}
+                           {ingredient.benefits && (
+                             <>
+                               <p className="text-xs font-medium mt-1">Benefits:</p>
+                               <p className="text-xs text-gray-700">{ingredient.benefits}</p>
+                             </>
+                           )}
+                         </div>
+                       )}
+                     </div>
+                   ))}
+                 </div>
+               </section>
+               )}
               
 
               {/* How to Use Section */}
-              <section className="mb-10 border border-black rounded-md py-6 px-5">
+              {(extendedProduct?.howToUse || (extendedProduct?.howToUseSteps && extendedProduct.howToUseSteps.length > 0) || extendedProduct?.howToUseVideo) && (
+              <section className="mb-10 border rounded-md py-6 px-5">
                 <h2 className="text-2xl font-heading text-center mb-8"><span className="text-green-600 font-bold">HOW TO</span> <span className="text-gray-800 font-bold">USE</span></h2>
                 <div className="flex flex-col md:flex-row items-stretch gap-6">
                   {/* YouTube Video on the left */}
@@ -578,7 +528,7 @@ const ProductPage: React.FC = () => {
                     )}
                     
                     {/* Step by step instructions if available */}
-                    {extendedProduct?.howToUseSteps && extendedProduct.howToUseSteps.length > 0 ? (
+                    {extendedProduct?.howToUseSteps && extendedProduct.howToUseSteps.length > 0 && (
                       <div className="space-y-6">
                         {/* Sort steps by step number */}
                         {[...extendedProduct.howToUseSteps]
@@ -593,31 +543,15 @@ const ProductPage: React.FC = () => {
                           ))
                         }
                       </div>
-                    ) : (
-                      /* No structured steps, show a placeholder only if no general instructions */
-                      !extendedProduct?.howToUse && (
-                        <div className="space-y-6">
-                          <div className="border-b border-gray-200 pb-4 mb-4">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-bold">Step 1: Prepare for the Day</span>
-                            </div>
-                            <p className="text-sm text-gray-700 mt-2">Take one capsule with water 30 minutes before breakfast to help control sugar cravings throughout the day.</p>
-                          </div>
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <span className="font-bold">Step 2: Morning Application</span>
-                            </div>
-                            <p className="text-sm text-gray-700 mt-2">Apply a small amount of the product to clean, dry skin before sun exposure. Reapply every 2-3 hours for continuous protection.</p>
-                          </div>
-                        </div>
-                      )
                     )}
                   </div>
                 </div>
               </section>
+              )}
 
               {/* Benefits Section */}
-              <section className="mb-16 border  rounded-md py-6 px-5">
+              {(extendedProduct?.benefits || (extendedProduct?.structuredBenefits && extendedProduct.structuredBenefits.length > 0)) && (
+              <section className="mb-16 border rounded-md py-6 px-5">
                 <h2 className="text-2xl font-heading text-center mb-8">Benefits</h2>
                 
                 {/* General benefits text if available */}
@@ -628,7 +562,7 @@ const ProductPage: React.FC = () => {
                 )}
                 
                 {/* Structured Benefits */}
-                {extendedProduct?.structuredBenefits && extendedProduct.structuredBenefits.length > 0 ? (
+                {extendedProduct?.structuredBenefits && extendedProduct.structuredBenefits.length > 0 && (
                   <div className="space-y-6">
                     {extendedProduct.structuredBenefits.map((benefit, index) => (
                       <div 
@@ -655,42 +589,13 @@ const ProductPage: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                ) : (
-                  // Fallback content if no structured benefits are available
-                  !extendedProduct?.benefits && (
-                    <div className="space-y-6">
-                      {/* Default benefit items */}
-                      <div className="flex flex-col md:flex-row mb-6 bg-[hsla(0, 9%, 94%, .6)]">
-                        <div className="md:w-1/2 p-6 bg-gray-50 flex flex-col justify-center">
-                          <h3 className="text-lg font-medium mb-2">99.3% Natural, Safe for Daily Use</h3>
-                          <p className="text-sm text-gray-600">This natural product is safe for daily use for protection with fewer allergies.</p>
-                        </div>
-                        <div className="md:w-1/2 bg-white">
-                          <div className="w-full h-full min-h-[200px] flex items-center justify-center bg-gray-100">
-                            <p className="text-gray-400">Image placeholder</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col md:flex-row mb-6 bg-[hsla(35, 63%, 95%, .6)]">
-                        <div className="md:w-1/2 order-1 md:order-2 p-6 bg-white flex flex-col justify-center">
-                          <h3 className="text-lg font-medium mb-2">Premium Quality Ingredients</h3>
-                          <p className="text-sm text-gray-600">Made with the highest quality ingredients for maximum effectiveness.</p>
-                        </div>
-                        <div className="md:w-1/2 order-2 md:order-1 bg-gray-50">
-                          <div className="w-full h-full min-h-[200px] flex items-center justify-center bg-gray-100">
-                            <p className="text-gray-400">Image placeholder</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
                 )}
               </section>
+              )}
             </div>
 
             {/* Reviews Section */}
-            <section className="mt-16 max-w-3xl mx-auto px-8 py-6 rounded">
+            <section className="mt-16 boder border-black max-w-3xl mx-auto px-8 py-6 rounded">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-heading text-2xl text-primary">Reviews ({extendedProduct!.reviews?.length || 0})</h2>
                 {isAuthenticated ? (
@@ -742,7 +647,7 @@ const ProductPage: React.FC = () => {
             </section>
 
             {/* FAQ Section */}
-            <section className="py-12 max-w-4xl mx-auto px-8 border border-black rounded-md my-10 bg-white">
+            <section className="py-12 max-w-4xl mx-auto px-8 border rounded-md my-10 bg-white">
               <h2 className="text-2xl font-heading text-primary mb-6 text-center">Frequently Asked Questions</h2>
               {extendedProduct?.faqs && extendedProduct.faqs.length > 0 ? (
                 <ProductFAQ faqs={extendedProduct.faqs} />
