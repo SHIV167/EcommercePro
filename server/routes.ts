@@ -891,7 +891,9 @@ export async function registerRoutes(app: Application): Promise<Server> {
         structuredIngredients,
         howToUseSteps,
         howToUse: productData.howToUse || '',
-        howToUseVideo: productData.howToUseVideo || ''
+        howToUseVideo: productData.howToUseVideo || '',
+        structuredBenefits,
+        benefits: productData.benefits || ''
       });
       console.log('[PRODUCT CREATE] Success:', newProduct);
       return res.status(201).json(newProduct);
@@ -977,11 +979,24 @@ export async function registerRoutes(app: Application): Promise<Server> {
         }
       }
       
+      // Parse structuredBenefits if provided
+      let structuredBenefits = [];
+      if (productData.structuredBenefits) {
+        try {
+          structuredBenefits = JSON.parse(productData.structuredBenefits);
+          console.log('Parsed structuredBenefits:', structuredBenefits);
+        } catch (e) {
+          console.error('Error parsing structuredBenefits:', e);
+        }
+      }
+      
       // Log the extracted data before creating the final update object
       console.log('[DEBUG] Extracted data for update:', {
         howToUseSteps,
         howToUse: productData.howToUse || '',
-        howToUseVideo: productData.howToUseVideo || ''
+        howToUseVideo: productData.howToUseVideo || '',
+        structuredBenefits,
+        benefits: productData.benefits || ''
       });
       
       const updateData = { 
@@ -992,7 +1007,9 @@ export async function registerRoutes(app: Application): Promise<Server> {
         structuredIngredients,
         howToUseSteps,
         howToUse: productData.howToUse || '',
-        howToUseVideo: productData.howToUseVideo || ''
+        howToUseVideo: productData.howToUseVideo || '',
+        structuredBenefits,
+        benefits: productData.benefits || ''
       };
       
       // Log the final update data object before saving to DB

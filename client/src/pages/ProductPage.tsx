@@ -569,7 +569,7 @@ const ProductPage: React.FC = () => {
               </section>
 
               {/* Benefits Section */}
-              <section className="mb-16 border-2 border-black rounded-md py-6 px-5">
+              <section className="mb-16 border border-black rounded-md py-6 px-5">
                 <h2 className="text-2xl font-heading text-center mb-8">Benefits</h2>
                 
                 {/* General benefits text if available */}

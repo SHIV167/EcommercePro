@@ -219,10 +219,12 @@ export class MongoDBStorage implements IStorage {
     console.log('[DEBUG] MongoDBStorage.updateProduct - Data before update:', {
       howToUse: productData.howToUse,
       howToUseVideo: productData.howToUseVideo,
-      howToUseStepsCount: productData.howToUseSteps?.length
+      howToUseStepsCount: productData.howToUseSteps?.length,
+      benefits: productData.benefits,
+      structuredBenefitsCount: productData.structuredBenefits?.length
     });
     
-    // Ensure HOW TO USE fields are explicitly included in the update
+    // Ensure HOW TO USE fields and Benefits fields are explicitly included in the update
     const updateData = {
       ...productData,
       imageUrl,
@@ -230,7 +232,9 @@ export class MongoDBStorage implements IStorage {
       // Explicitly set these fields to ensure they're updated
       howToUse: productData.howToUse,
       howToUseVideo: productData.howToUseVideo,
-      howToUseSteps: productData.howToUseSteps
+      howToUseSteps: productData.howToUseSteps,
+      benefits: productData.benefits,
+      structuredBenefits: productData.structuredBenefits
     };
     
     const updatedProduct = await ProductModel.findByIdAndUpdate(
@@ -244,7 +248,9 @@ export class MongoDBStorage implements IStorage {
       console.log('[DEBUG] MongoDBStorage.updateProduct - Updated product:', {
         howToUse: updatedProduct.howToUse,
         howToUseVideo: updatedProduct.howToUseVideo,
-        howToUseStepsCount: updatedProduct.howToUseSteps?.length
+        howToUseStepsCount: updatedProduct.howToUseSteps?.length,
+        benefits: updatedProduct.benefits,
+        structuredBenefitsCount: updatedProduct.structuredBenefits?.length
       });
     }
     
