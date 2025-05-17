@@ -59,8 +59,7 @@ export default function BlogSection() {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 3000,
-    prevArrow: <button className="slick-prev"><ChevronLeft className="w-6 h-6" /></button>,
-    nextArrow: <button className="slick-next"><ChevronRight className="w-6 h-6" /></button>,
+    arrows: true,
     responsive: [
       {
         breakpoint: 1024,
