@@ -31,7 +31,33 @@ export async function getFreeProductById(req: Request, res: Response) {
 export async function createFreeProduct(req: Request, res: Response) {
   try {
     const { productId, minOrderValue, maxOrderValue, enabled = true } = req.body;
-    const freeProduct = new FreeProductModel({ productId, minOrderValue, maxOrderValue, enabled });
+    
+    // Validate min and max order values
+    if (minOrderValue <= 0) {
+      return res.status(400).json({ message: 'Minimum order value must be greater than zero' });
+    }
+    
+    if (maxOrderValue !== null && maxOrderValue <= minOrderValue) {
+      return res.status(400).json({ 
+        message: 'Maximum order value must be greater than minimum order value' 
+      });
+    }
+
+    // Check if product is already a free product
+    const existingProduct = await FreeProductModel.findOne({ productId });
+    if (existingProduct) {
+      return res.status(400).json({ 
+        message: 'This product is already set up as a free product' 
+      });
+    }
+
+    const freeProduct = new FreeProductModel({ 
+      productId, 
+      minOrderValue, 
+      maxOrderValue: maxOrderValue || null, 
+      enabled 
+    });
+    
     await freeProduct.save();
     res.status(201).json(freeProduct);
   } catch (error) {
@@ -45,10 +71,51 @@ export async function updateFreeProduct(req: Request, res: Response) {
   try {
     const { id } = req.params;
     const { productId, minOrderValue, maxOrderValue, enabled } = req.body;
-    const freeProduct = await FreeProductModel.findByIdAndUpdate(id, { productId, minOrderValue, maxOrderValue, enabled }, { new: true });
+
+    // Validate min and max order values
+    if (minOrderValue <= 0) {
+      return res.status(400).json({ message: 'Minimum order value must be greater than zero' });
+    }
+    
+    if (maxOrderValue !== null && maxOrderValue <= minOrderValue) {
+      return res.status(400).json({ 
+        message: 'Maximum order value must be greater than minimum order value' 
+      });
+    }
+
+    // Check if the product is already a free product (for a different entry)
+    const existingProduct = await FreeProductModel.findOne({ 
+      productId,
+      _id: { $ne: id } // Exclude the current product being updated
+    });
+    
+    if (existingProduct) {
+      return res.status(400).json({ 
+        message: 'This product is already set up as a free product in another entry' 
+      });
+    }
+
+    const updateData: any = { 
+      minOrderValue, 
+      maxOrderValue: maxOrderValue || null, 
+      enabled 
+    };
+
+    // Only update productId if it's different (to avoid unnecessary updates)
+    if (productId) {
+      updateData.productId = productId;
+    }
+
+    const freeProduct = await FreeProductModel.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true }
+    );
+    
     if (!freeProduct) {
       return res.status(404).json({ message: 'Free product not found' });
     }
+    
     res.json(freeProduct);
   } catch (error) {
     console.error('Update free product error:', error);
