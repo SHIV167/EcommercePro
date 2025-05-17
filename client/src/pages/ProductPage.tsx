@@ -375,37 +375,55 @@ const ProductPage: React.FC = () => {
               </div>
 
               {/* Ingredients Section */}
-              <section className="py-12 max-w-4xl mx-auto px-8 border-2 border-black rounded-md my-8 bg-white">
-                <h2 className="text-2xl font-heading text-primary mb-6 text-center">Ingredients</h2>
+              <section className="py-6 my-8 border-2 border-black rounded-md px-4">
+                <h2 className="text-xl font-heading text-center mb-6 mt-2">Ingredients</h2>
                 {extendedProduct?.structuredIngredients && extendedProduct.structuredIngredients.length > 0 ? (
-                  <div className="space-y-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 justify-items-center">
                     {extendedProduct.structuredIngredients.map((ingredient, idx) => (
-                      <div key={idx} className="flex flex-col md:flex-row gap-6 border-b border-gray-100 pb-6 last:border-0 last:pb-0">
-                        {ingredient.imageUrl && (
-                          <div className="w-full md:w-1/4 flex justify-center">
-                            <img 
-                              src={ingredient.imageUrl} 
-                              alt={ingredient.name} 
-                              className="w-24 h-24 object-cover rounded-full border border-gray-200 shadow-sm" 
-                            />
-                          </div>
-                        )}
-                        <div className="w-full md:w-3/4">
-                          <h3 className="text-lg font-medium mb-2">{ingredient.name}</h3>
-                          <p className="text-gray-700 mb-3">{ingredient.description}</p>
-                          {ingredient.benefits && (
-                            <div>
-                              <h4 className="font-medium text-sm mb-2">Benefits:</h4>
-                              <p className="text-sm text-gray-600">{ingredient.benefits}</p>
-                            </div>
-                          )}
+                      <div key={idx} className="flex flex-col items-center text-center">
+                        <div className="w-24 h-24 mb-2 flex items-center justify-center">
+                          <img 
+                            src={ingredient.imageUrl || '/images/ingredients/ginger.jpg'} 
+                            alt={ingredient.name} 
+                            className="w-full h-full object-contain" 
+                          />
                         </div>
+                        <span className="text-sm font-medium">{ingredient.name}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center p-6 bg-gray-50 rounded-md">
-                    <p className="text-gray-600">No ingredients information available for this product.</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 justify-items-center">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-24 h-24 mb-2 flex items-center justify-center">
+                        <img src="/images/ingredients/ginger.jpg" alt="Lemon" className="w-full h-full object-contain" />
+                      </div>
+                      <span className="text-sm font-medium">Lemon</span>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-24 h-24 mb-2 flex items-center justify-center">
+                        <img src="/images/ingredients/ginger.jpg" alt="Honey" className="w-full h-full object-contain" />
+                      </div>
+                      <span className="text-sm font-medium">Honey</span>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-24 h-24 mb-2 flex items-center justify-center">
+                        <img src="/images/ingredients/ginger.jpg" alt="Milk" className="w-full h-full object-contain" />
+                      </div>
+                      <span className="text-sm font-medium">Milk</span>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-24 h-24 mb-2 flex items-center justify-center">
+                        <img src="/images/ingredients/ginger.jpg" alt="Vitamin E" className="w-full h-full object-contain" />
+                      </div>
+                      <span className="text-sm font-medium">Vitamin E</span>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-24 h-24 mb-2 flex items-center justify-center">
+                        <img src="/images/ingredients/ginger.jpg" alt="Aloe Vera" className="w-full h-full object-contain" />
+                      </div>
+                      <span className="text-sm font-medium">Aloe Vera</span>
+                    </div>
                   </div>
                 )}
               </section>
