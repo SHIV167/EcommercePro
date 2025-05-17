@@ -271,7 +271,20 @@ export default function FreeProductsPage() {
   const handleToggleStatus = async (id: string, newStatus: boolean) => {
     setLoading(true);
     try {
-      const response = await put(`/api/admin/free-products/${id}`, { enabled: newStatus });
+      // Find the current free product
+      const currentProduct = freeProducts.find(p => p._id === id);
+      if (!currentProduct) {
+        throw new Error('Free product not found');
+      }
+
+      // Send all required fields along with the new status
+      const response = await put(`/api/admin/free-products/${id}`, {
+        productId: currentProduct.productId,
+        minOrderValue: currentProduct.minOrderValue,
+        maxOrderValue: currentProduct.maxOrderValue,
+        enabled: newStatus
+      });
+
       toast({ 
         title: `Free product ${newStatus ? 'enabled' : 'disabled'} successfully`,
         variant: 'default' 
