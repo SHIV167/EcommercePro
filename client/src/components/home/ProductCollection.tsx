@@ -46,7 +46,11 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       categoryId: '1',
       createdAt: new Date(),
       sku: "KUM-MAS-001",
-      images: []
+      images: [],
+      // Add required fields to fix TypeScript errors
+      faqs: [],
+      structuredIngredients: [],
+      structuredBenefits: []
     },
     {
       _id: '2',
@@ -66,7 +70,11 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       categoryId: '1',
       createdAt: new Date(),
       sku: "KUM-SER-002",
-      images: []
+      images: [],
+      // Add required fields to fix TypeScript errors
+      faqs: [],
+      structuredIngredients: [],
+      structuredBenefits: []
     },
     {
       _id: '3',
@@ -86,7 +94,11 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       categoryId: '1',
       createdAt: new Date(),
       sku: "KUM-SET-003",
-      images: []
+      images: [],
+      // Add required fields to fix TypeScript errors
+      faqs: [],
+      structuredIngredients: [],
+      structuredBenefits: []
     },
     {
       _id: '4',
@@ -106,7 +118,11 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       categoryId: '1',
       createdAt: new Date(),
       sku: "KUM-OIL-004",
-      images: []
+      images: [],
+      // Add required fields to fix TypeScript errors
+      faqs: [],
+      structuredIngredients: [],
+      structuredBenefits: []
     }
   ];
 
@@ -150,9 +166,9 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
   );
   const sliderSettings = {
     dots: false,
-    infinite: true,
+    infinite: true, // Enable infinite looping
     speed: 500,
-    slidesToShow: 4,
+    slidesToShow: 4, // Show 4 cards on desktop
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 5000,

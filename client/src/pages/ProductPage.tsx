@@ -662,7 +662,7 @@ const ProductPage: React.FC = () => {
             {/* Bestsellers */}
             <section className="py-8">
               <div className="container mx-auto px-4 py-6 rounded">
-                <ProductCollection title="You May Also Like" collectionSlug="bestsellers" />
+                <ProductCollection title="You May Also Like" collectionSlug="bestsellers" slider={true} />
               </div>
             </section>
 
