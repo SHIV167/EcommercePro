@@ -15,11 +15,19 @@ export async function apiRequest(
   // Use VITE_API_URL or VITE_API_BASE_URL, fallback to current origin if unset
   const baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || window.location.origin;
   const fullUrl = url.startsWith("http") ? url : baseUrl + url;
+  
+  const headers: Record<string, string> = {};
+  
+  // Only set Content-Type for requests with a body
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+    credentials: "include", // This ensures cookies (including JWT) are sent with the request
   });
 
   await throwIfResNotOk(res);
