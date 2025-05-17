@@ -71,6 +71,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           howToUse: product.howToUse || "",
           howToUseVideo: product.howToUseVideo || "",
           howToUseSteps: product.howToUseSteps || [],
+          benefits: product.benefits || "",
+          structuredBenefits: product.structuredBenefits || [],
         }
       : {
           sku: "",
@@ -80,6 +82,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           price: 0,
           discountedPrice: null,
           stock: 0,
+          benefits: "",
+          structuredBenefits: [],
           categoryId: undefined,
           slug: "",
           featured: false,
@@ -110,6 +114,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   const { fields: howToUseStepFields, append: appendHowToUseStep, remove: removeHowToUseStep } = useFieldArray({
     control: form.control,
     name: "howToUseSteps",
+  });
+
+  const { fields: benefitFields, append: appendBenefit, remove: removeBenefit } = useFieldArray({
+    control: form.control,
+    name: "structuredBenefits",
   });
 
   // Handle form submit including images
@@ -176,6 +185,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
         const howToUseStepsJson = JSON.stringify(data.howToUseSteps || []);
         console.log('HOW TO USE STEPS JSON:', howToUseStepsJson);
         formData.append('howToUseSteps', howToUseStepsJson);
+        
+        // Append Benefits data
+        formData.append('benefits', data.benefits || '');
+        
+        // Append Structured Benefits as JSON string
+        console.log('BENEFITS TO SAVE:', data.structuredBenefits);
+        const structuredBenefitsJson = JSON.stringify(data.structuredBenefits || []);
+        console.log('STRUCTURED BENEFITS JSON:', structuredBenefitsJson);
+        formData.append('structuredBenefits', structuredBenefitsJson);
 
         // Send request (POST or PUT)
         const method = product ? 'PUT' : 'POST';
@@ -937,6 +955,129 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Step
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Benefits Section */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Product Benefits</CardTitle>
+                <CardDescription>Add the key benefits of your product</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="benefits"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>General Benefits Text</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Describe the general benefits of this product"
+                            {...field}
+                            className="min-h-[100px]"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Structured Benefits</FormLabel>
+                    </div>
+                    
+                    {benefitFields.length > 0 && (
+                      <div className="space-y-4">
+                        {benefitFields.map((field, index) => (
+                          <div key={field.id} className="p-4 border rounded-md relative">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-2 top-2 h-8 w-8 p-0"
+                              onClick={() => removeBenefit(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              <div className="grid gap-2">
+                                <FormField
+                                  control={form.control}
+                                  name={`structuredBenefits.${index}.title`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Benefit Title</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="e.g., 99.3% Natural, Safe for Children"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              
+                              <div className="grid gap-2">
+                                <FormField
+                                  control={form.control}
+                                  name={`structuredBenefits.${index}.imageUrl`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Image URL</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="URL for benefit image"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="grid gap-2 mt-4">
+                              <FormField
+                                control={form.control}
+                                name={`structuredBenefits.${index}.description`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Benefit Description</FormLabel>
+                                    <FormControl>
+                                      <Textarea
+                                        placeholder="Detailed description of this benefit"
+                                        {...field}
+                                        className="min-h-[100px]"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => appendBenefit({ title: '', description: '', imageUrl: '' })}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Benefit
                     </Button>
                   </div>
                 </div>

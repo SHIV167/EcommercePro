@@ -499,7 +499,7 @@ const ProductPage: React.FC = () => {
               
 
               {/* How to Use Section */}
-              <section className="mb-10 border-2 border-black rounded-md py-6 px-5">
+              <section className="mb-10 border border-black rounded-md py-6 px-5">
                 <h2 className="text-2xl font-heading text-center mb-8"><span className="text-green-600 font-bold">HOW TO</span> <span className="text-gray-800 font-bold">USE</span></h2>
                 <div className="flex flex-col md:flex-row items-stretch gap-6">
                   {/* YouTube Video on the left */}
@@ -569,52 +569,75 @@ const ProductPage: React.FC = () => {
               </section>
 
               {/* Benefits Section */}
-              <section className="mb-16">
+              <section className="mb-16 border-2 border-black rounded-md py-6 px-5">
                 <h2 className="text-2xl font-heading text-center mb-8">Benefits</h2>
                 
-                {/* Benefit 1 - Natural & Safe */}
-                <div className="flex flex-col md:flex-row mb-6 bg-[hsla(0, 9%, 94%, .6)]">
-                  <div className="md:w-1/2 p-6 bg-gray-50 flex flex-col justify-center">
-                    <h3 className="text-lg font-medium mb-2">99.3% Natural, Safe for Children & Daily Use</h3>
-                    <p className="text-sm text-gray-600">This 99% base natural sunscreen for face is safe for children above 3 years old and for daily use for protection with fewer allergies.</p>
+                {/* General benefits text if available */}
+                {extendedProduct?.benefits && (
+                  <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm leading-relaxed text-gray-700">{extendedProduct.benefits}</p>
                   </div>
-                  <div className="md:w-1/2 bg-white">
-                    <img src="/uploads/sections/nnsunprot_1.jpg" alt="Natural sunscreen" className="w-full h-full object-cover" />
-                  </div>
-                </div>
+                )}
                 
-                {/* Benefit 2 - SPF Protection */}
-                <div className="flex flex-col md:flex-row mb-6 bg-[hsla(35, 63%, 95%, .6)]">
-                  <div className="md:w-1/2 order-1 md:order-2 p-6 bg-white flex flex-col justify-center">
-                    <h3 className="text-lg font-medium mb-2">SPF 21 & PA++ Sun Protection</h3>
-                    <p className="text-sm text-gray-600">Titanium dioxide and Zinc Oxide are naturally occurring UV protection minerals that when nano-micronized provide SPF 21 and PA++ sun protection.</p>
+                {/* Structured Benefits */}
+                {extendedProduct?.structuredBenefits && extendedProduct.structuredBenefits.length > 0 ? (
+                  <div className="space-y-6">
+                    {extendedProduct.structuredBenefits.map((benefit, index) => (
+                      <div 
+                        key={index} 
+                        className={`flex flex-col md:flex-row mb-6 ${index % 2 === 0 ? 'bg-[hsla(0, 9%, 94%, .6)]' : 'bg-[hsla(35, 63%, 95%, .6)]'}`}
+                      >
+                        <div className={`md:w-1/2 ${index % 2 === 0 ? '' : 'order-1 md:order-2'} p-6 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} flex flex-col justify-center`}>
+                          <h3 className="text-lg font-medium mb-2">{benefit.title}</h3>
+                          <p className="text-sm text-gray-600">{benefit.description}</p>
+                        </div>
+                        <div className={`md:w-1/2 ${index % 2 === 0 ? '' : 'order-2 md:order-1'} ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                          {benefit.imageUrl ? (
+                            <img 
+                              src={benefit.imageUrl} 
+                              alt={benefit.title} 
+                              className="w-full h-full object-cover" 
+                            />
+                          ) : (
+                            <div className="w-full h-full min-h-[200px] flex items-center justify-center bg-gray-100">
+                              <p className="text-gray-400">No image available</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="md:w-1/2 order-2 md:order-1 bg-gray-50">
-                    <img src="/uploads/sections/nnsunprot_2.jpg" alt="Sun protection" className="w-full h-full object-cover" />
-                  </div>
-                </div>
-                
-                {/* Benefit 3 - Repair */}
-                <div className="flex flex-col md:flex-row mb-6 bg-[hsla(0, 9%, 94%, .6)]">
-                  <div className="md:w-1/2 p-6 bg-gray-50 flex flex-col justify-center">
-                    <h3 className="text-lg font-medium mb-2">Repairs Sunspots & Conditions Skin</h3>
-                    <p className="text-sm text-gray-600">These butter extracts are aged and matured together, deeply nourishing and thus in condition the skin without making it feeling greasy, making it the perfect natural sunscreen for oily skin.</p>
-                  </div>
-                  <div className="md:w-1/2 bg-white">
-                    <img src="/uploads/sections/nnsunprot_3.jpg" alt="Skin repair" className="w-full h-full object-cover" />
-                  </div>
-                </div>
-                
-                {/* Benefit 4 - Non-Nano */}
-                <div className="flex flex-col md:flex-row bg-[hsla(35, 63%, 95%, .6)]">
-                  <div className="md:w-1/2 order-1 md:order-2 p-6 bg-white flex flex-col justify-center">
-                    <h3 className="text-lg font-medium mb-2">Non-Nano Formulation Based Sun Protector</h3>
-                    <p className="text-sm text-gray-600">Non-Nano ZnO Oxide is the basic active minerals and filters out UVA & UVB rays protecting the skin from penetration and harm.</p>
-                  </div>
-                  <div className="md:w-1/2 order-2 md:order-1 bg-gray-50">
-                    <img src="/uploads/sections/nnsunprot_4.jpg" alt="Non-nano formulation" className="w-full h-full object-cover" />
-                  </div>
-                </div>
+                ) : (
+                  // Fallback content if no structured benefits are available
+                  !extendedProduct?.benefits && (
+                    <div className="space-y-6">
+                      {/* Default benefit items */}
+                      <div className="flex flex-col md:flex-row mb-6 bg-[hsla(0, 9%, 94%, .6)]">
+                        <div className="md:w-1/2 p-6 bg-gray-50 flex flex-col justify-center">
+                          <h3 className="text-lg font-medium mb-2">99.3% Natural, Safe for Daily Use</h3>
+                          <p className="text-sm text-gray-600">This natural product is safe for daily use for protection with fewer allergies.</p>
+                        </div>
+                        <div className="md:w-1/2 bg-white">
+                          <div className="w-full h-full min-h-[200px] flex items-center justify-center bg-gray-100">
+                            <p className="text-gray-400">Image placeholder</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col md:flex-row mb-6 bg-[hsla(35, 63%, 95%, .6)]">
+                        <div className="md:w-1/2 order-1 md:order-2 p-6 bg-white flex flex-col justify-center">
+                          <h3 className="text-lg font-medium mb-2">Premium Quality Ingredients</h3>
+                          <p className="text-sm text-gray-600">Made with the highest quality ingredients for maximum effectiveness.</p>
+                        </div>
+                        <div className="md:w-1/2 order-2 md:order-1 bg-gray-50">
+                          <div className="w-full h-full min-h-[200px] flex items-center justify-center bg-gray-100">
+                            <p className="text-gray-400">Image placeholder</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                )}
               </section>
             </div>
 
@@ -671,7 +694,7 @@ const ProductPage: React.FC = () => {
             </section>
 
             {/* FAQ Section */}
-            <section className="py-12 max-w-4xl mx-auto px-8 border-2 border-black rounded-md my-10 bg-white">
+            <section className="py-12 max-w-4xl mx-auto px-8 border border-black rounded-md my-10 bg-white">
               <h2 className="text-2xl font-heading text-primary mb-6 text-center">Frequently Asked Questions</h2>
               {extendedProduct?.faqs && extendedProduct.faqs.length > 0 ? (
                 <ProductFAQ faqs={extendedProduct.faqs} />
