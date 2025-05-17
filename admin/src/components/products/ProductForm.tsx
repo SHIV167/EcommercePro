@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -150,7 +150,23 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   const { fields: customSectionFields, append: appendCustomSection, remove: removeCustomSection } = useFieldArray({
     control: form.control,
     name: "customSections",
+    keyName: "key" // Use key as keyName to avoid conflicts with id
   });
+  
+  // Add backward compatibility for customSections
+  useEffect(() => {
+    try {
+      // Check if customSections exists in the form values
+      if (form && !form.getValues().customSections) {
+        // Initialize with empty array if it doesn't exist
+        form.setValue("customSections", []);
+      }
+    } catch (error) {
+      console.error("Error initializing customSections:", error);
+      // Fallback - ensure customSections is defined
+      form.setValue("customSections", []);
+    }
+  }, [form]);
 
   // Handle form submit including images
   const handleSubmitWithImages = form.handleSubmit(
@@ -856,7 +872,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {fields.customSections?.map((section, index) => (
+                  {customSectionFields && Array.isArray(customSectionFields) && customSectionFields.map((section, index) => (
                     <div key={section.id} className="border rounded-lg p-4 relative">
                       <div className="absolute top-2 right-2">
                         <Button
@@ -952,13 +968,24 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => appendCustomSection({
-                          id: nanoid(),
-                          title: '',
-                          htmlContent: '',
-                          displayOrder: fields.customSections?.length || 0,
-                          enabled: true
-                        })}
+                        onClick={() => {
+                          try {
+                            appendCustomSection({
+                              id: nanoid(),
+                              title: '',
+                              htmlContent: '',
+                              displayOrder: (customSectionFields && Array.isArray(customSectionFields)) ? customSectionFields.length : 0,
+                              enabled: true
+                            });
+                          } catch (error) {
+                            console.error("Error adding custom section:", error);
+                            toast({
+                              title: "Error adding section",
+                              description: "Please try again or contact support.",
+                              variant: "destructive"
+                            });
+                          }
+                        }}
                         className="w-full"
                       >
                         <Plus className="h-4 w-4 mr-2" />
@@ -972,13 +999,24 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                             type="button"
                             variant="secondary"
                             size="sm"
-                            onClick={() => appendCustomSection({
-                              id: nanoid(),
-                              title: template.title,
-                              htmlContent: template.content,
-                              displayOrder: fields.customSections?.length || 0,
-                              enabled: true
-                            })}
+                            onClick={() => {
+                              try {
+                                appendCustomSection({
+                                  id: nanoid(),
+                                  title: template.title,
+                                  htmlContent: template.content,
+                                  displayOrder: (customSectionFields && Array.isArray(customSectionFields)) ? customSectionFields.length : 0,
+                                  enabled: true
+                                });
+                              } catch (error) {
+                                console.error("Error adding template:", error);
+                                toast({
+                                  title: "Error adding template",
+                                  description: "Please try again or contact support.",
+                                  variant: "destructive"
+                                });
+                              }
+                            }}
                           >
                             + {template.title} Template
                           </Button>
