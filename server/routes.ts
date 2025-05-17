@@ -858,6 +858,17 @@ export async function registerRoutes(app: Application): Promise<Server> {
         }
       }
       
+      // Parse structured ingredients if provided
+      let structuredIngredients = [];
+      if (productData.structuredIngredients) {
+        try {
+          structuredIngredients = JSON.parse(productData.structuredIngredients);
+          console.log('Parsed structuredIngredients:', structuredIngredients);
+        } catch (e) {
+          console.error('Error parsing structuredIngredients:', e);
+        }
+      }
+
       const newProduct = await storage.createProduct({
         ...productData,
         price,
@@ -865,7 +876,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
         discountedPrice,
         images,
         imageUrl,
-        faqs
+        faqs,
+        structuredIngredients
       });
       console.log('[PRODUCT CREATE] Success:', newProduct);
       return res.status(201).json(newProduct);
@@ -917,7 +929,18 @@ export async function registerRoutes(app: Application): Promise<Server> {
         }
       }
       
-      const updateData = { ...productData, images, imageUrl, faqs };
+      // Parse structured ingredients if provided
+      let structuredIngredients = [];
+      if (productData.structuredIngredients) {
+        try {
+          structuredIngredients = JSON.parse(productData.structuredIngredients);
+          console.log('Parsed structuredIngredients:', structuredIngredients);
+        } catch (e) {
+          console.error('Error parsing structuredIngredients:', e);
+        }
+      }
+      
+      const updateData = { ...productData, images, imageUrl, faqs, structuredIngredients };
       const updatedProduct = await storage.updateProduct(productId, updateData);
       console.log('[PRODUCT UPDATE] Success:', updatedProduct);
       return res.status(200).json(updatedProduct);

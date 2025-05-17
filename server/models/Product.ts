@@ -5,6 +5,13 @@ export interface FAQ {
   answer: string;
 }
 
+export interface Ingredient {
+  name: string;
+  description: string;
+  benefits?: string;
+  imageUrl?: string;
+}
+
 export interface IProduct extends Document {
   name: string;
   sku: string;
@@ -25,11 +32,20 @@ export interface IProduct extends Document {
   images: string[];
   videoUrl: string;
   faqs?: FAQ[];
+  ingredients?: string;
+  structuredIngredients?: Ingredient[];
 }
 
 const FAQSchema = new Schema({
   question: { type: String, required: true },
   answer: { type: String, required: true }
+}, { _id: false });
+
+const IngredientSchema = new Schema({
+  name: { type: String, required: true },
+  description: { type: String, required: true },
+  benefits: { type: String },
+  imageUrl: { type: String }
 }, { _id: false });
 
 const ProductSchema: Schema = new Schema({
@@ -52,6 +68,8 @@ const ProductSchema: Schema = new Schema({
   images: { type: [String], default: [] },
   videoUrl: { type: String, default: '' },
   faqs: { type: [FAQSchema], default: [] },
+  ingredients: { type: String },
+  structuredIngredients: { type: [IngredientSchema], default: [] },
 });
 
 export default mongoose.model<IProduct>('Product', ProductSchema);
