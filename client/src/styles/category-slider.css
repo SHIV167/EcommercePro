@@ -1,0 +1,39 @@
+.category-slider {
+  padding-bottom: 40px;
+}
+
+.category-slider .slick-dots {
+  bottom: 0;
+}
+
+.category-slider .slick-dots li {
+  margin: 0 4px;
+}
+
+.category-slider .slick-dots li button:before {
+  font-size: 8px;
+  color: #558076;
+  opacity: 0.25;
+  transition: all 0.3s ease;
+}
+
+.category-slider .slick-dots li.slick-active button:before {
+  opacity: 1;
+  color: #558076;
+}
+
+.category-slider .slick-slide {
+  padding: 0 12px;
+}
+
+/* Add spacing between items */
+.category-slider .slick-track {
+  display: flex;
+  gap: 24px;
+}
+
+/* Center items when there are fewer slides than slidesToShow */
+.category-slider .slick-track {
+  margin-left: auto;
+  margin-right: auto;
+}

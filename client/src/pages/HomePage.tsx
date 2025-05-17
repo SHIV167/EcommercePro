@@ -17,6 +17,8 @@ import { Helmet } from 'react-helmet';
 import SearchBar from '@/components/home/SearchBar';
 import React, { useState, useEffect } from 'react';
 import MobileFooterNav from '@/components/navigation/MobileFooterNav';
+import BlogSlider from '@/components/home/BlogSlider';
+import '@/styles/blog-slider.css';
 
 export default function HomePage() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -51,6 +53,7 @@ export default function HomePage() {
       <FeaturedProductsSection/>
       <SustainabilitySection />
       <VideoGallery />
+      <BlogSlider />
       <NewsletterSection />
       <MobileFooterNav />
     </>

@@ -1,3 +1,8 @@
+export interface FAQ {
+  question: string;
+  answer: string;
+}
+
 export interface Product {
   _id: string;
   name: string;
@@ -9,5 +14,6 @@ export interface Product {
   stock: number;
   imageUrl?: string;
   videoUrl?: string;
+  faqs?: FAQ[];
   [key: string]: any;
 }

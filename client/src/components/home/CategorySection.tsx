@@ -1,14 +1,12 @@
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Category } from "@shared/schema";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay } from 'swiper/modules';
-import { useRef } from "react";
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import 'swiper/css';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
+import '@/styles/category-slider.css';
 
 export default function CategorySection() {
-  const swiperRef = useRef<any>(null);
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories/featured'],
   });
@@ -48,66 +46,42 @@ export default function CategorySection() {
   return (
     <section className="py-12 bg-neutral-cream category-section">
       <div className="container mx-auto px-4 relative">
-        {/* Custom navigation buttons positioned at absolute edges */}
-        <button 
-          onClick={() => swiperRef.current?.slidePrev()}
-          className="custom-nav-arrow absolute top-1/2 -translate-y-1/2 left-0 md:left-4 rounded-full w-10 h-10 flex items-center justify-center z-10 focus:outline-none"
-          style={{
-            backgroundColor: 'rgba(85, 128, 118, 0.85)',
-            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
-            transition: 'all 0.2s ease',
-          }}
-          aria-label="Previous categories"
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(85, 128, 118, 1)';
-            e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(85, 128, 118, 0.85)';
-            e.currentTarget.style.transform = 'translateY(-50%)';
-          }}
-        >
-          <ChevronLeft className="w-5 h-5 text-white" />
-        </button>
-
-        <button 
-          onClick={() => swiperRef.current?.slideNext()}
-          className="custom-nav-arrow absolute top-1/2 -translate-y-1/2 right-0 md:right-4 rounded-full w-10 h-10 flex items-center justify-center z-10 focus:outline-none"
-          style={{
-            backgroundColor: 'rgba(85, 128, 118, 0.85)',
-            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
-            transition: 'all 0.2s ease',
-          }}
-          aria-label="Next categories"
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(85, 128, 118, 1)';
-            e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(85, 128, 118, 0.85)';
-            e.currentTarget.style.transform = 'translateY(-50%)';
-          }}
-        >
-          <ChevronRight className="w-5 h-5 text-white" />
-        </button>
         <h2 className="font-heading text-2xl text-primary text-center mb-10">Shop By Category</h2>
-        <Swiper
-          spaceBetween={24}
-          slidesPerView={2}
-          breakpoints={{
-            640: { slidesPerView: 3 },
-            1024: { slidesPerView: 5 },
-            1280: { slidesPerView: 7 },
-          }}
-          className="category-swiper"
-          autoplay={{ delay: 2500, disableOnInteraction: false }}
-          modules={[Autoplay]}
-          onSwiper={(swiper) => {
-            swiperRef.current = swiper;
-          }}
+        <Slider
+          dots={true}
+          arrows={false}
+          infinite={true}
+          speed={500}
+          autoplay={true}
+          autoplaySpeed={2500}
+          slidesToShow={7}
+          slidesToScroll={1}
+          className="category-slider"
+          responsive={[
+            {
+              breakpoint: 1280,
+              settings: {
+                slidesToShow: 5,
+                slidesToScroll: 1
+              }
+            },
+            {
+              breakpoint: 1024,
+              settings: {
+                slidesToShow: 4,
+                slidesToScroll: 1
+              }
+            },
+            {
+              breakpoint: 640,
+              settings: {
+                slidesToShow: 2,
+                slidesToScroll: 1
+              }
+            }
+          ]}
         >
           {displayCategories.map((category) => (
-            <SwiperSlide key={category._id || category.slug}>
               <Link href={`/categories/${category.slug}`} className="group block">
                 <div className="flex flex-col items-center">
                   <div className="mb-4 flex items-center justify-center">
@@ -124,9 +98,9 @@ export default function CategorySection() {
                   </h3>
                 </div>
               </Link>
-            </SwiperSlide>
+
           ))}
-        </Swiper>
+        </Slider>
       </div>
     </section>
   );

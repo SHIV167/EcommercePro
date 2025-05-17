@@ -1,5 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface FAQ {
+  question: string;
+  answer: string;
+}
+
 export interface IProduct extends Document {
   name: string;
   sku: string;
@@ -19,7 +24,13 @@ export interface IProduct extends Document {
   createdAt: Date;
   images: string[];
   videoUrl: string;
+  faqs?: FAQ[];
 }
+
+const FAQSchema = new Schema({
+  question: { type: String, required: true },
+  answer: { type: String, required: true }
+}, { _id: false });
 
 const ProductSchema: Schema = new Schema({
   name: { type: String, required: true },
@@ -40,6 +51,7 @@ const ProductSchema: Schema = new Schema({
   createdAt: { type: Date, default: Date.now },
   images: { type: [String], default: [] },
   videoUrl: { type: String, default: '' },
+  faqs: { type: [FAQSchema], default: [] },
 });
 
 export default mongoose.model<IProduct>('Product', ProductSchema);

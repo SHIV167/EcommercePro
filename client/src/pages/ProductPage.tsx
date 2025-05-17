@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import React from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Product, Review } from "@shared/schema";
+import { Product as BaseProduct, Review } from "@shared/schema";
+import { Product, FAQ } from "@/types/product";
 import ReviewForm from "@/components/product/ReviewForm";
 import { Button } from "@/components/ui/button";
 import RatingStars from "@/components/products/RatingStars";
@@ -14,6 +15,9 @@ import { Helmet } from "react-helmet";
 import StickyAddToCart from "@/components/products/StickyAddToCart";
 import { apiRequest } from "@/lib/queryClient";
 import SocialShare from "@/components/products/SocialShare";
+import ProductFAQ from "@/components/product/ProductFAQ";
+import '@/styles/product-faq.css';
+import BlogSection from '@/components/home/BlogSection';
 
 // Extend Review type with server-enriched fields
 type EnrichedReview = Review & { _id?: string; userName?: string };
@@ -33,7 +37,7 @@ const ProductPage: React.FC = () => {
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
   const [couponApplied, setCouponApplied] = useState(false);
 
-  const { data: product, isLoading: productLoading } = useQuery<Product>({
+  const { data: product, isLoading: productLoading } = useQuery<BaseProduct & { faqs?: FAQ[] }>({
     queryKey: [`/api/products/${slug}`],
     queryFn: () => fetch(`/api/products/${slug}`).then(res => res.json()),
     enabled: !!slug,
@@ -52,7 +56,32 @@ const ProductPage: React.FC = () => {
   });
 
   const isDataReady = !productLoading && !!product;
-  const extendedProduct = isDataReady ? { ...product, reviews, relatedProducts: ((product as any)?.relatedProducts || []) as Product[] } : null;
+  // Sample FAQs for testing
+  const sampleFaqs = [
+    {
+      question: "Can I know why it is 99.3% natural where 0.7% is gone Is it safe for children?",
+      answer: "Yes, Natural Sun Protection is clinically tested for use on the face & body, for children above the age of three."
+    },
+    {
+      question: "Is it compulsory to apply moisturiser before applying Kama sunscreen? And can I use other moisturisers(other brands) with Kama sun protection?",
+      answer: "While it's not strictly compulsory, we recommend applying a moisturizer before sunscreen for optimal skin hydration. You can use moisturizers from other brands with our sun protection product."
+    },
+    {
+      question: "Is it sls and paraben free product?",
+      answer: "Yes, our product is free from SLS (Sodium Lauryl Sulfate) and parabens. We use natural and gentle ingredients in our formulations."
+    },
+    {
+      question: "Is this work for digital media lights and all kind of lights of today's generation?",
+      answer: "Yes, our sun protection is effective against various types of light, including blue light from digital devices and UV rays from different sources."
+    }
+  ];
+
+  const extendedProduct = isDataReady ? { 
+    ...product, 
+    reviews, 
+    relatedProducts: ((product as any)?.relatedProducts || []) as Product[],
+    faqs: product?.faqs || sampleFaqs // Use product FAQs if available, otherwise use sample FAQs
+  } : null;
 
   const ExtendedReviewForm = ReviewForm as unknown as React.FC<{ productId: string; onClose: () => void; onSubmit: (review: EnrichedReview) => void; }>;
 
@@ -567,12 +596,22 @@ const ProductPage: React.FC = () => {
               </div>
             </section>
 
+            {/* FAQ Section */}
+            {extendedProduct?.faqs && extendedProduct.faqs.length > 0 && (
+              <section className="py-8 max-w-3xl mx-auto px-8">
+                <ProductFAQ faqs={extendedProduct.faqs} />
+              </section>
+            )}
+
             {/* Bestsellers */}
             <section className="py-8">
               <div className="container mx-auto px-4 py-6 rounded">
                 <ProductCollection title="You May Also Like" collectionSlug="bestsellers" />
               </div>
             </section>
+
+            {/* Blog Section */}
+            <BlogSection />
 
             {/* Sticky Add to Cart */}
             {/* <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden">
