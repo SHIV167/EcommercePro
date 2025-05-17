@@ -81,39 +81,37 @@ export async function updateFreeProduct(req: Request, res: Response) {
     const { id } = req.params;
     const { productId, minOrderValue, maxOrderValue, enabled } = req.body;
 
-    // Validate min and max order values
-    if (minOrderValue <= 0) {
+    // Validate min and max order values if provided
+    if (minOrderValue !== undefined && minOrderValue <= 0) {
       return res.status(400).json({ message: 'Minimum order value must be greater than zero' });
     }
     
-    if (maxOrderValue !== null && maxOrderValue <= minOrderValue) {
+    if (maxOrderValue !== null && maxOrderValue !== undefined && minOrderValue !== undefined && maxOrderValue <= minOrderValue) {
       return res.status(400).json({ 
         message: 'Maximum order value must be greater than minimum order value' 
       });
     }
 
-    // Check if the product is already a free product (for a different entry)
-    const existingProduct = await FreeProductModel.findOne({ 
-      productId,
-      _id: { $ne: id } // Exclude the current product being updated
-    });
-    
-    if (existingProduct) {
-      return res.status(400).json({ 
-        message: 'This product is already set up as a free product in another entry' 
-      });
-    }
-
-    const updateData: any = { 
-      minOrderValue, 
-      maxOrderValue: maxOrderValue || null, 
-      enabled 
-    };
-
-    // Only update productId if it's different (to avoid unnecessary updates)
+    // Check if the product is already a free product (for a different entry) only if productId is provided
     if (productId) {
-      updateData.productId = productId;
+      const existingProduct = await FreeProductModel.findOne({ 
+        productId,
+        _id: { $ne: id } // Exclude the current product being updated
+      });
+      
+      if (existingProduct) {
+        return res.status(400).json({ 
+          message: 'This product is already set up as a free product in another entry' 
+        });
+      }
     }
+
+    const updateData: any = {};
+    // Only update fields that are explicitly provided
+    if (productId !== undefined) updateData.productId = productId;
+    if (minOrderValue !== undefined) updateData.minOrderValue = minOrderValue;
+    if (maxOrderValue !== undefined) updateData.maxOrderValue = maxOrderValue || null;
+    if (enabled !== undefined) updateData.enabled = enabled;
 
     const freeProduct = await FreeProductModel.findByIdAndUpdate(
       id, 
