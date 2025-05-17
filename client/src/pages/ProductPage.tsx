@@ -56,31 +56,11 @@ const ProductPage: React.FC = () => {
   });
 
   const isDataReady = !productLoading && !!product;
-  // Sample FAQs for testing
-  const sampleFaqs = [
-    {
-      question: "Can I know why it is 99.3% natural where 0.7% is gone Is it safe for children?",
-      answer: "Yes, Natural Sun Protection is clinically tested for use on the face & body, for children above the age of three."
-    },
-    {
-      question: "Is it compulsory to apply moisturiser before applying Kama sunscreen? And can I use other moisturisers(other brands) with Kama sun protection?",
-      answer: "While it's not strictly compulsory, we recommend applying a moisturizer before sunscreen for optimal skin hydration. You can use moisturizers from other brands with our sun protection product."
-    },
-    {
-      question: "Is it sls and paraben free product?",
-      answer: "Yes, our product is free from SLS (Sodium Lauryl Sulfate) and parabens. We use natural and gentle ingredients in our formulations."
-    },
-    {
-      question: "Is this work for digital media lights and all kind of lights of today's generation?",
-      answer: "Yes, our sun protection is effective against various types of light, including blue light from digital devices and UV rays from different sources."
-    }
-  ];
-
   const extendedProduct = isDataReady ? { 
     ...product, 
     reviews, 
     relatedProducts: ((product as any)?.relatedProducts || []) as Product[],
-    faqs: product?.faqs || sampleFaqs // Use product FAQs if available, otherwise use sample FAQs
+    faqs: product?.faqs || [] // Use product FAQs from the database
   } : null;
 
   const ExtendedReviewForm = ReviewForm as unknown as React.FC<{ productId: string; onClose: () => void; onSubmit: (review: EnrichedReview) => void; }>;
@@ -597,11 +577,17 @@ const ProductPage: React.FC = () => {
             </section>
 
             {/* FAQ Section */}
-            {extendedProduct?.faqs && extendedProduct.faqs.length > 0 && (
-              <section className="py-8 max-w-3xl mx-auto px-8">
+            <section className="py-12 max-w-4xl mx-auto px-8 border-2 border-black rounded-md my-10 bg-white">
+              <h2 className="text-2xl font-heading text-primary mb-6 text-center">Frequently Asked Questions</h2>
+              {extendedProduct?.faqs && extendedProduct.faqs.length > 0 ? (
                 <ProductFAQ faqs={extendedProduct.faqs} />
-              </section>
-            )}
+              ) : (
+                <div className="text-center p-6 bg-gray-50 rounded-md">
+                  <p className="text-gray-600">No frequently asked questions are available for this product yet.</p>
+                  <p className="text-sm text-gray-500 mt-2">Check back soon or contact customer support if you have specific questions.</p>
+                </div>
+              )}
+            </section>
 
             {/* Bestsellers */}
             <section className="py-8">

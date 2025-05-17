@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+// FAQ schema type for products
+export const faqSchema = z.object({
+  question: z.string(),
+  answer: z.string(),
+});
+export type FAQ = z.infer<typeof faqSchema>;
+
 // Product Zod schema and TypeScript type
 export const productSchema = z.object({
   _id: z.string().optional(), // MongoDB ObjectId as string
@@ -21,6 +28,7 @@ export const productSchema = z.object({
   createdAt: z.date().optional(),
   images: z.array(z.string()).optional().default([]),
   videoUrl: z.string().optional(),
+  faqs: z.array(faqSchema).optional().default([]), // Product FAQs
   minOrderValue: z.number().optional(), // For free products
   isFreeProduct: z.boolean().optional(), // Flag for free products
   ingredients: z.string().optional(), // Product ingredients

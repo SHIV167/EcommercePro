@@ -848,13 +848,24 @@ export async function registerRoutes(app: Application): Promise<Server> {
         console.error('[PRODUCT CREATE ERROR] Duplicate slug:', productData.slug);
         return res.status(400).json({ error: "Product with this slug already exists" });
       }
+      // Parse FAQs if provided
+      let faqs = [];
+      if (productData.faqs) {
+        try {
+          faqs = JSON.parse(productData.faqs);
+        } catch (e) {
+          console.error('Error parsing FAQs:', e);
+        }
+      }
+      
       const newProduct = await storage.createProduct({
         ...productData,
         price,
         stock,
         discountedPrice,
         images,
-        imageUrl
+        imageUrl,
+        faqs
       });
       console.log('[PRODUCT CREATE] Success:', newProduct);
       return res.status(201).json(newProduct);
@@ -896,7 +907,17 @@ export async function registerRoutes(app: Application): Promise<Server> {
         console.error('[PRODUCT UPDATE ERROR] Product not found:', productId);
         return res.status(404).json({ error: "Product not found" });
       }
-      const updateData = { ...productData, images, imageUrl };
+      // Parse FAQs if provided
+      let faqs = [];
+      if (productData.faqs) {
+        try {
+          faqs = JSON.parse(productData.faqs);
+        } catch (e) {
+          console.error('Error parsing FAQs:', e);
+        }
+      }
+      
+      const updateData = { ...productData, images, imageUrl, faqs };
       const updatedProduct = await storage.updateProduct(productId, updateData);
       console.log('[PRODUCT UPDATE] Success:', updatedProduct);
       return res.status(200).json(updatedProduct);

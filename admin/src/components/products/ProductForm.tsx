@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { apiRequest } from "../../lib/queryClient";
@@ -12,8 +12,9 @@ import { Textarea } from "../ui/textarea";
 import { Checkbox } from "../ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
-import { productSchema, categorySchema } from "../../../../shared/schema";
-import { X } from 'lucide-react';
+import { productSchema, categorySchema, faqSchema } from "../../../../shared/schema";
+import { X, Plus, Trash2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 type Product = z.infer<typeof productSchema>;
 type Category = z.infer<typeof categorySchema>;
 import { MongoProduct, MongoCategory } from "../../types/mongo";
@@ -65,6 +66,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           videoUrl: product.videoUrl || "",
           imageUrl: product.imageUrl || "",
           images: product.images || [],
+          faqs: product.faqs || [],
         }
       : {
           sku: "",
@@ -82,7 +84,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           videoUrl: "",
           imageUrl: "",
           images: [],
+          faqs: [],
         },
+  });
+  
+  // Setup a field array for managing FAQs
+  const { fields: faqFields, append: appendFaq, remove: removeFaq } = useFieldArray({
+    control: form.control,
+    name: "faqs",
   });
 
   // Handle form submit including images
@@ -129,6 +138,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           existingImages.forEach(url => formData.append('existingImages', url));
         }
         // No longer append imageUrl manually (let backend set it from images array)
+        
+        // Append FAQs as JSON string
+        if (data.faqs && data.faqs.length > 0) {
+          formData.append('faqs', JSON.stringify(data.faqs));
+        }
 
         // Send request (POST or PUT)
         const method = product ? 'PUT' : 'POST';
@@ -527,6 +541,89 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
+          
+          {/* Product FAQs Section */}
+          <div className="col-span-full mt-6">
+            <Card>
+              <CardHeader className="bg-muted/50">
+                <CardTitle className="text-lg font-medium">Frequently Asked Questions</CardTitle>
+                <CardDescription>
+                  Add common questions and answers about this product that will be displayed on the product page.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {faqFields.length === 0 ? (
+                  <div className="text-center p-4 border border-dashed rounded-md">
+                    <p className="text-muted-foreground mb-2">No FAQs added yet</p>
+                    <p className="text-sm text-muted-foreground">Add some frequently asked questions to help customers learn more about this product.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {faqFields.map((field, index) => (
+                      <div key={field.id} className="p-4 border rounded-md relative">
+                        <button 
+                          type="button" 
+                          className="absolute top-2 right-2 text-destructive hover:text-destructive/90"
+                          onClick={() => removeFaq(index)}
+                          aria-label="Remove FAQ"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <label htmlFor={`faqs.${index}.question`} className="text-sm font-medium">
+                              Question
+                            </label>
+                            <input
+                              {...form.register(`faqs.${index}.question`)}
+                              id={`faqs.${index}.question`}
+                              placeholder="Enter customer question"
+                              className="w-full p-2 border rounded-md text-sm"
+                            />
+                            {form.formState.errors?.faqs?.[index]?.question && (
+                              <p className="text-destructive text-xs mt-1">
+                                {form.formState.errors.faqs[index]?.question?.message}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <label htmlFor={`faqs.${index}.answer`} className="text-sm font-medium">
+                              Answer
+                            </label>
+                            <textarea
+                              {...form.register(`faqs.${index}.answer`)}
+                              id={`faqs.${index}.answer`}
+                              placeholder="Enter your answer to the question"
+                              rows={3}
+                              className="w-full p-2 border rounded-md text-sm resize-none"
+                            />
+                            {form.formState.errors?.faqs?.[index]?.answer && (
+                              <p className="text-destructive text-xs mt-1">
+                                {form.formState.errors.faqs[index]?.answer?.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => appendFaq({ question: '', answer: '' })}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add FAQ
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
         
         <div className="flex justify-end space-x-2 pt-2">
