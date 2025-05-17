@@ -3,6 +3,12 @@ export interface FAQ {
   answer: string;
 }
 
+export interface HowToUseStep {
+  stepNumber: number;
+  title: string;
+  description: string;
+}
+
 export interface Product {
   _id: string;
   name: string;
@@ -15,5 +21,9 @@ export interface Product {
   imageUrl?: string;
   videoUrl?: string;
   faqs?: FAQ[];
+  howToUse?: string;
+  howToUseVideo?: string;
+  howToUseSteps?: HowToUseStep[];
+  structuredIngredients?: any[];
   [key: string]: any;
 }

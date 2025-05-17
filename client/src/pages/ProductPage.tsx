@@ -499,11 +499,11 @@ const ProductPage: React.FC = () => {
               
 
               {/* How to Use Section */}
-              <section className="mb-10">
-                <h2 className="text-2xl font-heading text-center mb-6"><span className="text-green-600 font-bold">HOW TO</span> <span className="text-gray-800 font-bold">USE</span></h2>
-                <div className="flex flex-col md:flex-row items-stretch border border-gray-100 rounded overflow-hidden">
+              <section className="mb-10 border-2 border-black rounded-md py-6 px-5">
+                <h2 className="text-2xl font-heading text-center mb-8"><span className="text-green-600 font-bold">HOW TO</span> <span className="text-gray-800 font-bold">USE</span></h2>
+                <div className="flex flex-col md:flex-row items-stretch gap-6">
                   {/* YouTube Video on the left */}
-                  <div className="w-full md:w-1/2 bg-black">
+                  <div className="w-full md:w-1/2 bg-black rounded-md overflow-hidden">
                     {extendedProduct?.howToUseVideo ? (
                       <iframe 
                         className="w-full h-full min-h-[300px]"
@@ -521,13 +521,11 @@ const ProductPage: React.FC = () => {
                   </div>
                   
                   {/* Steps on the right */}
-                  <div className="w-full md:w-1/2 p-6 bg-white">
-                    <h3 className="text-xl font-medium mb-4">Follow these steps:</h3>
-                    
+                  <div className="w-full md:w-1/2 bg-white">
                     {/* General instructions if available */}
                     {extendedProduct?.howToUse && (
-                      <div className="mb-4 pb-4 border-b border-gray-100">
-                        <p className="text-sm text-gray-700">{extendedProduct.howToUse}</p>
+                      <div className="mb-6">
+                        <p className="text-sm leading-relaxed text-gray-700">{extendedProduct.howToUse}</p>
                       </div>
                     )}
                     
@@ -538,24 +536,30 @@ const ProductPage: React.FC = () => {
                         {[...extendedProduct.howToUseSteps]
                           .sort((a, b) => a.stepNumber - b.stepNumber)
                           .map((step, index) => (
-                            <div key={index}>
-                              <h4 className="font-bold">Step {step.stepNumber}: {step.title}</h4>
-                              <p className="text-sm text-gray-700 mt-1">{step.description}</p>
+                            <div key={index} className="border-b border-gray-200 pb-4 mb-4 last:border-0">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-bold">Step {step.stepNumber}: {step.title}</span>
+                              </div>
+                              <p className="text-sm text-gray-700 mt-2">{step.description}</p>
                             </div>
                           ))
                         }
                       </div>
                     ) : (
-                      /* No structured steps, show a placeholder or fallback */
+                      /* No structured steps, show a placeholder only if no general instructions */
                       !extendedProduct?.howToUse && (
                         <div className="space-y-6">
-                          <div>
-                            <h4 className="font-bold">Step 1: Prepare for the Day</h4>
-                            <p className="text-sm text-gray-700 mt-1">Take one capsule with water 30 minutes before breakfast to help control sugar cravings throughout the day.</p>
+                          <div className="border-b border-gray-200 pb-4 mb-4">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-bold">Step 1: Prepare for the Day</span>
+                            </div>
+                            <p className="text-sm text-gray-700 mt-2">Take one capsule with water 30 minutes before breakfast to help control sugar cravings throughout the day.</p>
                           </div>
                           <div>
-                            <h4 className="font-bold">Step 2: Morning Application</h4>
-                            <p className="text-sm text-gray-700 mt-1">Apply a small amount of the product to clean, dry skin before sun exposure. Reapply every 2-3 hours for continuous protection.</p>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-bold">Step 2: Morning Application</span>
+                            </div>
+                            <p className="text-sm text-gray-700 mt-2">Apply a small amount of the product to clean, dry skin before sun exposure. Reapply every 2-3 hours for continuous protection.</p>
                           </div>
                         </div>
                       )
