@@ -332,7 +332,7 @@ const ProductPage: React.FC = () => {
             </div>
 
             {/* Product Information Sections */}
-            <div className="mt-12 max-w-4xl mx-auto p-6">
+            <div className="mt-12 max-w-5xl mx-auto p-6">
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Offers Section */}
                 <div className="w-full md:w-1/2 border-2 border-gray-800 rounded p-4 mb-6 bg-white">
@@ -430,23 +430,23 @@ const ProductPage: React.FC = () => {
                 <h2 className="text-xl font-heading text-primary mb-6">Ingredients</h2>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Lemon" className="w-50 h-50 rounded-full object-contain mb-2" />
+                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Lemon" className="w-40 h-50 rounded-full object-contain mb-2" />
                     <span className="text-sm text-center">Lemon</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Honey" className="w-50 h-50 rounded-full object-contain mb-2" />
+                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Honey" className="w-40 h-50 rounded-full object-contain mb-2" />
                     <span className="text-sm text-center">Honey</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Milk" className="w-50 h-50 rounded-full object-contain mb-2" />
+                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Milk" className="w-40 h-50 rounded-full object-contain mb-2" />
                     <span className="text-sm text-center">Milk</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Vitamin E" className="w-50 h-50 rounded-full object-contain mb-2" />
+                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Vitamin E" className="w-40 h-50 rounded-full object-contain mb-2" />
                     <span className="text-sm text-center">Vitamin E</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Aloe Vera" className="w-50 h-50 rounded-full object-contain mb-2" />
+                    <img src="/uploads/sections/kama_ingredients_updated_600x400_0059_ginger.jpg" alt="Aloe Vera" className="w-40 h-50 rounded-full object-contain mb-2" />
                     <span className="text-sm text-center">Aloe Vera</span>
                   </div>
                 </div>
