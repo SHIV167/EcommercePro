@@ -868,6 +868,17 @@ export async function registerRoutes(app: Application): Promise<Server> {
           console.error('Error parsing structuredIngredients:', e);
         }
       }
+      
+      // Parse howToUseSteps if provided
+      let howToUseSteps = [];
+      if (productData.howToUseSteps) {
+        try {
+          howToUseSteps = JSON.parse(productData.howToUseSteps);
+          console.log('Parsed howToUseSteps:', howToUseSteps);
+        } catch (e) {
+          console.error('Error parsing howToUseSteps:', e);
+        }
+      }
 
       const newProduct = await storage.createProduct({
         ...productData,
@@ -877,7 +888,10 @@ export async function registerRoutes(app: Application): Promise<Server> {
         images,
         imageUrl,
         faqs,
-        structuredIngredients
+        structuredIngredients,
+        howToUseSteps,
+        howToUse: productData.howToUse || '',
+        howToUseVideo: productData.howToUseVideo || ''
       });
       console.log('[PRODUCT CREATE] Success:', newProduct);
       return res.status(201).json(newProduct);
@@ -940,7 +954,27 @@ export async function registerRoutes(app: Application): Promise<Server> {
         }
       }
       
-      const updateData = { ...productData, images, imageUrl, faqs, structuredIngredients };
+      // Parse howToUseSteps if provided
+      let howToUseSteps = [];
+      if (productData.howToUseSteps) {
+        try {
+          howToUseSteps = JSON.parse(productData.howToUseSteps);
+          console.log('Parsed howToUseSteps:', howToUseSteps);
+        } catch (e) {
+          console.error('Error parsing howToUseSteps:', e);
+        }
+      }
+      
+      const updateData = { 
+        ...productData, 
+        images, 
+        imageUrl, 
+        faqs, 
+        structuredIngredients,
+        howToUseSteps,
+        howToUse: productData.howToUse || '',
+        howToUseVideo: productData.howToUseVideo || ''
+      };
       const updatedProduct = await storage.updateProduct(productId, updateData);
       console.log('[PRODUCT UPDATE] Success:', updatedProduct);
       return res.status(200).json(updatedProduct);

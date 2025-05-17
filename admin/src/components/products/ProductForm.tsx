@@ -166,6 +166,20 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
         if (data.structuredIngredients && data.structuredIngredients.length > 0) {
           formData.append('structuredIngredients', JSON.stringify(data.structuredIngredients));
         }
+        
+        // Append How to Use data
+        if (data.howToUse) {
+          formData.append('howToUse', data.howToUse);
+        }
+        
+        if (data.howToUseVideo) {
+          formData.append('howToUseVideo', data.howToUseVideo);
+        }
+        
+        // Append How to Use Steps as JSON string
+        if (data.howToUseSteps && data.howToUseSteps.length > 0) {
+          formData.append('howToUseSteps', JSON.stringify(data.howToUseSteps));
+        }
 
         // Send request (POST or PUT)
         const method = product ? 'PUT' : 'POST';
