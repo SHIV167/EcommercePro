@@ -277,19 +277,21 @@ export default function FreeProductsPage() {
         throw new Error('Free product not found');
       }
 
-      // Send all required fields along with the new status
+      // Send ONLY the enabled status to avoid potential validation issues
+      // The backend has been updated to handle partial updates correctly
       const response = await put(`/api/admin/free-products/${id}`, {
-        productId: currentProduct.productId,
-        minOrderValue: currentProduct.minOrderValue,
-        maxOrderValue: currentProduct.maxOrderValue,
         enabled: newStatus
       });
+
+      console.log('Toggle status response:', response);
 
       toast({ 
         title: `Free product ${newStatus ? 'enabled' : 'disabled'} successfully`,
         variant: 'default' 
       });
-      loadFreeProducts();
+      
+      // Refresh the list after toggle
+      await loadFreeProducts();
     } catch (error) {
       console.error('Error toggling free product status:', error);
       toast({ 

@@ -86,7 +86,8 @@ export async function updateFreeProduct(req: Request, res: Response) {
       return res.status(400).json({ message: 'Minimum order value must be greater than zero' });
     }
     
-    if (maxOrderValue !== null && maxOrderValue !== undefined && minOrderValue !== undefined && maxOrderValue <= minOrderValue) {
+    // Only validate max value if it's actually provided and not null
+    if (maxOrderValue !== null && maxOrderValue !== undefined && minOrderValue !== undefined && maxOrderValue < minOrderValue) {
       return res.status(400).json({ 
         message: 'Maximum order value must be greater than minimum order value' 
       });

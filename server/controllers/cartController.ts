@@ -40,10 +40,10 @@ export async function addCartItem(req: Request, res: Response) {
         });
       }
 
-      // Validate maximum order value
-      if (freeProduct.maxOrderValue && cartTotal >= freeProduct.maxOrderValue) {
+      // Validate maximum order value - only apply if maxOrderValue is not null
+      if (freeProduct.maxOrderValue !== null && cartTotal > freeProduct.maxOrderValue) {
         return res.status(400).json({ 
-          message: `Cart total must be less than ₹${freeProduct.maxOrderValue} to add this free product` 
+          message: `Cart total exceeds maximum order value of ₹${freeProduct.maxOrderValue} for this free product` 
         });
       }
     }
@@ -102,10 +102,10 @@ export async function updateCartItemQuantity(req: Request, res: Response) {
         });
       }
 
-      // Validate maximum order value
-      if (freeProduct.maxOrderValue && cartTotal >= freeProduct.maxOrderValue) {
+      // Validate maximum order value - only apply if maxOrderValue is not null
+      if (freeProduct.maxOrderValue !== null && cartTotal > freeProduct.maxOrderValue) {
         return res.status(400).json({ 
-          message: `Cart total must be less than ₹${freeProduct.maxOrderValue} to add this free product` 
+          message: `Cart total exceeds maximum order value of ₹${freeProduct.maxOrderValue} for this free product` 
         });
       }
     }
