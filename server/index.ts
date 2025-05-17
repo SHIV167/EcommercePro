@@ -9,6 +9,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { connectToDatabase, closeDatabaseConnection } from "./db";
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import jwt from 'jsonwebtoken';
 
 const app = express();
 app.use(express.json());
@@ -16,25 +17,77 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 const allowedOriginsEnv = process.env.CORS_ORIGINS;
-const allowedOrigins = allowedOriginsEnv ? allowedOriginsEnv.split(',').map(s => s.trim()) : [];
+if (!allowedOriginsEnv) {
+  console.warn('CORS_ORIGINS environment variable is not set. Defaulting to localhost:3000');
+}
+
+// Parse allowed origins from environment variable
+const allowedOrigins = allowedOriginsEnv 
+  ? [...new Set(allowedOriginsEnv.split(',').map(s => s.trim()))]
+  : ['https://ecommercepromern.onrender.com'];
+
+console.log('Allowed CORS origins:', allowedOrigins);
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin || process.env.NODE_ENV === 'development' || origin.includes('-admin') || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS blocked')); // Disallow other origins
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow all origins in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Allowing all origins in development');
+      return callback(null, true);
     }
+    
+    // Normalize the origin by removing protocol and trailing slashes
+    const normalizeOrigin = (url: string) => {
+      return url
+        .replace(/^https?:\/\//, '') // Remove protocol
+        .replace(/\/*$/, ''); // Remove trailing slashes
+    };
+    
+    const normalizedOrigin = normalizeOrigin(origin);
+    
+    // Check if origin is in the allowed list
+    const isAllowed = allowedOrigins.some((allowedOrigin: string) => {
+      const normalizedAllowed = normalizeOrigin(allowedOrigin);
+      return normalizedOrigin === normalizedAllowed || 
+             normalizedOrigin.endsWith(`.${normalizedAllowed}`);
+    });
+    
+    if (isAllowed) {
+      console.log('CORS allowed for origin:', origin);
+      return callback(null, true);
+    }
+    
+    console.log('CORS blocked for origin:', origin);
+    console.log('Allowed origins:', allowedOrigins);
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  exposedHeaders: ['Set-Cookie'],
+  maxAge: 600 // Cache preflight request for 10 minutes
 };
 
 app.use(cors(corsOptions));
-
-// Handle preflight requests globally
 app.options('*', cors(corsOptions));
+
+// Add CORS headers to all responses
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.some((allowed: string) => origin.endsWith(allowed.replace(/^https?:\/\//, '')))) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  );
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -102,6 +155,38 @@ app.use((req, res, next) => {
       time: new Date().toISOString(),
       database: dbConnected ? 'connected' : 'disconnected'
     });
+  });
+
+  // Add test endpoint for CORS and auth testing
+  app.get('/api/test/auth', (req: Request, res: Response) => {
+    console.log('Test endpoint hit, cookies:', req.cookies);
+    
+    // Check if user is authenticated
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ 
+        authenticated: false, 
+        message: 'No token provided' 
+      });
+    }
+    
+    try {
+      // Verify the token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+      return res.status(200).json({ 
+        authenticated: true, 
+        user: decoded,
+        cookies: req.cookies,
+        headers: req.headers
+      });
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return res.status(401).json({ 
+        authenticated: false, 
+        message: 'Invalid token',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   });
 
   app.use('/api/promotimers', promoTimerRoutes);

@@ -3,15 +3,63 @@ import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import UserModel from '../models/User';
 
+type CookieOptions = {
+  path: string;
+  httpOnly: boolean;
+  secure: boolean;
+  sameSite: 'lax' | 'none' | 'strict' | boolean;
+  maxAge?: number;
+  domain?: string;
+};
+
+/**
+ * Get cookie options based on the current environment
+ */
+function getCookieOptions(req: Request, options: { maxAge?: number } = {}): CookieOptions {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const domain = getCookieDomain(req);
+  
+  const cookieOptions: CookieOptions = {
+    path: '/',
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+  };
+  
+  if (options.maxAge !== undefined) {
+    cookieOptions.maxAge = options.maxAge;
+  }
+  
+  if (domain) {
+    cookieOptions.domain = domain;
+  }
+  
+  return cookieOptions;
+}
+
 // Helper to get cookie domain
 function getCookieDomain(req: Request): string | undefined {
+  // If running in development or test environment, don't set domain
+  if (process.env.NODE_ENV !== 'production') {
+    return undefined;
+  }
+  
+  // For production, use the COOKIE_DOMAIN environment variable if set
   const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN;
   if (COOKIE_DOMAIN) return COOKIE_DOMAIN;
-  if (process.env.NODE_ENV === 'production') {
-    const parts = req.hostname.split('.');
-    const root = parts.slice(-2).join('.');
-    return `.${root}`;
+  
+  // Otherwise, try to derive from hostname
+  const hostname = req.hostname;
+  if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+    return undefined;
   }
+  
+  // For production, use the root domain
+  const parts = hostname.split('.');
+  if (parts.length > 2) {
+    return `.${parts.slice(-2).join('.')}`;
+  }
+  
   return undefined;
 }
 
@@ -54,14 +102,11 @@ export const adminLogin = async (req: Request, res: Response) => {
 
     // Set token as cookie
     console.log('Setting token cookie');
-    res.cookie('token', token, {
-      path: '/',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      domain: getCookieDomain(req),
-      maxAge: parseInt(process.env.COOKIE_MAX_AGE || '604800000') // 7 days default
+    const cookieOptions = getCookieOptions(req, {
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
+    
+    res.cookie('token', token, cookieOptions);
 
     // Return user data (excluding password)
     console.log('Returning user data');
@@ -78,13 +123,8 @@ export const adminLogin = async (req: Request, res: Response) => {
 
 // Admin Logout
 export const adminLogout = (req: Request, res: Response) => {
-  res.clearCookie('token', { 
-    path: '/',
-    httpOnly: true, 
-    secure: process.env.NODE_ENV === 'production', 
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
-    domain: getCookieDomain(req) 
-  });
+  const clearOptions = getCookieOptions(req);
+  res.clearCookie('token', clearOptions);
   return res.status(200).json({ message: 'Logged out successfully' });
 };
 
@@ -104,13 +144,8 @@ export const verifyAdminToken = (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Token verification error:', error);
-    res.clearCookie('token', { 
-      path: '/',
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
-      domain: getCookieDomain(req) 
-    });
+    const clearOptions = getCookieOptions(req);
+    res.clearCookie('token', clearOptions);
     return res.status(401).json({ message: 'Invalid token', isAuthenticated: false });
   }
 };
