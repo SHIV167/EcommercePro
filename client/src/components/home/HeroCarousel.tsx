@@ -54,7 +54,7 @@ export default function HeroCarousel() {
   }
 
   return (
-    <div className="relative w-full border border-neutral-sand overflow-hidden bg-[#f8f4ea]">
+    <div className="relative w-full border border-neutral-sand overflow-hidden bg-[#f8f4ea] md:top-0 -top-16">
       <div className="flex w-full transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${current * 100}%)` }}>
         {banners.map((banner, idx) => (
           <picture key={idx} className="w-full flex-shrink-0">
@@ -63,7 +63,7 @@ export default function HeroCarousel() {
               src={banner.desktopImageUrl}
               alt={banner.alt}
               className="w-full h-auto object-cover"
-              style={{ maxHeight: '480px' }}
+              style={{ maxHeight: '100%' }}
             />
           </picture>
         ))}
