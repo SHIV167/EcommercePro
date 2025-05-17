@@ -183,3 +183,16 @@ export type Scanner = {
   scannedAt: Date;
 };
 export type InsertScanner = Omit<Scanner, 'id' | 'scannedAt'>;
+
+// FreeProduct types
+export type FreeProduct = {
+  id?: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  enabled: boolean;
+  minOrderValue: number;
+  maxOrderValue?: number;
+  createdAt: Date;
+};
+export type InsertFreeProduct = Omit<FreeProduct, 'id' | '_id' | 'createdAt'>;

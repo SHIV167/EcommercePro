@@ -4,7 +4,9 @@ import FreeProductModel from '../models/FreeProduct';
 // Get all free products
 export async function getAllFreeProducts(req: Request, res: Response) {
   try {
-    const freeProducts = await FreeProductModel.find();
+    const isAdminRoute = req.baseUrl && req.baseUrl.includes('/admin');
+    const query = isAdminRoute ? {} : { enabled: true };
+    const freeProducts = await FreeProductModel.find(query);
     res.json(freeProducts);
   } catch (error) {
     console.error('Get free products error:', error);
@@ -16,8 +18,15 @@ export async function getAllFreeProducts(req: Request, res: Response) {
 export async function getFreeProductById(req: Request, res: Response) {
   try {
     const { id } = req.params;
+    const isAdminRoute = req.baseUrl && req.baseUrl.includes('/admin');
     const freeProduct = await FreeProductModel.findById(id);
+    
     if (!freeProduct) {
+      return res.status(404).json({ message: 'Free product not found' });
+    }
+
+    // If it's not an admin route and the product is disabled, return 404
+    if (!isAdminRoute && !freeProduct.enabled) {
       return res.status(404).json({ message: 'Free product not found' });
     }
     res.json(freeProduct);

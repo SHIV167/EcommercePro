@@ -125,6 +125,7 @@ import scannerRoutes from './routes/scannerRoutes'; // Import scanner routes
 import testimonialRoutes from './routes/testimonialRoutes'; // Import testimonial routes
 import freeProductRoutes from './routes/freeProductRoutes'; // Import freeProduct routes
 import reviewRoutes from './routes/reviewRoutes'; // Import review routes
+import cartRoutes from './routes/cartRoutes'; // Import cart routes
 
 // Import controllers for coupons
 
@@ -143,6 +144,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', testimonialRoutes);
   app.use('/api', freeProductRoutes);
   app.use('/api', reviewRoutes); // Add review routes
+  app.use('/api', cartRoutes); // Add cart routes
   // ensure upload directory exists in public/uploads
   const uploadDir = path.join(__dirname, '../public/uploads');
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
