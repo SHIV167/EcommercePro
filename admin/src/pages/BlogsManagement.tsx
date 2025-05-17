@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import BlogEditor from '@/components/blogs/BlogEditor';
 
 export default function BlogsManagement() {
   const { data: blogs = [], isLoading, refetch } = useQuery<Blog[]>({
@@ -25,14 +26,22 @@ export default function BlogsManagement() {
       return res.json();
     },
   });
+  
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest('DELETE', `/api/blogs/${id}`);
     },
-    onSuccess: () => { refetch(); toast({ title: 'Deleted blog' }); },
-    onError: () => { toast({ title: 'Deletion failed', variant: 'destructive' }); },
+    onSuccess: () => { 
+      refetch(); 
+      toast({ title: 'Deleted blog' }); 
+    },
+    onError: () => { 
+      toast({ title: 'Deletion failed', variant: 'destructive' }); 
+    },
   });
+  
   const { toast } = useToast();
+  
   // Form state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -44,8 +53,19 @@ export default function BlogsManagement() {
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  
   // Reset form
-  const resetForm = () => { setTitle(''); setSlug(''); setAuthor(''); setPublishedAt(''); setSummary(''); setContent(''); setImageUrl(''); setEditBlog(null); };
+  const resetForm = () => { 
+    setTitle(''); 
+    setSlug(''); 
+    setAuthor(''); 
+    setPublishedAt(''); 
+    setSummary(''); 
+    setContent(''); 
+    setImageUrl(''); 
+    setEditBlog(null); 
+  };
+  
   // Prefill for edit
   useEffect(() => {
     if (editBlog) {
@@ -58,25 +78,39 @@ export default function BlogsManagement() {
       setImageUrl(editBlog.imageUrl || '');
     }
   }, [editBlog]);
+  
   // Create and update mutations
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Blog>) => await apiRequest('POST', '/api/blogs', data),
-    onSuccess: () => { toast({ title: 'Created blog' }); refetch(); setIsCreateOpen(false); resetForm(); },
+    onSuccess: () => { 
+      toast({ title: 'Created blog' }); 
+      refetch(); 
+      setIsCreateOpen(false); 
+      resetForm(); 
+    },
     onError: () => toast({ title: 'Creation failed', variant: 'destructive' }),
   });
+  
   const updateMutation = useMutation({
     mutationFn: async (data: Blog) => await apiRequest('PUT', `/api/blogs/${data._id}`, data),
-    onSuccess: () => { toast({ title: 'Updated blog' }); refetch(); setIsEditOpen(false); resetForm(); },
+    onSuccess: () => { 
+      toast({ title: 'Updated blog' }); 
+      refetch(); 
+      setIsEditOpen(false); 
+      resetForm(); 
+    },
     onError: () => toast({ title: 'Update failed', variant: 'destructive' }),
   });
 
   if (isLoading) return <div>Loading...</div>;
+  
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Blog Posts</h1>
         <Button onClick={() => { resetForm(); setIsCreateOpen(true); }}>New Post</Button>
       </div>
+      
       <Table>
         <TableHeader>
           <TableRow>
@@ -100,39 +134,59 @@ export default function BlogsManagement() {
           ))}
         </tbody>
       </Table>
+      
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>New Blog Post</DialogTitle>
             <DialogDescription>Fill out the fields to create a blog post.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e: FormEvent) => { e.preventDefault(); createMutation.mutate({ title, slug, author, summary, content, imageUrl, publishedAt }); }} className="grid grid-cols-2 gap-4">
+          <form onSubmit={(e: FormEvent) => { 
+            e.preventDefault(); 
+            createMutation.mutate({ title, slug, author, summary, content, imageUrl, publishedAt }); 
+          }} className="grid grid-cols-2 gap-4">
             <div><Label>Title</Label><Input value={title} onChange={e => setTitle(e.target.value)} required /></div>
             <div><Label>Slug</Label><Input value={slug} onChange={e => setSlug(e.target.value)} required /></div>
             <div><Label>Author</Label><Input value={author} onChange={e => setAuthor(e.target.value)} required /></div>
             <div><Label>Publish Date</Label><Input type="date" value={publishedAt} onChange={e => setPublishedAt(e.target.value)} required /></div>
             <div className="col-span-2"><Label>Summary</Label><Textarea value={summary} onChange={e => setSummary(e.target.value)} required /></div>
-            <div className="col-span-2"><Label>Content</Label><Textarea value={content} onChange={e => setContent(e.target.value)} required /></div>
+            
+            {/* Rich text editor for content */}
+            <div className="col-span-2">
+              <Label>Content</Label>
+              <BlogEditor content={content} onChange={setContent} />
+            </div>
+            
             <div className="col-span-2"><Label>Image URL</Label><Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} /></div>
             <div className="col-span-2 flex justify-end"><Button type="submit">Create</Button></div>
           </form>
         </DialogContent>
       </Dialog>
+      
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Blog Post</DialogTitle>
             <DialogDescription>Update the fields below.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e: FormEvent) => { e.preventDefault(); if (editBlog) updateMutation.mutate({ ...editBlog, title, slug, author, summary, content, imageUrl, publishedAt }); }} className="grid grid-cols-2 gap-4">
+          <form onSubmit={(e: FormEvent) => { 
+            e.preventDefault(); 
+            if (editBlog) updateMutation.mutate({ ...editBlog, title, slug, author, summary, content, imageUrl, publishedAt }); 
+          }} className="grid grid-cols-2 gap-4">
             <div><Label>Title</Label><Input value={title} onChange={e => setTitle(e.target.value)} required /></div>
             <div><Label>Slug</Label><Input value={slug} onChange={e => setSlug(e.target.value)} required /></div>
             <div><Label>Author</Label><Input value={author} onChange={e => setAuthor(e.target.value)} required /></div>
             <div><Label>Publish Date</Label><Input type="date" value={publishedAt} onChange={e => setPublishedAt(e.target.value)} required /></div>
             <div className="col-span-2"><Label>Summary</Label><Textarea value={summary} onChange={e => setSummary(e.target.value)} required /></div>
-            <div className="col-span-2"><Label>Content</Label><Textarea value={content} onChange={e => setContent(e.target.value)} required /></div>
+            
+            {/* Rich text editor for content */}
+            <div className="col-span-2">
+              <Label>Content</Label>
+              <BlogEditor content={content} onChange={setContent} />
+            </div>
+            
             <div className="col-span-2"><Label>Image URL</Label><Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} /></div>
             <div className="col-span-2 flex justify-end"><Button type="submit">Update</Button></div>
           </form>

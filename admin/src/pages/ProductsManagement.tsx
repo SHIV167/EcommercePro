@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Product } from "@shared/schema";
-import { MongoProduct, MongoCategory, MongoCollection } from "@/types/mongo";
+import { MongoProduct, MongoCategory } from "@/types/mongo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -43,7 +43,6 @@ export default function ProductsManagement() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [collectionFilter, setCollectionFilter] = useState<string>("all");
   const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<MongoProduct | null>(null);
@@ -59,12 +58,11 @@ export default function ProductsManagement() {
     isLoading: isProductsLoading,
     refetch: refetchProducts,
   } = useQuery({
-    queryKey: ['/api/products', { page, limit, search, categoryFilter, collectionFilter }],
+    queryKey: ['/api/products', { page, limit, search, categoryFilter }],
     queryFn: async () => {
       let url = `/api/products?page=${page}&limit=${limit}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (categoryFilter && categoryFilter !== "all") url += `&categoryId=${categoryFilter}`;
-      if (collectionFilter && collectionFilter !== "all") url += `&collectionId=${collectionFilter}`;
       
       const response = await apiRequest("GET", url);
       return response.json();
@@ -80,18 +78,8 @@ export default function ProductsManagement() {
     }
   });
   
-  // Get collections for filter
-  const { data: collectionsData } = useQuery({
-    queryKey: ['/api/collections'],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/collections");
-      return response.json();
-    }
-  });
-  
-  // Ensure data is always arrays
+  // Ensure data is always an array
   const categories = Array.isArray(categoriesData) ? categoriesData as MongoCategory[] : [];
-  const collections = Array.isArray(collectionsData) ? collectionsData as MongoCollection[] : [];
   
   // Delete product mutation
   const deleteProductMutation = useMutation({
@@ -304,7 +292,10 @@ export default function ProductsManagement() {
         </div>
         
         <div className="flex gap-2">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <Select
+            value={categoryFilter}
+            onValueChange={setCategoryFilter}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
@@ -323,32 +314,16 @@ export default function ProductsManagement() {
               })}
             </SelectContent>
           </Select>
-          
-          <Select value={collectionFilter} onValueChange={setCollectionFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All Collections" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Collections</SelectItem>
-              {collections.map((collection) => {
-                const value = collection._id?.toString() || collection.id?.toString();
-                return (
-                  <SelectItem 
-                    key={value || `collection-${collection.name}`}
-                    value={value || `collection-${collection.name}`}
-                  >
-                    {collection.name}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-          
-          <Button variant="outline" onClick={() => refetchProducts()}>
+          <Button 
+            onClick={() => refetchProducts()}
+            variant="outline"
+            size="sm"
+            className="mr-2"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -441,7 +416,7 @@ export default function ProductsManagement() {
               Update the product details.
             </DialogDescription>
           </DialogHeader>
-          {editProduct && <ProductForm product={editProduct} onSuccess={handleEditProductSuccess} />}
+          {editProduct && <ProductForm product={editProduct as MongoProduct} onSuccess={handleEditProductSuccess} />}
         </DialogContent>
       </Dialog>
       

@@ -117,9 +117,6 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onDele
               <th scope="col" className="px-4 py-3.5 text-left text-sm font-medium text-muted-foreground">
                 Category
               </th>
-              <th scope="col" className="px-4 py-3.5 text-left text-sm font-medium text-muted-foreground">
-                Collections
-              </th>
               <th scope="col" className="px-4 py-3.5 text-right text-sm font-medium text-muted-foreground">
                 Stock
               </th>
@@ -165,13 +162,6 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onDele
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                     {getCategoryName(product.categoryId)}
                   </span>
-                </td>
-                <td className="whitespace-nowrap px-4 py-4 text-sm">
-                  {getCollectionsForProduct(product).map(name => (
-                    <span key={name} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/10 text-secondary">
-                      {name}
-                    </span>
-                  ))}
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 text-sm text-right">
                   {product.stock > 0 ? (

@@ -87,22 +87,47 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-popup';
       }
       
-      const response = await get<{data: GiftPopupConfig; status: number; message?: string}>(endpoint);
-      console.log('Gift popup config API response:', response);
-      
-      // Handle API error responses
-      if (response.status >= 400) {
-        throw new Error(response.message || 'Error loading configuration');
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
       }
       
-      // Ensure we have a valid GiftPopupConfig object
-      if (response.data && typeof response.data === 'object') {
-        console.log('Setting gift popup config:', response.data);
-        setConfig(response.data as GiftPopupConfig);
-      } else {
-        console.error('Invalid gift popup config format:', response);
-        throw new Error('Invalid gift popup configuration format');
+      // Check if the response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid response: not JSON');
       }
+      
+      const data = await response.json();
+      console.log('Gift popup config API response:', data);
+      
+      // Validate the response as a GiftPopupConfig
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid gift popup config: not an object');
+      }
+
+      // Extract the GiftPopupConfig from the response
+      // The API might return the config directly or within a data property
+      const configData = data.data || data;
+      
+      // Validate required fields
+      if (typeof configData.title !== 'string') {
+        console.error('Missing title in config:', configData);
+        throw new Error('Invalid config: missing title');
+      }
+      
+      if (typeof configData.minCartValue !== 'number') {
+        console.error('Missing minCartValue in config:', configData);
+        throw new Error('Invalid config: missing minCartValue');
+      }
+      
+      if (!Array.isArray(configData.giftProducts)) {
+        console.error('giftProducts is not an array:', configData);
+        configData.giftProducts = []; // Fix the giftProducts field if missing
+      }
+      
+      console.log('Setting gift popup config:', configData);
+      setConfig(configData);
     } catch (error: any) {
       console.error('Error loading gift popup config:', error);
       toast({
@@ -138,33 +163,53 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-products';
       }
       
-      const response = await get<{data: Product[]; status: number}>(endpoint);
-      console.log('Products API response:', response);
-      
-      // Handle API error responses
-      if (response.status >= 400) {
-        throw new Error('Failed to load products data');
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
       }
       
-      // Ensure we have a valid array of products
-      if (response.data && Array.isArray(response.data)) {
-        console.log(`Loaded ${response.data.length} products`);
-        setProducts(response.data);
-      } else {
-        console.error('Invalid products format:', response);
-        setProducts([]);
-        toast({
-          title: 'Data format error',
-          description: 'Product data is not in the expected format',
-          variant: 'destructive'
+      // Check if the response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid response: not JSON');
+      }
+      
+      const data = await response.json();
+      console.log('Available products API response:', data);
+      
+      // The API might return the products directly or within a data property
+      const productsData = data.data || data;
+      
+      // Validate products is an array
+      if (Array.isArray(productsData)) {
+        console.log(`Loaded ${productsData.length} products`);
+        
+        // Map products to ensure they have the required structure
+        const validatedProducts = productsData.map(product => {
+          // Ensure each product has the minimum required fields
+          if (!product._id || !product.name) {
+            console.warn('Product missing required fields:', product);
+          }
+          
+          return {
+            _id: product._id || '',
+            name: product.name || 'Unnamed Product',
+            price: typeof product.price === 'number' ? product.price : 0,
+            images: Array.isArray(product.images) ? product.images : []
+          };
         });
+        
+        setProducts(validatedProducts);
+      } else {
+        console.error('Invalid products format:', productsData);
+        throw new Error('Invalid products format: not an array');
       }
     } catch (error: any) {
       console.error('Error loading products:', error);
-      toast({ 
+      toast({
         title: 'Failed to load products',
-        description: error.message || 'Please check your connection and try again',
-        variant: 'destructive' 
+        description: error.message || 'Please try refreshing the page',
+        variant: 'destructive'
       });
       setProducts([]);
     } finally {

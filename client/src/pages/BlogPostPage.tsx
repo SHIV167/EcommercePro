@@ -2,6 +2,9 @@ import React from 'react';
 import { useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { Helmet } from 'react-helmet';
+import { Link } from 'wouter';
+import { Product } from '@/types/product';
 
 interface Blog {
   _id: string;
@@ -12,6 +15,7 @@ interface Blog {
   summary: string;
   content: string;
   imageUrl?: string;
+  relatedProducts?: string[];
 }
 
 export default function BlogPostPage() {
@@ -25,16 +29,206 @@ export default function BlogPostPage() {
     },
     enabled: !!slug,
   });
+  
+  // Fetch related products if available
+  const { data: relatedProducts = [] } = useQuery<Product[]>({
+    queryKey: ['/api/products/related', blog?.relatedProducts],
+    queryFn: async () => {
+      if (!blog?.relatedProducts?.length) return [];
+      const productIds = blog.relatedProducts.join(',');
+      const res = await apiRequest('GET', `/api/products/byIds?ids=${productIds}`);
+      return res.json();
+    },
+    enabled: !!blog?.relatedProducts?.length,
+  });
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError || !blog) return <div>Blog not found.</div>;
+  if (isLoading) return (
+    <div className="bg-red-900 min-h-screen py-10">
+      <div className="max-w-3xl mx-auto bg-white rounded-sm shadow-lg p-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
+          <div className="h-64 bg-gray-200 rounded mb-6"></div>
+          <div className="space-y-3">
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  
+  if (isError || !blog) return (
+    <div className="bg-red-900 min-h-screen py-10">
+      <div className="max-w-3xl mx-auto bg-white rounded-sm shadow-lg p-8 text-center">
+        <h1 className="text-2xl font-bold mb-4">Blog Post Not Found</h1>
+        <p className="text-gray-600 mb-6">The blog post you're looking for doesn't exist or has been moved.</p>
+        <Link href="/blogs" className="text-primary hover:text-primary-dark underline">Return to all blogs</Link>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">{blog.title}</h1>
-      <p className="text-sm text-gray-500 mb-6">{new Date(blog.publishedAt).toLocaleDateString()} by {blog.author}</p>
-      {blog.imageUrl && <img src={blog.imageUrl} alt={blog.title} className="w-full h-auto mb-6 object-cover" />}
-      <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: blog.content }} />
-    </div>
+    <>
+      <Helmet>
+        <title>{blog.title} | Kama Ayurveda</title>
+        <meta name="description" content={blog.summary} />
+        {blog.imageUrl && <meta property="og:image" content={blog.imageUrl} />}
+      </Helmet>
+      
+      <div className="bg-red-900 min-h-screen py-10">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Main content */}
+            <div className="w-full lg:w-2/3 bg-white rounded-sm shadow-lg overflow-hidden">
+          {/* Banner image */}
+          {blog.imageUrl && (
+            <div className="w-full relative">
+              <img 
+                src={blog.imageUrl} 
+                alt={blog.title} 
+                className="w-full h-auto object-cover" 
+              />
+            </div>
+          )}
+          
+          {/* Blog content */}
+          <div className="p-8">
+            {/* Title and meta */}
+            <div className="text-center mb-8 border-b border-gray-200 pb-4">
+              <h1 className="text-3xl font-serif font-medium mb-2">{blog.title}</h1>
+              <p className="text-sm text-gray-500">
+                Published on {new Date(blog.publishedAt).toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+                {blog.author && <> by <span className="font-medium">{blog.author}</span></>}
+              </p>
+            </div>
+            
+            {/* Content */}
+            <article>
+              <div 
+                className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:font-medium prose-p:text-gray-700 prose-a:text-primary prose-img:my-8"
+                dangerouslySetInnerHTML={{ __html: blog.content }} 
+              />
+            </article>
+            
+            {/* Related products */}
+            {relatedProducts.length > 0 && (
+              <div className="mt-12 pt-8 border-t border-gray-200">
+                <h2 className="text-2xl font-serif font-medium mb-6 text-center">Products Mentioned</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  {relatedProducts.map(product => (
+                    <div key={product._id} className="flex flex-col items-center">
+                      <Link href={`/products/${product.slug}`} className="block w-full">
+                        <div className="aspect-square overflow-hidden rounded-md mb-3 bg-gray-50">
+                          <img 
+                            src={product.images?.[0] || product.imageUrl} 
+                            alt={product.name} 
+                            className="w-full h-full object-cover transition-transform hover:scale-105" 
+                          />
+                        </div>
+                        <h3 className="text-sm font-medium text-center">{product.name}</h3>
+                        <p className="text-sm text-center text-primary font-medium mt-1">₹{product.price}</p>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Share and navigation */}
+            <div className="mt-10 pt-6 border-t border-gray-200 flex justify-between items-center">
+              <Link href="/blogs" className="text-sm text-primary hover:underline">&larr; Back to all articles</Link>
+              <div className="flex space-x-4">
+                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-700">
+                  <span className="sr-only">Share on Facebook</span>
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
+                  </svg>
+                </a>
+                <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(blog.title)}&url=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-700">
+                  <span className="sr-only">Share on Twitter</span>
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+            </div>
+            
+            {/* Sidebar with highlights */}
+            <div className="w-full lg:w-1/3 space-y-8 lg:sticky lg:top-10 lg:self-start">
+              {/* Highlights box */}
+              <div className="bg-white rounded-sm shadow-lg p-6">
+                <h3 className="text-lg font-serif font-medium mb-4 pb-2 border-b border-gray-200">Highlights</h3>
+                <ul className="space-y-4">
+                  <li>
+                    <a href="#" className="flex items-start group">
+                      <div className="w-16 h-16 rounded-sm overflow-hidden flex-shrink-0 bg-gray-100 mr-3">
+                        <img src="/images/aloe-vera-benefits.jpg" alt="Aloe Vera Benefits" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium group-hover:text-primary transition-colors">Top 5 Benefits of Aloe Vera for Skin</h4>
+                        <p className="text-xs text-gray-500 mt-1">May 12, 2025</p>
+                      </div>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-start group">
+                      <div className="w-16 h-16 rounded-sm overflow-hidden flex-shrink-0 bg-gray-100 mr-3">
+                        <img src="/images/ayurvedic-oils.jpg" alt="Ayurvedic Oils" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium group-hover:text-primary transition-colors">Essential Ayurvedic Oils for Daily Use</h4>
+                        <p className="text-xs text-gray-500 mt-1">April 28, 2025</p>
+                      </div>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-start group">
+                      <div className="w-16 h-16 rounded-sm overflow-hidden flex-shrink-0 bg-gray-100 mr-3">
+                        <img src="/images/skin-routine.jpg" alt="Skin Routine" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium group-hover:text-primary transition-colors">Morning Skin Routine for Glowing Skin</h4>
+                        <p className="text-xs text-gray-500 mt-1">April 15, 2025</p>
+                      </div>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              
+              {/* Featured product */}
+              <div className="bg-white rounded-sm shadow-lg p-6">
+                <h3 className="text-lg font-serif font-medium mb-4">Featured Product</h3>
+                <div className="text-center">
+                  <div className="aspect-square max-w-[200px] mx-auto overflow-hidden rounded-sm bg-gray-50 mb-4">
+                    <img src="/images/kumkumadi-oil.jpg" alt="Kumkumadi Brightening Ayurvedic Face Oil" className="w-full h-full object-contain" />
+                  </div>
+                  <h4 className="font-medium mb-1">Kumkumadi Brightening Ayurvedic Face Oil</h4>
+                  <p className="text-primary font-medium mb-3">₹2,495.00</p>
+                  <Link href="/products/kumkumadi-oil" className="block w-full bg-primary text-white py-2 px-4 rounded-sm hover:bg-primary-dark transition-colors text-sm font-medium">View Product</Link>
+                </div>
+              </div>
+              
+              {/* Newsletter signup */}
+              <div className="bg-white rounded-sm shadow-lg p-6">
+                <h3 className="text-lg font-serif font-medium mb-2">Subscribe to Our Newsletter</h3>
+                <p className="text-sm text-gray-600 mb-4">Get the latest articles and product updates</p>
+                <form className="space-y-3">
+                  <input type="email" placeholder="Your email address" className="w-full border border-gray-300 rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" />
+                  <button type="submit" className="w-full bg-primary text-white py-2 px-4 rounded-sm hover:bg-primary-dark transition-colors text-sm font-medium">Subscribe</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
