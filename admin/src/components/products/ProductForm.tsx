@@ -37,7 +37,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   
   // Setup custom HTML sections field array
   const [customSectionTemplates, setCustomSectionTemplates] = useState<{id: string, title: string, content: string, displayOrder?: number, enabled: boolean}[]>(
-    product?.customHtmlSections || [
+    product?.customHtmlSections && product.customHtmlSections.length > 0 ? 
+    product.customHtmlSections : [
     {
       id: 'clinically-tested',
       title: 'Clinically Tested To',
@@ -71,6 +72,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       enabled: false
     }
   ]);
+  
+  // Log current custom sections for debugging
+  useEffect(() => {
+    console.log("Product custom HTML sections:", product?.customHtmlSections);
+    console.log("Current custom section templates:", customSectionTemplates);
+  }, [product?.customHtmlSections]);
 
   // Get categories for the form
   const { data: categoriesData, isLoading: isCategoriesLoading } = useQuery({
@@ -165,7 +172,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       // Create FormData instance
       const formData = new FormData();
       
-      // Add custom HTML sections to the product data
+      // Log and add custom HTML sections to the product data
+      console.log('Custom HTML sections to save:', customSectionTemplates);
+      
       const productWithCustomSections = {
         ...productData,
         customHtmlSections: customSectionTemplates,
@@ -177,6 +186,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       
       // Convert the product data with custom HTML sections to JSON and append it
       formData.append('product', JSON.stringify(productWithCustomSections));
+      
+      // Also append customHtmlSections as a separate field for debugging
+      formData.append('customHtmlSections', JSON.stringify(customSectionTemplates));
       
       // Append each image file
       imageFiles.forEach((file) => {
@@ -1275,27 +1287,28 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           <CardContent>
             <div className="space-y-6">
               {customSectionTemplates.map((section, index) => (
-                <div key={section.id} className="border rounded-md p-4 space-y-4">
+                <div key={section.id} className="border rounded-lg p-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Checkbox 
-                        id={`section-enabled-${section.id}`}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`section-enabled-${index}`}
                         checked={section.enabled}
-                        onCheckedChange={(checked: boolean) => {
+                        onCheckedChange={(checked) => {
                           const updatedSections = [...customSectionTemplates];
                           updatedSections[index].enabled = !!checked;
                           setCustomSectionTemplates(updatedSections);
+                          console.log('Section enabled updated:', updatedSections[index]);
                         }}
                       />
-                      <div className="flex flex-col">
-                        <label 
-                          htmlFor={`section-enabled-${section.id}`}
-                          className="font-medium cursor-pointer"
+                      <div>
+                        <label
+                          htmlFor={`section-enabled-${index}`}
+                          className="text-sm font-medium leading-none cursor-pointer"
                         >
-                          {section.title}
+                          {section.enabled ? "Section enabled" : "Section disabled"}
                         </label>
-                        <p className="text-xs text-gray-500">
-                          {section.enabled ? 'Visible on product page' : 'Hidden on product page'}
+                        <p className="text-xs text-gray-500 mt-1">
+                          {section.enabled ? "Will appear on product page" : "Hidden on product page"}
                         </p>
                       </div>
                     </div>

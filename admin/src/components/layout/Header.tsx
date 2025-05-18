@@ -69,11 +69,13 @@ export default function Header() {
         </div>
         
         <div className="flex items-center gap-4">
+          
           <Button
             variant="outline"
             size="sm"
             className="border-primary text-primary hover:bg-primary hover:text-white"
           >
+            
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
@@ -90,7 +92,9 @@ export default function Header() {
               <path d="M13 3L21 3L21 11"></path>
               <path d="M21 3L9 15"></path>
             </svg>
+            <link href="https://ecommercepromern.onrender.com/">
             Visit Store
+            </link>
           </Button>
           
           <a href="#" className="relative text-muted-foreground hover:text-foreground">

@@ -6,6 +6,7 @@ import Product from '../models/Product';
 export const getGiftPopupConfig = async (req: Request, res: Response) => {
   // Set proper content type header
   res.setHeader('Content-Type', 'application/json');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   try {
     console.log('Fetching gift popup configuration...');
     
@@ -44,6 +45,7 @@ export const getGiftPopupConfig = async (req: Request, res: Response) => {
 export const updateGiftPopupConfig = async (req: Request, res: Response) => {
   // Set proper content type header
   res.setHeader('Content-Type', 'application/json');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   try {
     const { title, subTitle, active, minCartValue, maxCartValue, maxSelectableGifts, giftProducts } = req.body;
     
@@ -94,6 +96,7 @@ export const updateGiftPopupConfig = async (req: Request, res: Response) => {
 export const getGiftProducts = async (req: Request, res: Response) => {
   // Set proper content type header
   res.setHeader('Content-Type', 'application/json');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   try {
     console.log('Fetching gift products...');
     

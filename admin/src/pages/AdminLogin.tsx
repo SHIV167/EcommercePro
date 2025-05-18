@@ -79,7 +79,7 @@ export default function AdminLogin() {
         <CardHeader className="space-y-1 text-center">
           <div className="mx-auto mb-4">
             <div className="flex flex-col items-center">
-              <h1 className="text-primary font-heading text-3xl font-bold">KAMA</h1>
+              <h1 className="text-primary font-heading text-3xl font-bold">SHIV</h1>
               <p className="text-primary font-accent text-sm tracking-widest">AYURVEDA</p>
               <p className="text-primary text-sm mt-1">Admin Portal</p>
             </div>
@@ -104,7 +104,7 @@ export default function AdminLogin() {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="admin@kamaayurveda.com"
+                        placeholder="jhashiv5@gmail.com"
                         type="email"
                         autoComplete="email"
                         {...field}
@@ -157,7 +157,7 @@ export default function AdminLogin() {
           <div className="mt-6 text-center text-sm text-muted-foreground">
             <p>
               Don't have admin credentials?{" "}
-              <a href="/" className="text-primary hover:underline">
+              <a href="https://ecommercepromern.onrender.com" className="text-primary hover:underline">
                 Return to store
               </a>
             </p>

@@ -32,6 +32,16 @@ export const benefitSchema = z.object({
 });
 export type Benefit = z.infer<typeof benefitSchema>;
 
+// Custom HTML Section schema
+export const customHtmlSectionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  displayOrder: z.number().optional().default(0),
+  enabled: z.boolean().default(false)
+});
+export type CustomHtmlSection = z.infer<typeof customHtmlSectionSchema>;
+
 // Product Zod schema and TypeScript type
 export const productSchema = z.object({
   _id: z.string().optional(), // MongoDB ObjectId as string
@@ -91,6 +101,7 @@ export const productSchema = z.object({
   // Video URL for how-to-use is defined above
   benefits: z.string().optional(), // Simple text benefits
   structuredBenefits: z.array(benefitSchema).optional().default([]), // Structured benefits
+  customHtmlSections: z.array(customHtmlSectionSchema).optional().default([]), // Custom HTML sections
   minOrderValue: z.number().optional(), // For free products
   isFreeProduct: z.boolean().optional(), // Flag for free products
   usageFrequency: z.string().optional(), // Recommended usage frequency

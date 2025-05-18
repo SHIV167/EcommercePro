@@ -817,6 +817,12 @@ export async function registerRoutes(app: Application): Promise<Server> {
       files: req.files,
       headers: req.headers
     });
+    
+    // Debug specifically for custom HTML sections
+    console.log('[DEBUG] Custom HTML Sections data:', {
+      customHtmlSections: req.body.customHtmlSections,
+      product: req.body.product ? JSON.parse(req.body.product).customHtmlSections : undefined
+    });
     try {
       const productData = req.body;
       const files = req.files as Express.Multer.File[];
@@ -879,6 +885,28 @@ export async function registerRoutes(app: Application): Promise<Server> {
           console.error('Error parsing howToUseSteps:', e);
         }
       }
+      
+      // Parse customHtmlSections if provided
+      let customHtmlSections = [];
+      if (productData.customHtmlSections) {
+        try {
+          customHtmlSections = JSON.parse(productData.customHtmlSections);
+          console.log('Parsed customHtmlSections:', customHtmlSections);
+        } catch (e) {
+          console.error('Error parsing customHtmlSections:', e);
+        }
+      }
+
+      // Parse structuredBenefits if provided
+      let structuredBenefits = [];
+      if (productData.structuredBenefits) {
+        try {
+          structuredBenefits = JSON.parse(productData.structuredBenefits);
+          console.log('Parsed structuredBenefits:', structuredBenefits);
+        } catch (e) {
+          console.error('Error parsing structuredBenefits:', e);
+        }
+      }
 
       const newProduct = await storage.createProduct({
         ...productData,
@@ -893,7 +921,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
         howToUse: productData.howToUse || '',
         howToUseVideo: productData.howToUseVideo || '',
         structuredBenefits,
-        benefits: productData.benefits || ''
+        benefits: productData.benefits || '',
+        customHtmlSections
       });
       console.log('[PRODUCT CREATE] Success:', newProduct);
       return res.status(201).json(newProduct);
@@ -911,10 +940,17 @@ export async function registerRoutes(app: Application): Promise<Server> {
         ...req.body,
         howToUse: req.body.howToUse,
         howToUseVideo: req.body.howToUseVideo,
-        howToUseSteps: req.body.howToUseSteps
+        howToUseSteps: req.body.howToUseSteps,
+        customHtmlSections: req.body.customHtmlSections
       },
       files: req.files,
       headers: req.headers
+    });
+    
+    // Debug specifically for custom HTML sections
+    console.log('[DEBUG] Custom HTML Sections update data:', {
+      customHtmlSections: req.body.customHtmlSections,
+      product: req.body.product ? JSON.parse(req.body.product).customHtmlSections : undefined
     });
     
     // Debug log specifically for howToUse data
@@ -990,6 +1026,17 @@ export async function registerRoutes(app: Application): Promise<Server> {
         }
       }
       
+      // Parse customHtmlSections if provided
+      let customHtmlSections = [];
+      if (productData.customHtmlSections) {
+        try {
+          customHtmlSections = JSON.parse(productData.customHtmlSections);
+          console.log('Parsed customHtmlSections:', customHtmlSections);
+        } catch (e) {
+          console.error('Error parsing customHtmlSections:', e);
+        }
+      }
+      
       // Log the extracted data before creating the final update object
       console.log('[DEBUG] Extracted data for update:', {
         howToUseSteps,
@@ -1009,7 +1056,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
         howToUse: productData.howToUse || '',
         howToUseVideo: productData.howToUseVideo || '',
         structuredBenefits,
-        benefits: productData.benefits || ''
+        benefits: productData.benefits || '',
+        customHtmlSections
       };
       
       // Log the final update data object before saving to DB
@@ -1693,15 +1741,29 @@ export async function registerRoutes(app: Application): Promise<Server> {
       });
       
       // Get full product details for eligible free products
-      const productsWithDetails = [];
+      // Define a type that extends Product with free product properties
+      type ProductWithFreeDetails = Product & {
+        freeProductId: string;
+        minOrderValue: number;
+        isFreeProduct: boolean;
+      };
+      
+      // Type the array correctly
+      const productsWithDetails: ProductWithFreeDetails[] = [];
+      
       for (const freeProduct of eligibleFreeProducts) {
         const product = await storage.getProductById(freeProduct.productId);
         if (product) {
-          productsWithDetails.push({
+          // Create the combined object with proper typing
+          const freeProductWithDetails: ProductWithFreeDetails = {
             ...product,
-            freeProductId: freeProduct._id,
-            minOrderValue: freeProduct.minOrderValue
-          });
+            freeProductId: freeProduct._id.toString(), // Convert _id to string
+            minOrderValue: freeProduct.minOrderValue,
+            isFreeProduct: true
+          };
+          
+          // No type assertion needed with proper typing
+          productsWithDetails.push(freeProductWithDetails);
         }
       }
       

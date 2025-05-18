@@ -221,10 +221,12 @@ export class MongoDBStorage implements IStorage {
       howToUseVideo: productData.howToUseVideo,
       howToUseStepsCount: productData.howToUseSteps?.length,
       benefits: productData.benefits,
-      structuredBenefitsCount: productData.structuredBenefits?.length
+      structuredBenefitsCount: productData.structuredBenefits?.length,
+      customHtmlSectionsCount: productData.customHtmlSections?.length,
+      customHtmlSections: productData.customHtmlSections
     });
     
-    // Ensure HOW TO USE fields and Benefits fields are explicitly included in the update
+    // Ensure HOW TO USE fields, Benefits fields, and Custom HTML Sections are explicitly included in the update
     const updateData = {
       ...productData,
       imageUrl,
@@ -234,7 +236,8 @@ export class MongoDBStorage implements IStorage {
       howToUseVideo: productData.howToUseVideo,
       howToUseSteps: productData.howToUseSteps,
       benefits: productData.benefits,
-      structuredBenefits: productData.structuredBenefits
+      structuredBenefits: productData.structuredBenefits,
+      customHtmlSections: productData.customHtmlSections
     };
     
     const updatedProduct = await ProductModel.findByIdAndUpdate(
@@ -250,7 +253,9 @@ export class MongoDBStorage implements IStorage {
         howToUseVideo: updatedProduct.howToUseVideo,
         howToUseStepsCount: updatedProduct.howToUseSteps?.length,
         benefits: updatedProduct.benefits,
-        structuredBenefitsCount: updatedProduct.structuredBenefits?.length
+        structuredBenefitsCount: updatedProduct.structuredBenefits?.length,
+        customHtmlSectionsCount: updatedProduct.customHtmlSections?.length,
+        customHtmlSections: updatedProduct.customHtmlSections
       });
     }
     
