@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, FormEvent } from 'react';
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { Product } from "@shared/schema";
+// Import from local types instead of @shared/schema
 import { MongoProduct, MongoCategory } from "@/types/mongo";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter 
+  AppDialog as Dialog,
+  AppDialogContent as DialogContent,
+  AppDialogHeader as DialogHeader,
+  AppDialogTitle as DialogTitle,
+  AppDialogDescription as DialogDescription,
+  AppDialogFooter as DialogFooter 
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -132,7 +133,7 @@ export default function ProductsManagement() {
     deleteProductMutation.mutate(productId);
   };
   
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     setPage(1); // Reset page when searching
     refetchProducts();
@@ -211,27 +212,36 @@ export default function ProductsManagement() {
               }}>
                 Download Sample
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={(e) => {
-                e.preventDefault();
+              <DropdownMenuItem onSelect={() => {
                 const input = document.createElement('input');
                 input.type = 'file';
                 input.accept = '.csv';
-                input.onchange = async (event) => {
+                input.onchange = async (event: Event) => {
                   const file = (event.target as HTMLInputElement).files?.[0];
                   if (!file) return;
                   const formData = new FormData();
                   formData.append('file', file);
-                  try {
-                    const response = await apiRequest('POST', '/api/products/import', formData);
-                    const responseData = await response.json();
-                    toast({ title: `Import successful: ${responseData.imported?.length || 0} products imported` });
-                    refetchProducts();
-                  } catch (error: any) {
-                    console.error('Import error:', error);
-                    toast({ title: `Import failed: ${error.message}`, variant: 'destructive' });
+                  
+                  // Upload file
+                  const response = await apiRequest('POST', '/api/products/import-csv', {
+                    body: formData,
+                    headers: {},
+                  });
+                  
+                  if (response.ok) {
+                    toast({
+                      title: 'Import successful',
+                      description: 'Products were successfully imported.',
+                    });
+                    queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+                  } else {
+                    toast({
+                      title: 'Import failed',
+                      description: 'There was an error importing products.',
+                      variant: 'destructive',
+                    });
                   }
-                };
-                input.click();
+                };input.click();
               }}>
                 Import CSV
               </DropdownMenuItem>
@@ -267,7 +277,7 @@ export default function ProductsManagement() {
             <Input
               placeholder="Search products..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
               className="flex-1"
             />
             <Button type="submit" variant="secondary">
@@ -294,7 +304,7 @@ export default function ProductsManagement() {
         <div className="flex gap-2">
           <Select
             value={categoryFilter}
-            onValueChange={setCategoryFilter}
+            onValueChange={(value: string) => setCategoryFilter(value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Categories" />
@@ -355,7 +365,7 @@ export default function ProductsManagement() {
             <PaginationItem>
               <PaginationPrevious 
                 href="#" 
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                   e.preventDefault();
                   if (page > 1) setPage(page - 1);
                 }}
@@ -368,7 +378,7 @@ export default function ProductsManagement() {
               <PaginationItem key={pageNum}>
                 <PaginationLink
                   href="#"
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                     e.preventDefault();
                     setPage(pageNum);
                   }}
@@ -382,7 +392,7 @@ export default function ProductsManagement() {
             <PaginationItem>
               <PaginationNext
                 href="#"
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                   e.preventDefault();
                   if (page < totalPages) setPage(page + 1);
                 }}
@@ -439,9 +449,9 @@ export default function ProductsManagement() {
             <Button 
               variant="destructive" 
               onClick={confirmDeleteProduct}
-              disabled={deleteProductMutation.isPending}
+              disabled={deleteProductMutation.isLoading}
             >
-              {deleteProductMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteProductMutation.isLoading ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

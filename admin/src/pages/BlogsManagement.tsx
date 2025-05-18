@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Table, TableHeader, TableRow, TableCell } from '@/components/ui/table';
@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Blog } from '@/types/index';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
+  AppDialog as Dialog,
+  AppDialogContent as DialogContent,
+  AppDialogHeader as DialogHeader,
+  AppDialogTitle as DialogTitle,
+  AppDialogDescription as DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -145,11 +145,11 @@ export default function BlogsManagement() {
             e.preventDefault(); 
             createMutation.mutate({ title, slug, author, summary, content, imageUrl, publishedAt }); 
           }} className="grid grid-cols-2 gap-4">
-            <div><Label>Title</Label><Input value={title} onChange={e => setTitle(e.target.value)} required /></div>
-            <div><Label>Slug</Label><Input value={slug} onChange={e => setSlug(e.target.value)} required /></div>
-            <div><Label>Author</Label><Input value={author} onChange={e => setAuthor(e.target.value)} required /></div>
-            <div><Label>Publish Date</Label><Input type="date" value={publishedAt} onChange={e => setPublishedAt(e.target.value)} required /></div>
-            <div className="col-span-2"><Label>Summary</Label><Textarea value={summary} onChange={e => setSummary(e.target.value)} required /></div>
+            <div><Label>Title</Label><Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} required /></div>
+            <div><Label>Slug</Label><Input value={slug} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlug(e.target.value)} required /></div>
+            <div><Label>Author</Label><Input value={author} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAuthor(e.target.value)} required /></div>
+            <div><Label>Publish Date</Label><Input type="date" value={publishedAt} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPublishedAt(e.target.value)} required /></div>
+            <div className="col-span-2"><Label>Summary</Label><Textarea value={summary} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSummary(e.target.value)} required /></div>
             
             {/* Rich text editor for content */}
             <div className="col-span-2">
@@ -157,7 +157,7 @@ export default function BlogsManagement() {
               <BlogEditor content={content} onChange={setContent} />
             </div>
             
-            <div className="col-span-2"><Label>Image URL</Label><Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} /></div>
+            <div className="col-span-2"><Label>Image URL</Label><Input value={imageUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageUrl(e.target.value)} /></div>
             <div className="col-span-2 flex justify-end"><Button type="submit">Create</Button></div>
           </form>
         </DialogContent>
@@ -174,11 +174,11 @@ export default function BlogsManagement() {
             e.preventDefault(); 
             if (editBlog) updateMutation.mutate({ ...editBlog, title, slug, author, summary, content, imageUrl, publishedAt }); 
           }} className="grid grid-cols-2 gap-4">
-            <div><Label>Title</Label><Input value={title} onChange={e => setTitle(e.target.value)} required /></div>
-            <div><Label>Slug</Label><Input value={slug} onChange={e => setSlug(e.target.value)} required /></div>
-            <div><Label>Author</Label><Input value={author} onChange={e => setAuthor(e.target.value)} required /></div>
-            <div><Label>Publish Date</Label><Input type="date" value={publishedAt} onChange={e => setPublishedAt(e.target.value)} required /></div>
-            <div className="col-span-2"><Label>Summary</Label><Textarea value={summary} onChange={e => setSummary(e.target.value)} required /></div>
+            <div><Label>Title</Label><Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} required /></div>
+            <div><Label>Slug</Label><Input value={slug} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlug(e.target.value)} required /></div>
+            <div><Label>Author</Label><Input value={author} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAuthor(e.target.value)} required /></div>
+            <div><Label>Publish Date</Label><Input type="date" value={publishedAt} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPublishedAt(e.target.value)} required /></div>
+            <div className="col-span-2"><Label>Summary</Label><Textarea value={summary} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSummary(e.target.value)} required /></div>
             
             {/* Rich text editor for content */}
             <div className="col-span-2">
@@ -186,7 +186,7 @@ export default function BlogsManagement() {
               <BlogEditor content={content} onChange={setContent} />
             </div>
             
-            <div className="col-span-2"><Label>Image URL</Label><Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} /></div>
+            <div className="col-span-2"><Label>Image URL</Label><Input value={imageUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageUrl(e.target.value)} /></div>
             <div className="col-span-2 flex justify-end"><Button type="submit">Update</Button></div>
           </form>
         </DialogContent>

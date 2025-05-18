@@ -11,11 +11,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  AppDialog as Dialog,
+  AppDialogContent as DialogContent,
+  AppDialogHeader as DialogHeader,
+  AppDialogTitle as DialogTitle,
+  AppDialogFooter as DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

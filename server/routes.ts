@@ -709,6 +709,42 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
   
   // Product routes
+  // Update product
+  app.put("/api/products/:id", async (req, res) => {
+    try {
+      console.log('Updating product with ID:', req.params.id);
+      console.log('Request body:', req.body);
+
+      const productId = req.params.id;
+      const updateData = req.body;
+
+      // Ensure custom HTML sections are properly formatted
+      if (updateData.customHtmlSections) {
+        updateData.customHtmlSections = updateData.customHtmlSections.map((section: any) => ({
+          id: section.id,
+          title: section.title,
+          content: section.content,
+          displayOrder: section.displayOrder || 0,
+          enabled: section.enabled
+        }));
+      }
+
+      // Update the product
+      const updatedProduct = await storage.updateProduct(productId, updateData);
+      
+      if (!updatedProduct) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+
+      return res.status(200).json(updatedProduct);
+    } catch (error) {
+      console.error('Error updating product:', error);
+      return res.status(500).json({ 
+        message: error instanceof Error ? error.message : 'Failed to update product'
+      });
+    }
+  });
+
   app.get("/api/products", async (req, res) => {
     try {
       const page = parseInt(req.query.page as string || "1");
@@ -1223,6 +1259,17 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
   
   // Product-Collection routes
+  // Get all product collections
+  app.get("/api/product-collections", async (req, res) => {
+    try {
+      const collections = await storage.getCollections();
+      return res.json(collections);
+    } catch (error) {
+      console.error('Error fetching product collections:', error);
+      return res.status(500).json({ message: 'Failed to fetch product collections' });
+    }
+  });
+
   app.post("/api/product-collections", async (req, res) => {
     try {
       const { productId, collectionId } = req.body;

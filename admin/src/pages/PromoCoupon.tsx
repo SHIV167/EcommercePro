@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -18,12 +18,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
+  AppDialog as Dialog,
+  AppDialogContent as DialogContent,
+  AppDialogHeader as DialogHeader,
+  AppDialogTitle as DialogTitle,
+  AppDialogFooter as DialogFooter,
+  AppDialogClose as DialogClose,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -375,7 +375,7 @@ export default function PromoCoupon() {
                               {...field} 
                               placeholder="SUMMER25" 
                               className="uppercase"
-                              onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value.toUpperCase())}
                             />
                           </FormControl>
                           <FormDescription>
@@ -457,7 +457,7 @@ export default function PromoCoupon() {
                               step={form.watch("discountType") === "percentage" ? "1" : "0.01"}
                               min={0}
                               max={form.watch("discountType") === "percentage" ? 100 : undefined}
-                              onChange={(e) => field.onChange(Number(e.target.value))}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(Number(e.target.value))}
                             />
                           </FormControl>
                           <FormDescription>
@@ -488,7 +488,7 @@ export default function PromoCoupon() {
                               type="number"
                               step="0.01"
                               min="0"
-                              onChange={(e) => field.onChange(Number(e.target.value))}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(Number(e.target.value))}
                             />
                           </FormControl>
                           <FormDescription>
@@ -515,7 +515,7 @@ export default function PromoCoupon() {
                               type="number"
                               step="1"
                               min="-1"
-                              onChange={(e) => field.onChange(Number(e.target.value))}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(Number(e.target.value))}
                             />
                           </FormControl>
                           <FormDescription>

@@ -186,6 +186,36 @@ const ProductPage: React.FC = () => {
     }
   };
 
+  const renderCustomHtmlSections = () => {
+    console.log('Product custom HTML sections:', product?.customHtmlSections);
+    if (!product?.customHtmlSections || product.customHtmlSections.length === 0) {
+      return null;
+    }
+
+    // Filter for enabled sections and sort by display order
+    const activeSections = product.customHtmlSections
+      .filter(section => section.enabled)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+
+    if (activeSections.length === 0) {
+      return null;
+    }
+
+    return activeSections.map(section => (
+      <div 
+        key={section.id} 
+        className="mt-8 border-2 border-black p-4 rounded-lg"
+        style={{ border: '2px solid black' }}
+      >
+        <h3 className="text-xl font-bold mb-4">{section.title}</h3>
+        <div 
+          className="prose max-w-none"
+          dangerouslySetInnerHTML={{ __html: section.content }} 
+        />
+      </div>
+    ));
+  };
+
   return (
     <div className="min-h-screen bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/uploads/fullbg_Desktop.png')", backgroundSize:"cover"}}>
       {!isDataReady ? (
@@ -655,29 +685,8 @@ const ProductPage: React.FC = () => {
               </div>
             </section>
 
-            {/* Custom HTML Sections - Added logging for debugging */}
-            {(() => {
-              // Log sections data for debugging
-              console.log("Custom HTML Sections from API:", extendedProduct?.customHtmlSections);
-              
-              // Get enabled sections
-              const enabledSections = extendedProduct?.customHtmlSections?.filter(section => section.enabled) || [];
-              console.log("Enabled sections:", enabledSections);
-              
-              // Return the JSX if we have enabled sections
-              return enabledSections.length > 0 ? (
-                <section className="py-8 max-w-4xl mx-auto">
-                  {enabledSections
-                    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
-                    .map((section) => (
-                      <div key={section.id} className="custom-html-section mb-8 p-6 border-2 border-black rounded-md bg-white">
-                        <h2 className="text-2xl font-heading text-primary mb-4">{section.title}</h2>
-                        <div className="custom-html-content prose max-w-none" dangerouslySetInnerHTML={{ __html: section.content }} />
-                      </div>
-                    ))}
-                </section>
-              ) : null;
-            })()}
+            {/* Custom HTML Sections */}
+            {renderCustomHtmlSections()}
 
             {/* FAQ Section */}
             <section className="py-12 max-w-4xl mx-auto px-8 border rounded-md my-10 bg-white">

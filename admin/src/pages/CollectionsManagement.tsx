@@ -9,12 +9,19 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AppDialog as Dialog, AppDialogContent as DialogContent, AppDialogHeader as DialogHeader, AppDialogTitle as DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Product } from "@shared/schema";
+// Local interface to replace missing @shared/schema
+type Product = {
+  _id?: string;
+  name: string;
+  price: number;
+  imageUrl?: string;
+  // Add other properties as needed
+};
 
 // Collection type (sync with backend)
 type Collection = {
@@ -81,27 +88,27 @@ function CollectionForm({ open, onClose, onSave, initial, products, selectedProd
           <div className="flex-1 space-y-4">
             <div>
               <Label>Name</Label>
-              <Input value={name} onChange={e => setName(e.target.value)} required />
+              <Input value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} required />
             </div>
             <div>
               <Label>Slug</Label>
-              <Input value={slug} onChange={e => setSlug(e.target.value)} required />
+              <Input value={slug} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlug(e.target.value)} required />
             </div>
             <div>
               <Label>Description</Label>
-              <Input value={description} onChange={e => setDescription(e.target.value)} />
+              <Input value={description} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)} />
             </div>
             <div>
               <Label>Desktop Banner URL</Label>
-              <Input value={desktopImageUrl} onChange={e => setDesktopImageUrl(e.target.value)} />
+              <Input value={desktopImageUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDesktopImageUrl(e.target.value)} />
             </div>
             <div>
               <Label>Mobile Banner URL</Label>
-              <Input value={mobileImageUrl} onChange={e => setMobileImageUrl(e.target.value)} />
+              <Input value={mobileImageUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMobileImageUrl(e.target.value)} />
             </div>
             <div>
               <Label>Image URL</Label>
-              <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} />
+              <Input value={imageUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageUrl(e.target.value)} />
             </div>
             <div className="flex items-center space-x-2">
               <Switch checked={featured} onCheckedChange={setFeatured} />
@@ -111,7 +118,7 @@ function CollectionForm({ open, onClose, onSave, initial, products, selectedProd
           <div className="w-1/3 space-y-4 flex flex-col">
             <div>
               <Label>Products</Label>
-              <Input value={filter} onChange={e => setFilter(e.target.value)} placeholder="Search products" />
+              <Input value={filter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilter(e.target.value)} placeholder="Filter products..." className="mb-2" />
               <ul>
                 {filteredProducts.map(product => (
                   <li key={product._id}>
@@ -161,7 +168,7 @@ export default function CollectionsManagement() {
   });
 
   // fetch all products for mapping
-  const { data: allProducts = [], isLoading: productsLoading } = useQuery<Product[]>({
+  const { data: allProducts = [] } = useQuery<Product[]>({
     queryKey: ['/api/products'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/products');

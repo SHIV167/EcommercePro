@@ -10,11 +10,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  AppDialog as Dialog,
+  AppDialogContent as DialogContent,
+  AppDialogHeader as DialogHeader,
+  AppDialogTitle as DialogTitle,
+  AppDialogFooter as DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -169,11 +169,11 @@ export default function GiftCardTemplatesManagement() {
           <div className="space-y-4">
             <div>
               <Label>Initial Amount</Label>
-              <Input type="number" min={0} value={initialAmount} onChange={e => setInitialAmount(Number(e.target.value))} />
+              <Input type="number" min={0} value={initialAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInitialAmount(Number(e.target.value))} />
             </div>
             <div>
               <Label>Expiry Date</Label>
-              <DatePicker selected={expiryDate} onChange={date => setExpiryDate(date || new Date())} />
+              <DatePicker selected={expiryDate} onChange={(date: Date | null) => setExpiryDate(date || new Date())} />
             </div>
             <div className="flex items-center space-x-2">
               <Label>Active</Label>
@@ -181,7 +181,7 @@ export default function GiftCardTemplatesManagement() {
             </div>
             <div>
               <Label>Image</Label>
-              <Input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] ?? null)} />
+              <Input type="file" accept="image/*" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageFile(e.target.files?.[0] ?? null)} />
             </div>
           </div>
           <DialogFooter>

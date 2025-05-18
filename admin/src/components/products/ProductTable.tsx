@@ -1,7 +1,13 @@
 import React from "react";
-import { Product } from "@shared/schema";
 import { MongoProduct, MongoCategory } from "@/types/mongo";
-import type { ProductCollection } from "@shared/schema";
+
+// Local interface to replace missing @shared/schema
+interface ProductCollection {
+  _id?: string;
+  id?: string;
+  productId: string;
+  collectionId: string;
+}
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -42,11 +48,23 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onDele
   };
 
   // Helper: map product to its collections via ProductCollection join
+  // Use error handling for product collections query
   const { data: pcData } = useQuery({
     queryKey: ['/api/product-collections'],
-    queryFn: async () => (await apiRequest('GET', '/api/product-collections')).json()
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('GET', '/api/product-collections');
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching product collections:', error);
+        return []; // Return empty array on error to prevent UI crashes
+      }
+    },
+    // Add retry to false to prevent multiple failed attempts
+    retry: false
   });
   const pcs = Array.isArray(pcData) ? pcData as ProductCollection[] : [];
+  // Collection mapping functionality (currently unused but may be needed later)
   const getCollectionsForProduct = (prod: MongoProduct) => {
     const pid = prod._id?.toString() || prod.id?.toString();
     return pcs

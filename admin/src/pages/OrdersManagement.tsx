@@ -1,6 +1,37 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Order } from "@shared/schema";
+
+// Define Order interface since @shared/schema module is missing
+interface Order {
+  _id: string;
+  id?: string;
+  userId: string;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    price: number;
+    name: string;
+    imageUrl?: string;
+  }>;
+  totalAmount: number;
+  paymentMethod: string; // Added missing paymentMethod property
+  shippingAddress: {
+    fullName: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
+  status: string;
+  packageLength?: number;
+  packageBreadth?: number;
+  packageHeight?: number;
+  packageWeight?: number;
+  createdAt: string;
+  updatedAt: string;
+};
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,11 +42,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
+  AppDialog as Dialog,
+  AppDialogContent as DialogContent,
+  AppDialogHeader as DialogHeader,
+  AppDialogTitle as DialogTitle,
+  AppDialogDescription as DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Pagination,
@@ -50,7 +81,7 @@ export default function OrdersManagement() {
   const apiBase = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL ?? '');
 
   // Fetch orders
-  const { data: ordersData, isLoading, isError } = useQuery({
+  const { data: ordersData, isLoading } = useQuery({
     queryKey: ['orders', page, limit, search, statusFilter, dateFilter],
     queryFn: async () => {
       let url = `${apiBase}/api/orders?page=${page}&limit=${limit}`;
@@ -74,7 +105,7 @@ export default function OrdersManagement() {
     id: order.id || order._id || '',
   }));
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPage(1); // Reset page when searching
   };
@@ -113,7 +144,7 @@ export default function OrdersManagement() {
     });
   };
 
-  const updateOrderMutation = useMutation({
+  const updateOrderMutation = useMutation<any, unknown, { id: string; status: string }>({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const res = await fetch(`${apiBase}/api/orders/${id}`, {
         method: "PUT",
@@ -228,7 +259,7 @@ export default function OrdersManagement() {
             <Input
               placeholder="Search by order ID or customer..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
               className="flex-1"
             />
             <Button type="submit" variant="secondary">
@@ -267,7 +298,7 @@ export default function OrdersManagement() {
             </SelectContent>
           </Select>
 
-          <Select value={dateFilter} onValueChange={(value) => setDateFilter(typeof value === 'string' ? value : '')}>
+          <Select value={dateFilter} onValueChange={(value: string) => setDateFilter(typeof value === 'string' ? value : '')}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Date Range" />
             </SelectTrigger>
@@ -472,7 +503,15 @@ export default function OrdersManagement() {
                 <div>
                   <h3 className="font-heading text-sm text-muted-foreground mb-2">Payment Information</h3>
                   <div className="border rounded-md p-4">
-                    <p className="font-medium">Payment Method: {selectedOrder.paymentMethod}</p>
+                    <p className="text-sm">Shipping Address:</p>
+                    <p className="bg-muted p-3 rounded-md text-sm mt-1">
+                      {selectedOrder.shippingAddress.fullName}<br/>
+                      {selectedOrder.shippingAddress.addressLine1}<br/>
+                      {selectedOrder.shippingAddress.addressLine2 && <>{selectedOrder.shippingAddress.addressLine2}<br/></>}
+                      {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}<br/>
+                      {selectedOrder.shippingAddress.country}
+                    </p>
+                    <p>Payment Method: {selectedOrder.paymentMethod}</p>
                     <p>Payment Status: Paid</p>
                     <p>Transaction ID: TXNID123456</p>
                   </div>
@@ -481,14 +520,26 @@ export default function OrdersManagement() {
                 <div>
                   <h3 className="font-heading text-sm text-muted-foreground mb-2">Shipping Address</h3>
                   <div className="border rounded-md p-4">
-                    <p>{selectedOrder.shippingAddress}</p>
+                    <p>
+                      {selectedOrder.shippingAddress.fullName}<br/>
+                      {selectedOrder.shippingAddress.addressLine1}<br/>
+                      {selectedOrder.shippingAddress.addressLine2 && <>{selectedOrder.shippingAddress.addressLine2}<br/></>}
+                      {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}<br/>
+                      {selectedOrder.shippingAddress.country}
+                    </p>
                   </div>
                 </div>
 
                 <div>
                   <h3 className="font-heading text-sm text-muted-foreground mb-2">Billing Address</h3>
                   <div className="border rounded-md p-4">
-                    <p>{selectedOrder.shippingAddress}</p>
+                    <p>
+                      {selectedOrder.shippingAddress.fullName}<br/>
+                      {selectedOrder.shippingAddress.addressLine1}<br/>
+                      {selectedOrder.shippingAddress.addressLine2 && <>{selectedOrder.shippingAddress.addressLine2}<br/></>}
+                      {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}<br/>
+                      {selectedOrder.shippingAddress.country}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -556,25 +607,25 @@ export default function OrdersManagement() {
                       type="number"
                       placeholder="Length"
                       value={packageLength}
-                      onChange={(e) => setPackageLength(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPackageLength(e.target.value)}
                     />
                     <Input
                       type="number"
                       placeholder="Breadth"
                       value={packageBreadth}
-                      onChange={(e) => setPackageBreadth(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPackageBreadth(e.target.value)}
                     />
                     <Input
                       type="number"
                       placeholder="Height"
                       value={packageHeight}
-                      onChange={(e) => setPackageHeight(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPackageHeight(e.target.value)}
                     />
                     <Input
                       type="number"
                       placeholder="Weight"
                       value={packageWeight}
-                      onChange={(e) => setPackageWeight(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPackageWeight(e.target.value)}
                     />
                   </div>
                 )}
@@ -593,8 +644,8 @@ export default function OrdersManagement() {
 
                 <div className="space-x-2">
                   <Button variant="outline">Print Invoice</Button>
-                  <Button className="bg-primary hover:bg-primary-light text-white" onClick={handleUpdateOrder} disabled={updateOrderMutation.isPending}>
-                    {updateOrderMutation.isPending ? "Updating..." : "Update Order"}
+                  <Button className="bg-primary hover:bg-primary-light text-white" onClick={handleUpdateOrder} disabled={updateOrderMutation.status === 'loading'}>
+                    {updateOrderMutation.status === 'loading' ? "Updating..." : "Update Order"}
                   </Button>
                 </div>
               </div>

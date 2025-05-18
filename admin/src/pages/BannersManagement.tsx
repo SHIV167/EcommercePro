@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -11,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AppDialog as Dialog, AppDialogContent as DialogContent, AppDialogHeader as DialogHeader, AppDialogTitle as DialogTitle, AppDialogFooter as DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 
@@ -91,23 +90,23 @@ function BannerForm({ open, onClose, onSave, initial }: BannerFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label>Title</Label>
-            <Input value={title} onChange={e => setTitle(e.target.value)} required />
+            <Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} required />
           </div>
           <div>
             <Label>Subtitle</Label>
-            <Input value={subtitle} onChange={e => setSubtitle(e.target.value)} />
+            <Input value={subtitle} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSubtitle(e.target.value)} />
           </div>
           <div>
             <Label>Alt Text</Label>
-            <Input value={alt} onChange={e => setAlt(e.target.value)} required />
+            <Input value={alt} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAlt(e.target.value)} required />
           </div>
           <div>
             <Label>Link URL</Label>
-            <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} />
+            <Input value={linkUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLinkUrl(e.target.value)} />
           </div>
           <div>
             <Label>Position</Label>
-            <Input type="number" value={position} onChange={e => setPosition(Number(e.target.value))} min={0} className="w-full" />
+            <Input type="number" value={position} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPosition(parseInt(e.target.value) || 0)} min={0} className="w-full" />
           </div>
           <div className="overflow-x-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -115,25 +114,25 @@ function BannerForm({ open, onClose, onSave, initial }: BannerFormProps) {
                 <Label>Desktop Image</Label>
                 <div className="flex gap-4">
                   <label className="inline-flex items-center">
-                    <input type="radio" name="desktopOption" value="upload" checked={desktopOption==='upload'} onChange={()=>setDesktopOption('upload')} />
+                    <input type="radio" name="desktopOption" value="upload" checked={desktopOption==='upload'} onChange={() => setDesktopOption('upload')} />
                     <span className="ml-2">Upload</span>
                   </label>
                   <label className="inline-flex items-center">
-                    <input type="radio" name="desktopOption" value="url" checked={desktopOption==='url'} onChange={()=>setDesktopOption('url')} />
+                    <input type="radio" name="desktopOption" value="url" checked={desktopOption==='url'} onChange={() => setDesktopOption('url')} />
                     <span className="ml-2">URL</span>
                   </label>
                 </div>
                 {desktopOption==='upload' ? (
-                  <Input type="file" accept="image/*" onChange={e => setFileDesktop(e.target.files?.[0])} className="w-full" />
+                  <input type="file" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFileDesktop(e.target.files?.[0])} accept="image/*" className="w-full" />
                 ) : (
-                  <Input value={desktopUrl} onChange={e => setDesktopUrl(e.target.value)} placeholder="https://example.com/desktop.jpg" className="w-full max-w-full break-words whitespace-normal" />
+                  <Input value={desktopUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDesktopUrl(e.target.value)} placeholder="https://example.com/desktop.jpg" className="w-full max-w-full break-words whitespace-normal" />
                 )}
                 {((desktopOption==='upload' && fileDesktop) || (desktopOption==='url' && desktopUrl)) && (
                   <img
                     src={desktopOption==='upload' ? URL.createObjectURL(fileDesktop!) : desktopUrl}
                     alt={alt || "Desktop banner image"}
                     className="h-14 mt-2 rounded"
-                    onError={e => { const img=e.target as HTMLImageElement; img.onerror=null; img.src=import.meta.env.BASE_URL + "placeholder-desktop.png"; }}
+                    onError={(e: React.SyntheticEvent<HTMLImageElement>) => { const img=e.target as HTMLImageElement; img.onerror=null; img.src=import.meta.env.BASE_URL + "placeholder-desktop.png"; }}
                   />
                 )}
               </div>
@@ -141,18 +140,18 @@ function BannerForm({ open, onClose, onSave, initial }: BannerFormProps) {
                 <Label>Mobile Image</Label>
                 <div className="flex gap-4">
                   <label className="inline-flex items-center">
-                    <input type="radio" name="mobileOption" value="upload" checked={mobileOption==='upload'} onChange={()=>setMobileOption('upload')} />
+                    <input type="radio" name="mobileOption" value="upload" checked={mobileOption==='upload'} onChange={() => setMobileOption('upload')} />
                     <span className="ml-2">Upload</span>
                   </label>
                   <label className="inline-flex items-center">
-                    <input type="radio" name="mobileOption" value="url" checked={mobileOption==='url'} onChange={()=>setMobileOption('url')} />
+                    <input type="radio" name="mobileOption" value="url" checked={mobileOption==='url'} onChange={() => setMobileOption('url')} />
                     <span className="ml-2">URL</span>
                   </label>
                 </div>
                 {mobileOption==='upload' ? (
-                  <Input type="file" accept="image/*" onChange={e => setFileMobile(e.target.files?.[0])} className="w-full" />
+                  <input type="file" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFileMobile(e.target.files?.[0])} accept="image/*" className="w-full" />
                 ) : (
-                  <Input value={mobileUrl} onChange={e => setMobileUrl(e.target.value)} placeholder="https://example.com/mobile.jpg" className="w-full max-w-full break-words whitespace-normal" />
+                  <Input value={mobileUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMobileUrl(e.target.value)} placeholder="https://example.com/mobile.jpg" className="w-full max-w-full break-words whitespace-normal" />
                 )}
                 {((mobileOption==='upload' && fileMobile) || (mobileOption==='url' && mobileUrl)) && (
                   <img
@@ -186,11 +185,7 @@ export default function BannersManagement() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | undefined>();
 
-  // --- Banner list normalization ---
-  // Always ensure every banner has an 'id' property for edit/delete
-  const normalizeBanners = (banners: any[]): Banner[] =>
-    banners.map(b => ({ ...b, id: b.id || b._id }));
-
+  // Use the Banner type consistently throughout the component
   // Fetch banners from the correct API endpoint
   const { data: bannersData = [], isLoading } = useQuery({
     queryKey: ['banners'],
@@ -321,7 +316,7 @@ export default function BannersManagement() {
                           src={banner.desktopImageUrl}
                           alt={banner.alt ? banner.alt : "Desktop banner image"}
                           className="h-12 rounded"
-                          onError={e => {
+                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                             const img = e.target as HTMLImageElement;
                             img.onerror = null;
                             img.src = import.meta.env.BASE_URL + "placeholder-desktop.png";

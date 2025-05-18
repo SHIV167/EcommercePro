@@ -206,60 +206,58 @@ export class MongoDBStorage implements IStorage {
     return convertToObject<Product>(newProduct);
   }
 
-  async updateProduct(id: string, productData: Partial<InsertProduct>): Promise<Product | undefined> {
-    // Convert imageUrl and images to public URLs before saving
-    let imageUrl = productData.imageUrl;
-    if (imageUrl) imageUrl = toPublicUrl(imageUrl);
-    let images = productData.images;
-    if (Array.isArray(images)) {
-      images = images.map(toPublicUrl);
+  async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined> {
+    try {
+      console.log('Updating product with ID:', id);
+      console.log('Update data:', product);
+
+      // Find the existing product first
+      const existingProduct = await ProductModel.findById(id);
+      if (!existingProduct) {
+        console.log('Product not found for update');
+        return undefined;
+      }
+
+      // Update the fields that are present in the request
+      if (product.name) existingProduct.name = product.name;
+      if (product.description) existingProduct.description = product.description;
+      if (product.shortDescription) existingProduct.shortDescription = product.shortDescription;
+      if (typeof product.price !== 'undefined') existingProduct.price = product.price;
+      if (typeof product.discountedPrice !== 'undefined') existingProduct.discountedPrice = product.discountedPrice === null ? undefined : product.discountedPrice;
+      if (typeof product.stock !== 'undefined') existingProduct.stock = product.stock;
+      if (product.slug) existingProduct.slug = product.slug;
+      if (typeof product.featured !== 'undefined') existingProduct.featured = product.featured;
+      if (typeof product.bestseller !== 'undefined') existingProduct.bestseller = product.bestseller;
+      if (typeof product.isNew !== 'undefined') existingProduct.isNew = product.isNew;
+      if (product.videoUrl) existingProduct.videoUrl = product.videoUrl;
+      if (product.categoryId) existingProduct.categoryId = product.categoryId;
+
+      // Update arrays if they are present
+      if (Array.isArray(product.images)) {
+        existingProduct.images = product.images.filter(img => img && typeof img === 'string');
+      }
+
+      // Update custom HTML sections if present
+      if (Array.isArray(product.customHtmlSections)) {
+        existingProduct.customHtmlSections = product.customHtmlSections.map(section => ({
+          id: section.id,
+          title: section.title,
+          content: section.content,
+          displayOrder: section.displayOrder || 0,
+          enabled: section.enabled
+        }));
+      }
+
+      // Save the updated product
+      console.log('Saving updated product...');
+      await existingProduct.save();
+      console.log('Product saved successfully');
+
+      return convertToObject<Product>(existingProduct);
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
     }
-    
-    // Debug the incoming data to help troubleshoot
-    console.log('[DEBUG] MongoDBStorage.updateProduct - Data before update:', {
-      howToUse: productData.howToUse,
-      howToUseVideo: productData.howToUseVideo,
-      howToUseStepsCount: productData.howToUseSteps?.length,
-      benefits: productData.benefits,
-      structuredBenefitsCount: productData.structuredBenefits?.length,
-      customHtmlSectionsCount: productData.customHtmlSections?.length,
-      customHtmlSections: productData.customHtmlSections
-    });
-    
-    // Ensure HOW TO USE fields, Benefits fields, and Custom HTML Sections are explicitly included in the update
-    const updateData = {
-      ...productData,
-      imageUrl,
-      images,
-      // Explicitly set these fields to ensure they're updated
-      howToUse: productData.howToUse,
-      howToUseVideo: productData.howToUseVideo,
-      howToUseSteps: productData.howToUseSteps,
-      benefits: productData.benefits,
-      structuredBenefits: productData.structuredBenefits,
-      customHtmlSections: productData.customHtmlSections
-    };
-    
-    const updatedProduct = await ProductModel.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true }
-    );
-    
-    // Debug the result
-    if (updatedProduct) {
-      console.log('[DEBUG] MongoDBStorage.updateProduct - Updated product:', {
-        howToUse: updatedProduct.howToUse,
-        howToUseVideo: updatedProduct.howToUseVideo,
-        howToUseStepsCount: updatedProduct.howToUseSteps?.length,
-        benefits: updatedProduct.benefits,
-        structuredBenefitsCount: updatedProduct.structuredBenefits?.length,
-        customHtmlSectionsCount: updatedProduct.customHtmlSections?.length,
-        customHtmlSections: updatedProduct.customHtmlSections
-      });
-    }
-    
-    return updatedProduct ? convertToObject<Product>(updatedProduct) : undefined;
   }
 
   async deleteProduct(id: string): Promise<boolean> {
@@ -325,8 +323,13 @@ export class MongoDBStorage implements IStorage {
 
   // Collection operations
   async getCollections(): Promise<Collection[]> {
-    const collections = await CollectionModel.find();
-    return collections.map(c => convertToObject<Collection>(c));
+    try {
+      const collections = await CollectionModel.find();
+      return collections.map(collection => convertToObject<Collection>(collection));
+    } catch (error) {
+      console.error('Error getting collections:', error);
+      throw error;
+    }
   }
 
   async getCollectionById(id: string): Promise<Collection | undefined> {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,11 +10,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  AppDialog as Dialog,
+  AppDialogContent as DialogContent,
+  AppDialogHeader as DialogHeader,
+  AppDialogTitle as DialogTitle,
+  AppDialogFooter as DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -196,12 +196,12 @@ export default function GiftCardsManagement() {
           <div className="space-y-4">
             <div>
               <Label>Initial Amount</Label>
-              <Input type="number" min={0} value={initialAmount} onChange={e => setInitialAmount(Number(e.target.value))} />
+              <Input type="number" min={0} value={initialAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInitialAmount(Number(e.target.value))} />
             </div>
             {editing && (
               <div>
                 <Label>Balance</Label>
-                <Input type="number" min={0} value={balance} onChange={e => setBalance(Number(e.target.value))} />
+                <Input type="number" min={0} value={balance} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBalance(Number(e.target.value))} />
               </div>
             )}
             <div>

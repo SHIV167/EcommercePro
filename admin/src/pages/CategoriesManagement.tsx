@@ -9,7 +9,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AppDialog as Dialog, AppDialogContent as DialogContent, AppDialogHeader as DialogHeader, AppDialogTitle as DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -72,27 +72,27 @@ function CategoryForm({ open, onClose, onSave, initial }: CategoryFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label>Name</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} required />
+            <Input value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} required />
           </div>
           <div>
             <Label>Slug</Label>
-            <Input value={slug} onChange={e => setSlug(e.target.value)} required />
+            <Input value={slug} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlug(e.target.value)} required />
           </div>
           <div>
             <Label>Description</Label>
-            <Input value={description} onChange={e => setDescription(e.target.value)} />
+            <Input value={description} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)} />
           </div>
           <div>
             <Label>Image URL</Label>
-            <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} />
+            <Input value={imageUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageUrl(e.target.value)} />
           </div>
           <div>
             <Label>Desktop Image URL</Label>
-            <Input value={desktopImageUrl} onChange={e => setDesktopImageUrl(e.target.value)} />
+            <Input value={desktopImageUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDesktopImageUrl(e.target.value)} />
           </div>
           <div>
             <Label>Mobile Image URL</Label>
-            <Input value={mobileImageUrl} onChange={e => setMobileImageUrl(e.target.value)} />
+            <Input value={mobileImageUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMobileImageUrl(e.target.value)} />
           </div>
           <div className="flex items-center space-x-2">
             <Switch checked={featured} onCheckedChange={setFeatured} />

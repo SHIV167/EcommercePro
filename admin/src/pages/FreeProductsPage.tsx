@@ -17,12 +17,12 @@ import {
 } from '@/components/ui/table';
 import { Loader } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  AppDialog as Dialog,
+  AppDialogContent as DialogContent,
+  AppDialogDescription as DialogDescription,
+  AppDialogFooter as DialogFooter,
+  AppDialogHeader as DialogHeader,
+  AppDialogTitle as DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
@@ -430,7 +430,7 @@ export default function FreeProductsPage() {
                 id="product"
                 className="w-full px-3 py-2 border border-input rounded-md"
                 value={formData.productId}
-                onChange={(e) => setFormData({...formData, productId: e.target.value})}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({...formData, productId: e.target.value})}
                 disabled={editingProduct !== null}
               >
                 <option value="">Select a product</option>
@@ -451,7 +451,7 @@ export default function FreeProductsPage() {
                 id="minOrderValue"
                 type="number"
                 value={formData.minOrderValue}
-                onChange={(e) => setFormData({...formData, minOrderValue: parseFloat(e.target.value)})}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, minOrderValue: parseFloat(e.target.value)})}
               />
               {formErrors.minOrderValue && (
                 <p className="text-destructive text-sm">{formErrors.minOrderValue}</p>
@@ -464,7 +464,7 @@ export default function FreeProductsPage() {
                 id="maxOrderValue"
                 type="number"
                 value={formData.maxOrderValue === null ? '' : formData.maxOrderValue}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const value = e.target.value.trim() === '' ? null : parseFloat(e.target.value);
                   setFormData({...formData, maxOrderValue: value});
                 }}
