@@ -187,16 +187,28 @@ const ProductPage: React.FC = () => {
   };
 
   const renderCustomHtmlSections = () => {
-    console.log('Product custom HTML sections:', product?.customHtmlSections);
-    if (!product?.customHtmlSections || product.customHtmlSections.length === 0) {
+    // Enhanced debugging to check both possible locations of customHtmlSections
+    console.log('Product data:', product);
+    console.log('Extended product data:', extendedProduct);
+  
+    // Check both potential sources of customHtmlSections
+    const customSections = extendedProduct?.customHtmlSections || 
+                          (product as any)?.customHtmlSections || [];
+  
+    console.log('Custom HTML sections found:', customSections);
+  
+    if (!customSections || customSections.length === 0) {
+      console.log('No custom HTML sections found');
       return null;
     }
 
     // Filter for enabled sections and sort by display order
-    const activeSections = product.customHtmlSections
+    const activeSections = customSections
       .filter(section => section.enabled)
       .sort((a, b) => a.displayOrder - b.displayOrder);
 
+    console.log('Active sections after filtering:', activeSections);
+  
     if (activeSections.length === 0) {
       return null;
     }
@@ -204,7 +216,7 @@ const ProductPage: React.FC = () => {
     return activeSections.map(section => (
       <div 
         key={section.id} 
-        className="mt-8 border-2 border-black p-4 rounded-lg"
+        className="mt-8 border-2 border-black p-4 rounded-lg custom-html-section"
         style={{ border: '2px solid black' }}
       >
         <h3 className="text-xl font-bold mb-4">{section.title}</h3>
