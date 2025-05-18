@@ -67,10 +67,7 @@ const productSchema = z.object({
     description: z.string(),
     imageUrl: z.string().optional()
   })).default([]),
-  howToUse: z.array(z.object({
-    step: z.string(),
-    imageUrl: z.string().optional()
-  })).default([]),
+  howToUse: z.string().optional(),
   howToUseSteps: z.array(z.object({
     stepNumber: z.number().optional(),
     title: z.string().optional(),
