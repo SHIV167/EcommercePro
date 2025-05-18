@@ -19,7 +19,7 @@ import {
   Bar,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+// Removed wouter Link import as it was causing React error #137
 import { Order, Product } from "../../../shared/schema";
 
 interface DashboardSummary {
@@ -85,7 +85,8 @@ export default function Dashboard() {
           <p className="text-muted-foreground">Overview of your store's performance</p>
         </div>
         
-        <Link href="/admin/products">
+        {/* Fix Link component to use the correct pattern */}
+        <a href="/admin/products">
           <Button className="bg-primary hover:bg-primary/90 text-white">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -103,7 +104,7 @@ export default function Dashboard() {
             </svg>
             Manage Products
           </Button>
-        </Link>
+        </a>
       </div>
       
       {/* Quick Actions Card */}
@@ -134,9 +135,9 @@ export default function Dashboard() {
                 <h3 className="font-semibold">Manage Products</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-3">Add, edit, and organize your product catalog</p>
-              <Link href="/admin/products">
+              <a href="/admin/products">
                 <Button variant="outline" className="w-full">Go to Products</Button>
-              </Link>
+              </a>
             </div>
             
             <div className="border rounded-lg p-4 hover:bg-muted/10 transition-colors">
@@ -161,9 +162,9 @@ export default function Dashboard() {
                 <h3 className="font-semibold">Process Orders</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-3">View and manage customer orders</p>
-              <Link href="/admin/orders">
+              <a href="/admin/orders">
                 <Button variant="outline" className="w-full">Go to Orders</Button>
-              </Link>
+              </a>
             </div>
             
             <div className="border rounded-lg p-4 hover:bg-muted/10 transition-colors">
@@ -187,9 +188,9 @@ export default function Dashboard() {
                 <h3 className="font-semibold">Manage Customers</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-3">View customer information and purchase history</p>
-              <Link href="/admin/users">
+              <a href="/admin/users">
                 <Button variant="outline" className="w-full">Go to Customers</Button>
-              </Link>
+              </a>
             </div>
           </div>
         </CardContent>

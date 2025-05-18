@@ -92,9 +92,9 @@ export default function Header() {
               <path d="M13 3L21 3L21 11"></path>
               <path d="M21 3L9 15"></path>
             </svg>
-            <link href="https://ecommercepromern.onrender.com/">
-            Visit Store
-            </link>
+            <a href="https://ecommercepromern.onrender.com/" target="_blank" rel="noopener noreferrer">
+              Visit Store
+            </a>
           </Button>
           
           <a href="#" className="relative text-muted-foreground hover:text-foreground">
