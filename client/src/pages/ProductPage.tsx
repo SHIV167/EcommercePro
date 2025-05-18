@@ -655,21 +655,29 @@ const ProductPage: React.FC = () => {
               </div>
             </section>
 
-            {/* Custom HTML Sections */}
-            {extendedProduct && extendedProduct.customHtmlSections && extendedProduct.customHtmlSections.length > 0 && (
-              <section className="py-8 max-w-4xl mx-auto">
-                {extendedProduct.customHtmlSections
-                  .filter(section => section.enabled)
-                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
-                  .map((section) => (
-                    <div key={section.id} className="custom-html-section mb-8 p-6 border border-black rounded-md bg-white">
-                      <h2 className="text-2xl font-heading text-primary mb-4">{section.title}</h2>
-                      <div className="custom-html-content prose max-w-none" dangerouslySetInnerHTML={{ __html: section.content }} />
-                    </div>
-                  ))
-                }
-              </section>
-            )}
+            {/* Custom HTML Sections - Added logging for debugging */}
+            {(() => {
+              // Log sections data for debugging
+              console.log("Custom HTML Sections from API:", extendedProduct?.customHtmlSections);
+              
+              // Get enabled sections
+              const enabledSections = extendedProduct?.customHtmlSections?.filter(section => section.enabled) || [];
+              console.log("Enabled sections:", enabledSections);
+              
+              // Return the JSX if we have enabled sections
+              return enabledSections.length > 0 ? (
+                <section className="py-8 max-w-4xl mx-auto">
+                  {enabledSections
+                    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                    .map((section) => (
+                      <div key={section.id} className="custom-html-section mb-8 p-6 border-2 border-black rounded-md bg-white">
+                        <h2 className="text-2xl font-heading text-primary mb-4">{section.title}</h2>
+                        <div className="custom-html-content prose max-w-none" dangerouslySetInnerHTML={{ __html: section.content }} />
+                      </div>
+                    ))}
+                </section>
+              ) : null;
+            })()}
 
             {/* FAQ Section */}
             <section className="py-12 max-w-4xl mx-auto px-8 border rounded-md my-10 bg-white">

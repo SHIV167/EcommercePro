@@ -193,12 +193,18 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
     setIsSubmitting(true);
 
     try {
-      // Set custom HTML sections from state
-      // Ensure all have displayOrder set
+      // Set custom HTML sections from state and ensure they're properly formatted
+      // This is critical for proper updating on the server side
       values.customHtmlSections = customSectionTemplates.map((section: CustomHtmlSection) => ({
-        ...section,
-        displayOrder: section.displayOrder || 0
+        id: section.id,
+        title: section.title,
+        content: section.content,
+        displayOrder: section.displayOrder || 0,
+        enabled: section.enabled
       }));
+      
+      // Log for debugging
+      console.log("Submitting custom HTML sections:", values.customHtmlSections);
 
       // Handle image uploads first
       if (imageFiles.length > 0) {
@@ -232,8 +238,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       // Convert the product data with custom HTML sections to JSON and append it
       formData.append('product', JSON.stringify(values));
       
-      // Also append customHtmlSections as a separate field for debugging
-      formData.append('customHtmlSections', JSON.stringify(customSectionTemplates));
+      // Also append customHtmlSections as a separate field - this is critical for the server to process it correctly
+      formData.append('customHtmlSections', JSON.stringify(values.customHtmlSections));
       
       // Append each image file
       imageFiles.forEach((file) => {
@@ -263,13 +269,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       
       // Clear form
       form.reset();
+      // Show success toast with details about the custom HTML sections
+      toast({
+        title: product ? "Product updated successfully" : "Product created successfully",
+        description: `Custom HTML sections: ${values.customHtmlSections.filter(s => s.enabled).length} enabled of ${values.customHtmlSections.length} total`,
+        variant: "default"
+      });
+
+      // Clear temp image data
       setImageFiles([]);
       setImagePreviews([]);
-      setExistingImages([]);
       
-      // Call onSuccess prop if provided
-      if (onSuccess) onSuccess();
-
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error: any) {
       console.error("Error saving product:", error);
       toast({
