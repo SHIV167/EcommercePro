@@ -1,12 +1,12 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
+import { Transition } from '@headlessui/react';
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import MobileNav from "./MobileNav";
 import MiniCart from "@/components/layout/MiniCart";
 import { useQuery } from "@tanstack/react-query";
 import type { Category } from "@shared/schema";
-import { Transition } from '@headlessui/react';
 import { apiRequest } from "@/lib/queryClient";
 import SearchBar from "@/components/home/SearchBar";
 import MegaMenu from "../MegaMenu";
@@ -139,7 +139,6 @@ export default function Header() {
                 </svg>
               </button>
               <Transition
-                as={Fragment}
                 show={isUserMenuOpen}
                 enter="transition ease-out duration-200"
                 enterFrom="opacity-0 translate-y-2"
@@ -147,6 +146,7 @@ export default function Header() {
                 leave="transition ease-in duration-150"
                 leaveFrom="opacity-100 translate-y-0"
                 leaveTo="opacity-0 translate-y-2"
+                as="div"
               >
                 <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg py-2 z-[100] border border-gray-100" role="menu">
                   {!isAuthenticated && (
@@ -219,7 +219,6 @@ export default function Header() {
                 </svg>
               </button>
               <Transition
-                as={Fragment}
                 show={isUserMenuOpen}
                 enter="transition ease-out duration-200"
                 enterFrom="opacity-0 translate-y-2"
@@ -227,6 +226,7 @@ export default function Header() {
                 leave="transition ease-in duration-150"
                 leaveFrom="opacity-100 translate-y-0"
                 leaveTo="opacity-0 translate-y-2"
+                as="div"
               >
                 <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg py-2 z-[100] border border-gray-100" role="menu">
                   {!isAuthenticated && (
