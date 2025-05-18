@@ -25,10 +25,10 @@ import '@/styles/custom-html-sections.css';
 type EnrichedReview = Review & { _id?: string; userName?: string };
 
 // Type for custom HTML sections
-type CustomSection = {
+type CustomHtmlSection = {
   id: string;
   title: string;
-  htmlContent: string;
+  content: string;
   displayOrder: number;
   enabled: boolean;
 };
@@ -74,7 +74,7 @@ const ProductPage: React.FC = () => {
     reviews, 
     relatedProducts: ((product as any)?.relatedProducts || []) as Product[],
     faqs: product?.faqs || [], // Use product FAQs from the database
-    customSections: ((product as any)?.customSections || []) as CustomSection[]
+    customHtmlSections: ((product as any)?.customHtmlSections || []) as CustomHtmlSection[]
   } : null;
 
   const ExtendedReviewForm = ReviewForm as unknown as React.FC<{ productId: string; onClose: () => void; onSubmit: (review: EnrichedReview) => void; }>;
@@ -658,15 +658,15 @@ const ProductPage: React.FC = () => {
             </section>
 
             {/* Custom HTML Sections */}
-            {extendedProduct && extendedProduct.customSections && extendedProduct.customSections.length > 0 && (
+            {extendedProduct && extendedProduct.customHtmlSections && extendedProduct.customHtmlSections.length > 0 && (
               <section className="py-8 max-w-4xl mx-auto">
-                {extendedProduct.customSections
+                {extendedProduct.customHtmlSections
                   .filter(section => section.enabled)
                   .sort((a, b) => a.displayOrder - b.displayOrder)
                   .map((section) => (
                     <div key={section.id} className="custom-html-section mb-8 p-6 border rounded-md bg-white">
                       <h2 className="text-2xl font-heading text-primary mb-4">{section.title}</h2>
-                      <div className="custom-html-content prose max-w-none" dangerouslySetInnerHTML={{ __html: section.htmlContent }} />
+                      <div className="custom-html-content prose max-w-none" dangerouslySetInnerHTML={{ __html: section.content }} />
                     </div>
                   ))
                 }

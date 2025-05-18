@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { toast } from 'sonner';
@@ -12,8 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, CheckCircle, XCircle } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 interface Review {
   _id: string;
@@ -28,7 +27,7 @@ interface Review {
 }
 
 const ReviewManagement = () => {
-  const { isAuthenticated, isLoading: authLoading } = useAdminAuth();
+  const { isAuthenticated } = useAdminAuth();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
@@ -54,7 +53,7 @@ const ReviewManagement = () => {
   });
 
   // Update review status mutation
-  const updateReviewStatus = useMutation({
+  const { mutate: updateReviewStatus, isLoading: isUpdating } = useMutation({
     mutationFn: async ({ reviewId, status }: { reviewId: string; status: 'approved' | 'rejected' }) => {
       const response = await apiRequest(`/api/admin/reviews/${reviewId}/status`, {
         method: 'PATCH',
@@ -76,21 +75,27 @@ const ReviewManagement = () => {
 
   // Handle approve/reject actions
   const handleApprove = (reviewId: string) => {
-    updateReviewStatus.mutate(
-      { reviewId, status: 'approved' },
+    updateReviewStatus(
+      { reviewId, status: 'approved' as const },
       {
         onSuccess: () => toast.success('Review approved successfully'),
-        onError: (error) => toast.error(error.message)
+        onError: (error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+          toast.error(errorMessage);
+        }
       }
     );
   };
 
   const handleReject = (reviewId: string) => {
-    updateReviewStatus.mutate(
-      { reviewId, status: 'rejected' },
+    updateReviewStatus(
+      { reviewId, status: 'rejected' as const },
       {
         onSuccess: () => toast.success('Review rejected'),
-        onError: (error) => toast.error(error.message)
+        onError: (error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+          toast.error(errorMessage);
+        }
       }
     );
   };
@@ -145,7 +150,7 @@ const ReviewManagement = () => {
           <div className="w-full md:w-1/3">
             <Select 
               value={filter} 
-              onValueChange={(value) => setFilter(value as any)}
+              onValueChange={(value: 'all' | 'pending' | 'approved' | 'rejected') => setFilter(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Filter by status" />
@@ -166,7 +171,7 @@ const ReviewManagement = () => {
               type="text"
               placeholder="Search reviews..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -224,7 +229,7 @@ const ReviewManagement = () => {
                                 variant="outline" 
                                 size="sm" 
                                 onClick={() => handleApprove(review._id)}
-                                disabled={updateReviewStatus.isPending}
+                                disabled={isUpdating}
                                 className="text-green-600 border-green-600 hover:bg-green-50"
                               >
                                 <CheckCircle className="h-4 w-4 mr-1" />
@@ -234,7 +239,7 @@ const ReviewManagement = () => {
                                 variant="outline" 
                                 size="sm" 
                                 onClick={() => handleReject(review._id)}
-                                disabled={updateReviewStatus.isPending}
+                                disabled={isUpdating}
                                 className="text-red-600 border-red-600 hover:bg-red-50"
                               >
                                 <XCircle className="h-4 w-4 mr-1" />
@@ -247,7 +252,7 @@ const ReviewManagement = () => {
                               variant="outline" 
                               size="sm" 
                               onClick={() => handleApprove(review._id)}
-                              disabled={updateReviewStatus.isPending}
+                              disabled={isUpdating}
                               className="text-green-600 border-green-600 hover:bg-green-50"
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
@@ -259,7 +264,7 @@ const ReviewManagement = () => {
                               variant="outline" 
                               size="sm" 
                               onClick={() => handleReject(review._id)}
-                              disabled={updateReviewStatus.isPending}
+                              disabled={isUpdating}
                               className="text-red-600 border-red-600 hover:bg-red-50"
                             >
                               <XCircle className="h-4 w-4 mr-1" />

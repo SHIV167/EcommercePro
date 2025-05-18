@@ -141,11 +141,17 @@ export default function TestimonialsManagement() {
           <div className="space-y-4">
             <div>
               <Label>Name</Label>
-              <Input value={name} onChange={e => setName(e.target.value)} />
+              <Input 
+                value={name} 
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} 
+              />
             </div>
             <div>
               <Label>Content</Label>
-              <Textarea value={content} onChange={e => setContent(e.target.value)} />
+              <Textarea 
+                value={content} 
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)} 
+              />
             </div>
             <div>
               <Label>Rating</Label>
@@ -154,7 +160,7 @@ export default function TestimonialsManagement() {
                 min={1}
                 max={5}
                 value={rating}
-                onChange={e => setRating(Number(e.target.value))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRating(Number(e.target.value))}
               />
             </div>
             <div className="flex items-center space-x-2">

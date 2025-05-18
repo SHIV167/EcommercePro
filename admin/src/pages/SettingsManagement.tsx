@@ -75,7 +75,7 @@ export default function SettingsManagement() {
       const res = await apiRequest('PUT', '/api/admin/settings', payload);
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({ title: 'Settings updated successfully' });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/settings'] });
     },
@@ -84,7 +84,7 @@ export default function SettingsManagement() {
     }
   });
 
-  const isUpdating = status === 'pending';
+  const isUpdating = status === 'loading';
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-full p-8">

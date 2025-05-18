@@ -5,20 +5,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { apiRequest } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Checkbox } from "../ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
-import { productSchema, categorySchema, faqSchema } from "../../../../shared/schema";
+import { productSchema } from "../../../../shared/schema";
 import { X, Plus, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { CodeEditor } from "../ui/code-editor";
 import { nanoid } from "nanoid";
-type Product = z.infer<typeof productSchema>;
-type Category = z.infer<typeof categorySchema>;
+import { Label } from "../ui/label";
 import { MongoProduct, MongoCategory } from "../../types/mongo";
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -37,7 +36,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   const [existingImages, setExistingImages] = useState<string[]>(product?.images || []);
   
   // Setup custom HTML sections field array
-  const [customSectionTemplates, setCustomSectionTemplates] = useState<{id: string, title: string, content: string}[]>([
+  const [customSectionTemplates, setCustomSectionTemplates] = useState<{id: string, title: string, content: string, displayOrder?: number, enabled: boolean}[]>(
+    product?.customHtmlSections || [
     {
       id: 'clinically-tested',
       title: 'Clinically Tested To',
@@ -56,8 +56,20 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       Did you know that Natural Sun Protection contains the natural mineral Zinc Oxide known as Yasad Bhsma, which protects from both UVA & UVB rays?
     </blockquote>
   </div>
-</div>`
+</div>`,
+      displayOrder: 0,
+      enabled: false
     },
+    {
+      id: 'ingredients-list',
+      title: 'Ingredients List',
+      content: `<div>
+  <h3 class="text-xl font-medium mb-4">Ingredients List</h3>
+  <p class="mb-4">Purified Water, Elaeis Guineensis (Olive) Oil, Glycerin, Zinc Oxide & Titanium Dioxide (Natural Sun protection minerals), Cera Alba (Beeswax), Butyrospermum Parkii (Shea) Butter, Theobroma Cacao (Cocoa) Seed Butter, Xanthan Gum, Syzygium Aromaticum (Clove) Bud Oil, Citrus Aurantium Bergamia (Bergamot) Fruit Oil, Cetyl Alcohol.</p>
+</div>`,
+      displayOrder: 1,
+      enabled: false
+    }
   ]);
 
   // Get categories for the form
@@ -95,35 +107,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           faqs: product.faqs || [],
           structuredIngredients: product.structuredIngredients || [],
           howToUse: product.howToUse || "",
-          howToUseVideo: product.howToUseVideo || "",
-          howToUseSteps: product.howToUseSteps || [],
-          benefits: product.benefits || "",
-          structuredBenefits: product.structuredBenefits || [],
-        }
-      : {
-          sku: "",
-          name: "",
-          description: "",
-          shortDescription: "",
-          price: 0,
-          discountedPrice: null,
-          stock: 0,
-          benefits: "",
-          structuredBenefits: [],
-          categoryId: undefined,
-          slug: "",
-          featured: false,
-          bestseller: false,
-          isNew: true,
-          videoUrl: "",
-          imageUrl: "",
-          images: [],
-          faqs: [],
-          structuredIngredients: [],
-          howToUse: "",
-          howToUseVideo: "",
-          howToUseSteps: [],
-        },
+          howToUseVideo: product.howToUseVideo || ""
   });
   
   // Setup field arrays for managing FAQs, ingredients, and how-to-use steps
@@ -168,101 +152,82 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
     }
   }, [form]);
 
-  // Handle form submit including images
-  const handleSubmitWithImages = form.handleSubmit(
-    async (data) => {
-      console.log('🛎️ SUBMIT HANDLER FIRED', data); // debug
+  // Form submission handler
+  const onSubmit = async (values: ProductFormValues): Promise<void> => {
+    try {
       setIsSubmitting(true);
-      try {
-        const formData = new FormData();
-        // Append all product fields, ensuring correct types
-        formData.append('sku', data.sku);
-        formData.append('name', data.name);
-        formData.append('description', data.description);
-        formData.append('shortDescription', data.shortDescription || '');
-        formData.append('price', String(Number(data.price)));
-        if (
-          typeof data.discountedPrice === 'string' &&
-          data.discountedPrice !== '' &&
-          !isNaN(Number(data.discountedPrice))
-        ) {
-          formData.append('discountedPrice', String(Number(data.discountedPrice)));
-        } else if (
-          typeof data.discountedPrice === 'number' &&
-          !isNaN(data.discountedPrice)
-        ) {
-          formData.append('discountedPrice', String(data.discountedPrice));
-        }
-        formData.append('stock', String(Number(data.stock)));
-        formData.append('categoryId', data.categoryId);
-        const slugToAppend = data.slug || data.name.toLowerCase()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/[\s_-]+/g, '-')
-          .replace(/^-+|-+$/g, '');
-        formData.append('slug', slugToAppend);
-        formData.append('featured', data.featured ? 'true' : 'false');
-        formData.append('bestseller', data.bestseller ? 'true' : 'false');
-        formData.append('isNew', data.isNew ? 'true' : 'false');
-        formData.append('videoUrl', data.videoUrl || '');
 
-        // Append all selected image files
-        imageFiles.forEach(file => formData.append('images', file));
-        // For edit: also send existing image URLs to keep
-        if (product && existingImages.length > 0) {
-          existingImages.forEach(url => formData.append('existingImages', url));
-        }
-        // No longer append imageUrl manually (let backend set it from images array)
-        
-        // Append FAQs as JSON string
-        if (data.faqs && data.faqs.length > 0) {
-          formData.append('faqs', JSON.stringify(data.faqs));
-        }
-        
-        // Append structured ingredients as JSON string
-        if (data.structuredIngredients && data.structuredIngredients.length > 0) {
-          formData.append('structuredIngredients', JSON.stringify(data.structuredIngredients));
-        }
-        
-        // Append How to Use data
-        formData.append('howToUse', data.howToUse || '');
-        formData.append('howToUseVideo', data.howToUseVideo || '');
-        
-        // Append How to Use Steps as JSON string - always include this even if empty
-        console.log('HOW TO USE STEPS TO SAVE:', data.howToUseSteps);
-        const howToUseStepsJson = JSON.stringify(data.howToUseSteps || []);
-        console.log('HOW TO USE STEPS JSON:', howToUseStepsJson);
-        formData.append('howToUseSteps', howToUseStepsJson);
-        
-        // Append Benefits data
-        formData.append('benefits', data.benefits || '');
-        
-        // Append Structured Benefits as JSON string
-        console.log('BENEFITS TO SAVE:', data.structuredBenefits);
-        const structuredBenefitsJson = JSON.stringify(data.structuredBenefits || []);
-        console.log('STRUCTURED BENEFITS JSON:', structuredBenefitsJson);
-        formData.append('structuredBenefits', structuredBenefitsJson);
+      // Extract values from the form
+      const { faqs, structuredIngredients, howToUseSteps, structuredBenefits, ...productData } = values;
+      
+      // Create FormData instance
+      const formData = new FormData();
+      
+      // Add custom HTML sections to the product data
+      const productWithCustomSections = {
+        ...productData,
+        customHtmlSections: customSectionTemplates,
+        faqs: faqs || [],
+        structuredIngredients: structuredIngredients || [],
+        howToUseSteps: howToUseSteps || [],
+        structuredBenefits: structuredBenefits || []
+      };
+      
+      // Convert the product data with custom HTML sections to JSON and append it
+      formData.append('product', JSON.stringify(productWithCustomSections));
+      
+      // Append each image file
+      imageFiles.forEach((file) => {
+        formData.append('images', file);
+      });
 
-        // Send request (POST or PUT)
-        const method = product ? 'PUT' : 'POST';
-        const url = product ? `/api/products/${product._id}` : '/api/products';
-        const response = await apiRequest(method, url, formData);
-        if (!response.ok) throw new Error('Failed to save product');
-        toast({ title: `Product ${product ? 'updated' : 'created'} successfully!` });
-        queryClient.invalidateQueries({ queryKey: ['/api/products'] });
-        if (onSuccess) onSuccess();
-      } catch (err) {
-        toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to save product', variant: 'destructive' });
-      } finally {
-        setIsSubmitting(false);
+      // Send request (POST or PUT)
+      const method = product ? 'PUT' : 'POST';
+      const url = product ? `/api/products/${product._id}` : '/api/products';
+      const response = await apiRequest(method, url, { body: formData, includeAuth: true, skipContentType: true });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || 'Failed to save product');
       }
-    },
-    (errors) => {
-      console.log('FORM VALIDATION ERRORS', errors);
+
+      // Process successful response
+      await response.json();
+
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
+      toast({
+        title: product ? "Product Updated" : "Product Created",
+        description: `The product has been successfully ${product ? "updated" : "created"}.`,
+      });
+      
+      // Clear form
+      form.reset();
+      setImageFiles([]);
+      setImagePreviews([]);
+      setExistingImages([]);
+      
+      // Call onSuccess prop if provided
+      if (onSuccess) onSuccess();
+
+    } catch (error: any) {
+      console.error("Error saving product:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save product.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  );
+  };
+
+  // Create a handle submit function that uses the form's handleSubmit and calls onSubmit
+  const handleSubmitWithImages = form.handleSubmit(onSubmit);
 
   // Handle image file selection
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = Array.from(e.target.files || []);
     setImageFiles(files);
     setImagePreviews(files.map(file => URL.createObjectURL(file)));
@@ -380,7 +345,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                     type="number"
                     step="0.01"
                     value={field.value === undefined || field.value === null ? '' : field.value}
-                    onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -400,7 +365,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                     type="number" 
                     step="0.01" 
                     value={field.value === null ? "" : field.value} 
-                    onChange={e => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const value = e.target.value;
                       field.onChange(value === "" ? null : parseFloat(value));
                     }} 
@@ -423,7 +388,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                   <Input
                     type="number"
                     value={field.value === undefined || field.value === null ? '' : field.value}
-                    onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -910,7 +875,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                                 <Input
                                   type="number"
                                   {...field}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(parseInt(e.target.value) || 0)}
                                 />
                               </FormControl>
                               <FormDescription>Determines the order of sections (lower numbers appear first)</FormDescription>
@@ -1106,7 +1071,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                                           type="number"
                                           min="1"
                                           {...field}
-                                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(parseInt(e.target.value) || 1)}
                                           value={field.value || 1}
                                         />
                                       </FormControl>
@@ -1298,6 +1263,123 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
             </Card>
           </div>
         </div>
+        
+        {/* Custom HTML Sections */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold">Custom HTML Sections</CardTitle>
+            <CardDescription>Create rich HTML sections like "Clinically Tested To" or "Ingredients List"</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {customSectionTemplates.map((section, index) => (
+                <div key={section.id} className="border rounded-md p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox 
+                        id={`section-enabled-${section.id}`}
+                        checked={section.enabled}
+                        onCheckedChange={(checked: boolean) => {
+                          const updatedSections = [...customSectionTemplates];
+                          updatedSections[index].enabled = !!checked;
+                          setCustomSectionTemplates(updatedSections);
+                        }}
+                      />
+                      <div className="flex flex-col">
+                        <label 
+                          htmlFor={`section-enabled-${section.id}`}
+                          className="font-medium cursor-pointer"
+                        >
+                          {section.title}
+                        </label>
+                        <p className="text-xs text-gray-500">
+                          {section.enabled ? 'Visible on product page' : 'Hidden on product page'}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setCustomSectionTemplates(
+                          customSectionTemplates.filter((_, i) => i !== index)
+                        );
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="grid gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor={`section-title-${index}`}>Section Title</Label>
+                        <Input
+                          id={`section-title-${index}`}
+                          value={section.title}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const updatedSections = [...customSectionTemplates];
+                            updatedSections[index].title = e.target.value;
+                            setCustomSectionTemplates(updatedSections);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`section-order-${index}`}>Display Order</Label>
+                        <Input
+                          id={`section-order-${index}`}
+                          type="number"
+                          min="0"
+                          value={section.displayOrder?.toString() || '0'}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const updatedSections = [...customSectionTemplates];
+                            updatedSections[index].displayOrder = parseInt(e.target.value) || 0;
+                            setCustomSectionTemplates(updatedSections);
+                          }}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Lower numbers appear first
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor={`section-content-${index}`}>HTML Content</Label>
+                      <CodeEditor
+                        value={section.content}
+                        onChange={(value: string) => {
+                          const updatedSections = [...customSectionTemplates];
+                          updatedSections[index].content = value;
+                          setCustomSectionTemplates(updatedSections);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setCustomSectionTemplates([
+                    ...customSectionTemplates,
+                    {
+                      id: nanoid(8),
+                      title: 'New Section',
+                      content: '<div>\n  <!-- Content goes here -->\n</div>',
+                      displayOrder: customSectionTemplates.length,
+                      enabled: false
+                    }
+                  ]);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add HTML Section
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
         
         <div className="flex justify-end space-x-2 pt-2">
           <Button

@@ -1,4 +1,4 @@
-import React from "react";
+
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -62,7 +62,7 @@ export default function UsersManagement() {
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={updateUserMutation.status === 'pending'}
+                  disabled={updateUserMutation.status === 'loading'}
                   onClick={() =>
                     updateUserMutation.mutate({ id: user.id, isAdmin: !user.isAdmin })
                   }
@@ -72,7 +72,7 @@ export default function UsersManagement() {
                 <Button
                   size="sm"
                   variant="destructive"
-                  disabled={deleteUserMutation.status === 'pending'}
+                  disabled={deleteUserMutation.status === 'loading'}
                   onClick={() => deleteUserMutation.mutate(user.id)}
                 >
                   Delete

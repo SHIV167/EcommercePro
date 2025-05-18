@@ -24,6 +24,14 @@ export interface Benefit {
   imageUrl?: string;
 }
 
+export interface CustomHtmlSection {
+  id: string;
+  title: string;
+  content: string;
+  displayOrder?: number;
+  enabled: boolean;
+}
+
 export interface IProduct extends Document {
   name: string;
   sku: string;
@@ -51,6 +59,7 @@ export interface IProduct extends Document {
   howToUseSteps?: HowToUseStep[];
   benefits?: string;
   structuredBenefits?: Benefit[];
+  customHtmlSections?: CustomHtmlSection[];
 }
 
 const FAQSchema = new Schema({
@@ -75,6 +84,14 @@ const BenefitSchema = new Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   imageUrl: { type: String }
+}, { _id: false });
+
+const CustomHtmlSectionSchema = new Schema({
+  id: { type: String, required: true },
+  title: { type: String, required: true },
+  content: { type: String, required: true },
+  displayOrder: { type: Number, default: 0 },
+  enabled: { type: Boolean, default: false }
 }, { _id: false });
 
 const ProductSchema: Schema = new Schema({
@@ -104,6 +121,7 @@ const ProductSchema: Schema = new Schema({
   howToUseSteps: { type: [HowToUseStepSchema], default: [] },
   benefits: { type: String },
   structuredBenefits: { type: [BenefitSchema], default: [] },
+  customHtmlSections: { type: [CustomHtmlSectionSchema], default: [] },
 });
 
 export default mongoose.model<IProduct>('Product', ProductSchema);
