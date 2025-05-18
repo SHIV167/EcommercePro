@@ -3,7 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Link } from 'wouter';
 import { Helmet } from 'react-helmet';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 import '@/styles/blog-post.css';
+import '@/styles/blog-slider.css';
+import '@/styles/blog-slider-blogs-page.css';
 
 interface Blog {
   _id: string;
@@ -25,13 +30,28 @@ export default function BlogsPage() {
   });
 
   // Add the blog-post-page class to the body for consistent styling
+  // and initialize the slider after component mount
   useEffect(() => {
     document.body.classList.add('blog-post-page');
     
+    // Initialize slider after component mount
+    const timer = setTimeout(() => {
+      const sliderElem = document.querySelector('.blog-slider');
+      if (sliderElem && typeof (window as any).jQuery !== 'undefined') {
+        try {
+          (window as any).jQuery('.blog-slider').slick('unslick');
+          (window as any).jQuery('.blog-slider').slick();
+        } catch (e) {
+          console.log('Slick initialization error:', e);
+        }
+      }
+    }, 500);
+    
     return () => {
       document.body.classList.remove('blog-post-page');
+      clearTimeout(timer);
     };
-  }, []);
+  }, [blogs]);
 
   if (isLoading) return (
     <div className="min-h-screen py-10">
@@ -63,7 +83,7 @@ export default function BlogsPage() {
         <meta name="description" content="Read our latest blog articles on skincare, wellness, and beauty tips." />
       </Helmet>
       
-      <div className="min-h-screen py-10">
+      <div className="min-h-screen py-10 blogs-page">
         <div className="blog-container">
           {/* Header with Kama Blog and navigation */}
           <div className="flex items-center justify-between mb-6 border-b pb-4">
@@ -75,32 +95,77 @@ export default function BlogsPage() {
             </div>
           </div>
           
-          {/* Blog Grid - Using style from the Kama Ayurveda screenshot */}
-          <div className="grid md:grid-cols-3 gap-6">
-            {blogs.map((blog) => (
+          {/* Blog Slider - Using the slider component from homepage */}
+          <Slider
+            key={`blog-slider-${blogs.length}`}
+            dots={true}
+            dotsClass="slick-dots custom-slick-dots"
+            infinite={blogs.length > 3}
+            speed={500}
+            slidesToShow={3}
+            slidesToScroll={1}
+            arrows={true}
+            autoplay={true}
+            autoplaySpeed={5000}
+            pauseOnHover={true}
+            className="blog-slider mb-12"
+            responsive={[
+              {
+                breakpoint: 1024,
+                settings: {
+                  slidesToShow: 2,
+                  slidesToScroll: 1,
+                  arrows: true,
+                  dots: true
+                }
+              },
+              {
+                breakpoint: 640,
+                settings: {
+                  slidesToShow: 1,
+                  slidesToScroll: 1,
+                  arrows: false,
+                  dots: true
+                }
+              }
+            ]}
+          >
+            {blogs.map((blog, index) => (
+              <div key={`${blog._id}-${index}`} className="px-2">
+                <Link href={`/blogs/${blog.slug}`} className="block group">
+                  <div className="relative aspect-[4/3] mb-4 overflow-hidden rounded">
+                    <img
+                      src={blog.imageUrl || '/uploads/blog-default-banner.jpg'}
+                      alt={blog.title}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => (e.currentTarget.src = '/uploads/blog-default-banner.jpg')}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
+                      <h2 className="text-white text-xl font-medium">{blog.title}</h2>
+                      <div className="text-white/80 text-sm mt-2">
+                        <span className="text-white hover:underline">Read More</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </Slider>
+          
+          {/* Static Grid for Mobile Fallback - Hidden on larger screens */}
+          <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
+            {blogs.slice(0, 4).map((blog) => (
               <div key={blog._id} className="relative rounded-md overflow-hidden group cursor-pointer">
                 <Link href={`/blogs/${blog.slug}`}>
-                  {blog.imageUrl ? (
-                    <img
-                      src={blog.imageUrl}
-                      alt={blog.title}
-                      className="w-full h-52 object-cover transition-transform group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-52 bg-gray-100 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  )}
+                  <img
+                    src={blog.imageUrl || '/uploads/blog-default-banner.jpg'}
+                    alt={blog.title}
+                    className="w-full h-52 object-cover transition-transform group-hover:scale-105"
+                    onError={(e) => (e.currentTarget.src = '/uploads/blog-default-banner.jpg')}
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
                     <h2 className="text-white text-xl font-medium">{blog.title}</h2>
-                    <div className="text-white/80 text-sm mt-2 flex justify-between items-center">
-                      <span>{new Date(blog.publishedAt).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}</span>
+                    <div className="text-white/80 text-sm mt-2">
                       <span className="text-white hover:underline">Read More</span>
                     </div>
                   </div>

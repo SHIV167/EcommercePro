@@ -159,19 +159,53 @@ export default function BlogPostPage() {
         <div className="relative w-full h-[250px] sm:h-[300px] md:h-[400px] bg-cover bg-center" 
           style={{ backgroundImage: `url(${blog?.imageUrl || '/uploads/blog-default-banner.jpg'})` }}>
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-          {/* Breadcrumb navigation */}
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-            <div className="text-xs sm:text-sm text-white flex flex-wrap items-center">
+        </div>
+        
+        {/* White background section with navigation and title - positioned to overlap with banner */}
+        <div className="relative z-20 max-w-4xl mx-auto -mt-16 sm:-mt-24 md:-mt-32 px-4">
+          <div className="bg-white p-6 sm:p-8 shadow-md rounded-sm">
+            {/* Breadcrumb navigation */}
+            <div className="text-xs uppercase mb-4 text-gray-500 flex flex-wrap items-center">
               <Link href="/" className="hover:text-primary">HOME</Link>
-              <span className="mx-1 sm:mx-2">❯</span>
+              <span className="mx-2">❯</span>
               <Link href="/blogs" className="hover:text-primary">BLOG</Link>
-              <span className="mx-1 sm:mx-2">❯</span>
-              <span className="uppercase truncate max-w-[150px] sm:max-w-none">{blog?.title?.split(' ').slice(0, 3).join(' ')}</span>
+              <span className="mx-2">❯</span>
+              <span className="uppercase truncate max-w-[150px] sm:max-w-none text-primary">{blog?.title?.split(' ').slice(0, 3).join(' ')}</span>
+            </div>
+            
+            {/* Blog title */}
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium mb-4">{blog?.title}</h1>
+            
+            {/* Author info and date */}
+            <div className="flex items-center text-sm text-gray-600 mb-4">
+              <div>Authored by: <span className="font-medium text-gray-700">{blog?.author || 'Shreya Dalela'}</span></div>
+              <div className="flex items-center ml-4">
+                <span className="text-gray-500">{blog ? formatDate(blog.publishedAt) : '16 March 2020'}</span>
+                <span className="mx-2 text-gray-400">•</span>
+                <span className="text-amber-600">{readingTime} min read</span>
+              </div>
+            </div>
+            
+            {/* Like and share section */}
+            <div className="flex items-center space-x-4 pt-2 border-t border-gray-100">
+              <button className="flex items-center text-gray-600 hover:text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <span className="text-sm">Like</span>
+              </button>
+              
+              <button className="flex items-center text-gray-600 hover:text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                <span className="text-sm">Share</span>
+              </button>
             </div>
           </div>
         </div>
         
-        <div className="blog-container py-6 sm:py-8 pb-12">
+        <div className="blog-container py-6 sm:py-8 pb-12 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm mt-12">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Main content */}
             <div className="w-full lg:w-2/3">
@@ -179,16 +213,13 @@ export default function BlogPostPage() {
               <div className="p-4 sm:p-6 md:p-8">
                 {/* Title and meta */}
                 <div className="text-left mb-8 pb-4">
-                  <div className="p-4 sm:p-6 md:p-8">
-                    <div className="blog-header">
-                      <h1 className="blog-title">{blog.title}</h1>
-                      <div className="blog-meta flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0">
-                        <div className="blog-author">Authored by: <span className="font-medium">{blog.author}</span></div>
-                        <div className="blog-date flex flex-wrap items-center">
-                          <span>{formatDate(blog.publishedAt)}</span>
-                          <span className="blog-date-divider">•</span>
-                          <span className="blog-reading-time">{readingTime} min read</span>
-                        </div>
+                  <div className="p-4 sm:p-6 md:p-8 bg-white/80 rounded-lg shadow-sm">
+                    <div className="blog-meta flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 mb-6">
+                      <div className="blog-author">Authored by: <span className="font-medium">{blog.author}</span></div>
+                      <div className="blog-date flex flex-wrap items-center">
+                        <span>{formatDate(blog.publishedAt)}</span>
+                        <span className="blog-date-divider">•</span>
+                        <span className="blog-reading-time">{readingTime} min read</span>
                       </div>
                     </div>
 
@@ -227,7 +258,7 @@ export default function BlogPostPage() {
                     <div className="blog-author-section flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
                       <div className="blog-author-avatar mb-4 sm:mb-0">
                         <img 
-                          src="/uploads/author-avatar.jpg" 
+                          src="https://blog.kamaayurveda.com/wp-content/uploads/2022/03/avatar_user_20_1647310804.png" 
                           alt={blog.author} 
                           className="mx-auto sm:mx-0 w-16 h-16 sm:w-20 sm:h-20"
                           onError={(e) => (e.currentTarget.src = '/uploads/default-avatar.jpg')}
@@ -258,7 +289,7 @@ export default function BlogPostPage() {
                 
                 {/* Related products */}
                 {relatedProducts.length > 0 && (
-                  <div className="mt-12 pt-8">
+                  <div className="mt-12 pt-8 bg-white/80 rounded-lg shadow-sm p-4 sm:p-6">
                     <h2 className="text-2xl font-serif font-medium mb-6 text-center">Products Mentioned</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
                       {relatedProducts.map(product => (
@@ -285,7 +316,7 @@ export default function BlogPostPage() {
             {/* Sidebar */}
             <div className="w-full lg:w-1/3 space-y-4 sm:space-y-6 px-4 sm:px-0">
               {/* Highlights box */}
-              <div className="blog-highlights">
+              <div className="blog-highlights bg-white/90 shadow-sm">
                 <h3 className="blog-highlights-title">Highlights</h3>
                 <ul className="blog-highlights-list">
                   {headings.map((heading) => (
@@ -356,7 +387,7 @@ export default function BlogPostPage() {
           </div>
           
           {/* Related blog posts - Styled like Kama Ayurveda */}
-          <div className="my-8 sm:my-12 px-4 sm:px-0">
+          <div className="my-8 sm:my-12 px-4 sm:px-0 py-6 bg-white/80 rounded-lg shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
               <h2 className="text-xl sm:text-2xl font-serif">Kama Blog</h2>
               <Link href="/blogs" className="text-primary text-sm hover:underline">Explore All Blogs</Link>
