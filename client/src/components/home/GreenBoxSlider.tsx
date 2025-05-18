@@ -90,7 +90,7 @@ export default function GreenBoxSlider() {
               </div>
               {/* Text card - overlaps right edge of image on desktop */}
               <div
-                className="w-full md:w-[55%] bg-white shadow-2xl rounded-lg p-6 flex flex-col justify-center items-start md:absolute md:top-1/2 md:right-12 md:-translate-y-1/2 md:z-20 md:ml-[-80px] md:mr-0"
+                className="w-full md:w-[48%] bg-white shadow-2xl rounded-lg p-6 flex flex-col justify-center items-start md:absolute md:top-1/2 md:right-12 md:-translate-y-1/2 md:z-20 md:ml-[-80px] md:mr-0"
                 style={{
                   boxShadow: '0 6px 32px 0 rgba(0,0,0,0.14)',
                   ...(window.innerWidth >= 768 ? { left: 'calc(50% + 80px)' } : {})
