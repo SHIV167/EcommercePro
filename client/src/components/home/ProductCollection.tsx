@@ -47,8 +47,8 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       createdAt: new Date(),
       sku: "KUM-MAS-001",
       images: [],
-      // Add required fields to fix TypeScript errors
       faqs: [],
+      customSections: [], 
       structuredIngredients: [],
       structuredBenefits: []
     },
@@ -71,8 +71,8 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       createdAt: new Date(),
       sku: "KUM-SER-002",
       images: [],
-      // Add required fields to fix TypeScript errors
       faqs: [],
+      customSections: [], // Adding required field
       structuredIngredients: [],
       structuredBenefits: []
     },
@@ -95,8 +95,8 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       createdAt: new Date(),
       sku: "KUM-SET-003",
       images: [],
-      // Add required fields to fix TypeScript errors
       faqs: [],
+      customSections: [], // Adding required field
       structuredIngredients: [],
       structuredBenefits: []
     },
@@ -119,8 +119,8 @@ export default function ProductCollection({ collectionSlug, title, slider = fals
       createdAt: new Date(),
       sku: "KUM-OIL-004",
       images: [],
-      // Add required fields to fix TypeScript errors
       faqs: [],
+      customSections: [], // Adding required field
       structuredIngredients: [],
       structuredBenefits: []
     }
