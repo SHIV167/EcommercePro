@@ -116,10 +116,8 @@ const ProductPage: React.FC = () => {
   const handleAddToCart = async () => {
     if (!extendedProduct) return;
     try {
-      for (let i = 0; i < quantity; i++) {
-        await addItem(extendedProduct!);
-      }
-      toast({ title: "Added to cart" });
+      await addItem(extendedProduct!, quantity);
+      toast({ title: `${quantity} item${quantity > 1 ? 's' : ''} added to cart` });
     } catch (error: any) {
       console.error("Error adding to cart:", error);
       toast({ title: "Error adding to cart", description: error.message });
@@ -128,7 +126,7 @@ const ProductPage: React.FC = () => {
 
   const handleBuyNow = () => {
     if (!extendedProduct) return;
-    addItem(extendedProduct!);
+    addItem(extendedProduct!, quantity);
     navigate('/checkout');
   };
 

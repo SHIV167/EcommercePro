@@ -4,6 +4,8 @@ import Product from '../models/Product';
 
 // Get current gift popup configuration
 export const getGiftPopupConfig = async (req: Request, res: Response) => {
+  // Set proper content type header
+  res.setHeader('Content-Type', 'application/json');
   try {
     console.log('Fetching gift popup configuration...');
     
@@ -40,6 +42,8 @@ export const getGiftPopupConfig = async (req: Request, res: Response) => {
 
 // Update gift popup configuration
 export const updateGiftPopupConfig = async (req: Request, res: Response) => {
+  // Set proper content type header
+  res.setHeader('Content-Type', 'application/json');
   try {
     const { title, subTitle, active, minCartValue, maxCartValue, maxSelectableGifts, giftProducts } = req.body;
     
@@ -88,6 +92,8 @@ export const updateGiftPopupConfig = async (req: Request, res: Response) => {
 
 // Get available gift products with details
 export const getGiftProducts = async (req: Request, res: Response) => {
+  // Set proper content type header
+  res.setHeader('Content-Type', 'application/json');
   try {
     console.log('Fetching gift products...');
     

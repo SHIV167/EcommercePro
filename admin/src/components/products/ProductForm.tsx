@@ -108,6 +108,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
           structuredIngredients: product.structuredIngredients || [],
           howToUse: product.howToUse || "",
           howToUseVideo: product.howToUseVideo || ""
+        }
+      : {}
   });
   
   // Setup field arrays for managing FAQs, ingredients, and how-to-use steps

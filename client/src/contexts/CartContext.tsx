@@ -11,8 +11,8 @@ interface CartItem {
 
 interface CartContextType {
   cartItems: CartItem[];
-  addItem: (product: Product) => Promise<void>;
-  addGiftToCart: (product: Product & { isGift: boolean }) => Promise<void>;
+  addItem: (product: Product, quantity?: number) => Promise<void>;
+  addGiftToCart: (product: Product & { isGift: boolean }, quantity?: number) => Promise<void>;
   removeItem: (itemId: number) => Promise<void>;
   removeItemFromCart: (productId: string) => Promise<void>;
   updateQuantity: (itemId: number, quantity: number) => Promise<void>;
@@ -192,7 +192,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   }, []);
 
   // Add item to cart with optimistic updates
-  const addItem = async (product: Product) => {
+  const addItem = async (product: Product, quantity: number = 1) => {
     const previousItems = [...cartItems];
     try {
       // Ensure cartId is available before proceeding
@@ -218,7 +218,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       if (existingItemIndex !== -1) {
         // Optimistically update existing item
         const updatedItems = [...cartItems];
-        updatedItems[existingItemIndex].quantity += 1;
+        updatedItems[existingItemIndex].quantity += quantity;
         setCartItems(updatedItems);
 
         // Update in API
@@ -230,7 +230,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         const tempItem: CartItem = {
           id: Date.now(),
           product,
-          quantity: 1,
+          quantity: quantity,
         };
         setCartItems([...cartItems, tempItem]);
 
@@ -239,7 +239,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         const response = await apiRequest("POST", "/api/cart/items", {
           cartId: currentCartId,
           productId: prodId,
-          quantity: 1,
+          quantity: quantity,
         });
         // Defensive: handle empty or invalid JSON
         let data: any = {};
@@ -341,7 +341,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   // Add gift item to cart (for gift popup)
-  const addGiftToCart = async (product: Product & { isGift: boolean }) => {
+  const addGiftToCart = async (product: Product & { isGift: boolean }, quantity: number = 1) => {
     const previousItems = [...cartItems];
     try {
       // Ensure cartId is available before proceeding
