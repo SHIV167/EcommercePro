@@ -155,31 +155,36 @@ export default function BlogPostPage() {
       </Helmet>
       
       <div className="min-h-screen">
-        {/* Breadcrumb navigation */}
-        <div className="blog-container pt-6">
-          <div className="text-sm text-gray-500 flex items-center">
-            <Link href="/" className="hover:text-primary">HOME</Link>
-            <span className="mx-2">❯</span>
-            <Link href="/blogs" className="hover:text-primary">BLOG</Link>
-            <span className="mx-2">❯</span>
-            <span className="uppercase truncate">{blog?.title}</span>
+        {/* Full-width blog header banner with background image - responsive height */}
+        <div className="relative w-full h-[250px] sm:h-[300px] md:h-[400px] bg-cover bg-center" 
+          style={{ backgroundImage: `url(${blog?.imageUrl || '/uploads/blog-default-banner.jpg'})` }}>
+          <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+          {/* Breadcrumb navigation */}
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+            <div className="text-xs sm:text-sm text-white flex flex-wrap items-center">
+              <Link href="/" className="hover:text-primary">HOME</Link>
+              <span className="mx-1 sm:mx-2">❯</span>
+              <Link href="/blogs" className="hover:text-primary">BLOG</Link>
+              <span className="mx-1 sm:mx-2">❯</span>
+              <span className="uppercase truncate max-w-[150px] sm:max-w-none">{blog?.title?.split(' ').slice(0, 3).join(' ')}</span>
+            </div>
           </div>
         </div>
         
-        <div className="blog-container pb-12">
-          <div className="flex flex-col lg:flex-row gap-8">
+        <div className="blog-container py-6 sm:py-8 pb-12">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {/* Main content */}
             <div className="w-full lg:w-2/3">
               {/* Blog content */}
-              <div className="p-8">
+              <div className="p-4 sm:p-6 md:p-8">
                 {/* Title and meta */}
-                <div className="text-left mb-8 border-b border-gray-200 pb-4">
-                  <div className="bg-white p-8 rounded-md shadow-sm">
+                <div className="text-left mb-8 pb-4">
+                  <div className="p-4 sm:p-6 md:p-8">
                     <div className="blog-header">
                       <h1 className="blog-title">{blog.title}</h1>
-                      <div className="blog-meta">
+                      <div className="blog-meta flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0">
                         <div className="blog-author">Authored by: <span className="font-medium">{blog.author}</span></div>
-                        <div className="blog-date">
+                        <div className="blog-date flex flex-wrap items-center">
                           <span>{formatDate(blog.publishedAt)}</span>
                           <span className="blog-date-divider">•</span>
                           <span className="blog-reading-time">{readingTime} min read</span>
@@ -187,15 +192,7 @@ export default function BlogPostPage() {
                       </div>
                     </div>
 
-                    {blog.imageUrl && (
-                      <div className="w-full h-[300px] md:h-[400px] relative overflow-hidden mb-6 rounded-md">
-                        <img 
-                          src={blog.imageUrl} 
-                          alt={blog.title} 
-                          className="w-full h-full object-cover" 
-                        />
-                      </div>
-                    )}
+                    {/* Blog image is now used as banner at the top of the page */}
 
                     {/* Blog content */}
                     <div 
@@ -205,41 +202,55 @@ export default function BlogPostPage() {
                     />
                     
                     {/* Share buttons */}
-                    <div className="blog-share">
-                      <div className="blog-share-label">Share</div>
-                      <div className="blog-share-buttons">
-                        <button aria-label="Share on Facebook">
+                    <div className="blog-share flex flex-wrap items-center">
+                      <div className="blog-share-label mr-3 mb-2">Share</div>
+                      <div className="blog-share-buttons flex flex-wrap">
+                        <button aria-label="Share on Facebook" className="mb-2">
                           <FaFacebook className="text-[#3b5998]" size={18} />
                         </button>
-                        <button aria-label="Share on Twitter">
+                        <button aria-label="Share on Twitter" className="mb-2">
                           <FaTwitter className="text-[#1da1f2]" size={18} />
                         </button>
-                        <button aria-label="Share on Pinterest">
+                        <button aria-label="Share on Pinterest" className="mb-2">
                           <FaPinterest className="text-[#bd081c]" size={18} />
                         </button>
-                        <button aria-label="Share by Email">
+                        <button aria-label="Share by Email" className="mb-2">
                           <FaEnvelope className="text-gray-600" size={18} />
                         </button>
-                        <button aria-label="Share on LinkedIn">
+                        <button aria-label="Share on LinkedIn" className="mb-2">
                           <FaLinkedin className="text-[#0077b5]" size={18} />
                         </button>
                       </div>
                     </div>
                     
                     {/* Author info */}
-                    <div className="blog-author-section">
-                      <div className="blog-author-avatar">
+                    <div className="blog-author-section flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
+                      <div className="blog-author-avatar mb-4 sm:mb-0">
                         <img 
                           src="/uploads/author-avatar.jpg" 
                           alt={blog.author} 
+                          className="mx-auto sm:mx-0 w-16 h-16 sm:w-20 sm:h-20"
                           onError={(e) => (e.currentTarget.src = '/uploads/default-avatar.jpg')}
                         />
                       </div>
                       <div className="blog-author-info">
-                        <h3>About {blog.author}</h3>
-                        <p className="blog-author-bio">
+                        <h3 className="text-lg sm:text-xl">About {blog.author}</h3>
+                        <p className="blog-author-bio text-sm sm:text-base">
                           Expert in Ayurvedic skincare and wellness. Passionate about sharing knowledge on natural beauty remedies and traditional Ayurvedic practices for modern living.
                         </p>
+                      </div>
+                    </div>
+                    
+                    {/* Was this article helpful? */}
+                    <div className="mt-6 py-4">
+                      <h3 className="text-lg font-medium mb-3">Was this article helpful?</h3>
+                      <div className="flex space-x-3">
+                        <button className="px-5 py-2 bg-primary text-white rounded-sm hover:bg-primary-dark transition-colors text-sm font-medium">
+                          Yes
+                        </button>
+                        <button className="px-5 py-2 border border-primary text-primary rounded-sm hover:bg-gray-100 transition-colors text-sm font-medium">
+                          No
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -247,9 +258,9 @@ export default function BlogPostPage() {
                 
                 {/* Related products */}
                 {relatedProducts.length > 0 && (
-                  <div className="mt-12 pt-8 border-t border-gray-200">
+                  <div className="mt-12 pt-8">
                     <h2 className="text-2xl font-serif font-medium mb-6 text-center">Products Mentioned</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
                       {relatedProducts.map(product => (
                         <div key={product._id} className="flex flex-col items-center">
                           <Link href={`/products/${product.slug}`} className="block w-full">
@@ -272,7 +283,7 @@ export default function BlogPostPage() {
             </div>
             
             {/* Sidebar */}
-            <div className="w-full lg:w-1/3 space-y-6">
+            <div className="w-full lg:w-1/3 space-y-4 sm:space-y-6 px-4 sm:px-0">
               {/* Highlights box */}
               <div className="blog-highlights">
                 <h3 className="blog-highlights-title">Highlights</h3>
@@ -321,18 +332,7 @@ export default function BlogPostPage() {
                 </div>
               </div>
               
-              {/* Was this article helpful? */}
-              <div className="blog-highlights">
-                <h3 className="blog-highlights-title">Was this article helpful?</h3>
-                <div className="flex space-x-2 mt-4">
-                  <button className="px-4 py-2 bg-primary text-white rounded-sm hover:bg-primary-dark transition-colors text-sm font-medium">
-                    Yes
-                  </button>
-                  <button className="px-4 py-2 border border-primary text-primary rounded-sm hover:bg-gray-50 transition-colors text-sm font-medium">
-                    No
-                  </button>
-                </div>
-              </div>
+              {/* Intentionally removed - moved below author section */}
               
               {/* Newsletter signup */}
               <div className="blog-highlights">
@@ -356,12 +356,12 @@ export default function BlogPostPage() {
           </div>
           
           {/* Related blog posts - Styled like Kama Ayurveda */}
-          <div className="my-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-serif">Kama Blog</h2>
+          <div className="my-8 sm:my-12 px-4 sm:px-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
+              <h2 className="text-xl sm:text-2xl font-serif">Kama Blog</h2>
               <Link href="/blogs" className="text-primary text-sm hover:underline">Explore All Blogs</Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
               {/* Blog post cards with text overlays like in screenshot */}
               <div className="relative rounded-md overflow-hidden group cursor-pointer">
                 <img 
@@ -398,7 +398,7 @@ export default function BlogPostPage() {
                   src="/uploads/blog-3.jpg" 
                   alt="Pink Lips Naturally" 
                   className="w-full h-52 object-cover transition-transform group-hover:scale-105"
-                  onError={(e) => (e.currentTarget.src = '/uploads/blog-default-banner.jpg')}
+                  onError={(e) => (e.currentTarget.src = 'https://blog.kamaayurveda.com/wp-content/uploads/2022/03/avatar_user_20_1647310804.png')}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
                   <h3 className="text-white text-xl font-medium">Pink Lips Naturally – 14 Simple Home Remedies</h3>
