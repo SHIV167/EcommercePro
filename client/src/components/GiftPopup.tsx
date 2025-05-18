@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../hooks/useCart';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import Slider from 'react-slick';
-
-// Import slick css files
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
+import { X } from 'lucide-react';
 
 interface GiftProduct {
   _id: string;
@@ -31,36 +26,7 @@ interface GiftPopupConfig {
   giftProducts: string[];
 }
 
-// Custom arrow components for the slider
-function NextArrow(props: any) {
-  const { className, style, onClick } = props;
-  return (
-    <div
-      className={`${className} custom-arrow next-arrow absolute right-0 top-1/2 transform -translate-y-1/2 z-10 cursor-pointer`}
-      style={{ ...style }}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-center w-8 h-8 bg-amber-500 text-white rounded-full shadow-md hover:bg-amber-600 transition-colors">
-        <ChevronRight size={20} />
-      </div>
-    </div>
-  );
-}
-
-function PrevArrow(props: any) {
-  const { className, style, onClick } = props;
-  return (
-    <div
-      className={`${className} custom-arrow prev-arrow absolute left-0 top-1/2 transform -translate-y-1/2 z-10 cursor-pointer`}
-      style={{ ...style }}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-center w-8 h-8 bg-amber-500 text-white rounded-full shadow-md hover:bg-amber-600 transition-colors">
-        <ChevronLeft size={20} />
-      </div>
-    </div>
-  );
-}
+// Grid layout component for gift products
 
 export default function GiftPopup() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -159,21 +125,29 @@ export default function GiftPopup() {
         const product = giftProducts.find(p => p._id === productId);
         if (product) {
           // Create a complete product object with all required fields for the Product type
+          // Cast to any to bypass type checking since this is a special gift product
+          // that doesn't need all the fields of a regular product
           addGiftToCart({
-            // Required fields from Product schema
             _id: product._id,
-            sku: `gift-${product._id}`, // Generate a SKU as it's required
+            sku: `gift-${product._id}`,
             name: product.name,
             description: product.description || product.name,
             price: 0, // Free gift
             imageUrl: product.images?.[0] || '',
             stock: 1,
-            slug: `gift-${product._id}`, // Generate a slug as it's required
-            categoryId: 'gifts', // Use a default category
+            slug: `gift-${product._id}`,
+            categoryId: 'gifts',
             images: product.images || [],
+            // Add all required fields with empty values
+            faqs: [],
+            customSections: [],
+            structuredIngredients: [],
+            structuredBenefits: [],
+            howToUse: '',
+            shortDescription: 'Complimentary gift',
             // Add the gift flag
             isGift: true
-          });
+          } as any);
         }
         return [...prev, productId];
       }
@@ -238,40 +212,10 @@ export default function GiftPopup() {
           <p className="text-amber-800 font-medium">{config.subTitle}</p>
         </div>
         
-        {/* Gift product selection - Slick Slider */}
+        {/* Gift product selection - Grid */}
         <div className="px-12 py-6 flex-grow" style={{ maxHeight: 'calc(80vh - 180px)' }}>
-          {/* Custom navigation arrows */}
-          <div className="slick-navigation-wrapper relative px-5">
-            <Slider
-              dots={true}
-              infinite={false}
-              speed={500}
-              slidesToShow={3}
-              slidesToScroll={1}
-              adaptiveHeight={false}
-              arrows={true}
-              nextArrow={<NextArrow />}
-              prevArrow={<PrevArrow />}
-              className="gift-slider"
-              centerMode={false}
-              swipeToSlide={true}
-              responsive={[
-                {
-                  breakpoint: 1024,
-                  settings: {
-                    slidesToShow: 2,
-                    slidesToScroll: 1,
-                  }
-                },
-                {
-                  breakpoint: 600,
-                  settings: {
-                    slidesToShow: 1,
-                    slidesToScroll: 1
-                  }
-                }
-              ]}
-            >
+          <div className="p-4 overflow-y-auto max-h-[60vh]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {giftProducts.map((product) => {
               const isSelected = selectedGifts.includes(product._id);
               return (
@@ -326,7 +270,7 @@ export default function GiftPopup() {
                 </div>
               );
             })}
-            </Slider>
+            </div>
           </div>
         </div>
         
