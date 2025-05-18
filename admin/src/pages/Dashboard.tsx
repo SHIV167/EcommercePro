@@ -43,10 +43,13 @@ export default function Dashboard() {
   // Fetch top products
   const { data: topProducts = [], isLoading: isProductsLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/dashboard/top-products"],
+    // Add error handling to prevent React errors
+    onError: (error) => {
+      console.error("Error fetching top products:", error);
+    },
+    // Use placeholders when data is unavailable
+    placeholderData: [],
   });
-  
-  // Ensure topProducts is used to prevent lint warning
-  console.log('Top products:', topProducts);
   
   // Sample data for charts when API doesn't return data yet
   const sampleSalesData = [
@@ -403,76 +406,60 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Sample top products */}
-                <div className="flex gap-3 py-2 border-b border-border">
-                  <div className="h-10 w-10 bg-muted rounded-md overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1629198735566-e36c0bd9ad76"
-                      alt="Product"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-medium">Kumkumadi Face Oil</p>
-                    <p className="text-sm text-muted-foreground">128 sold</p>
-                  </div>
-                </div>
-                
-                <div className="flex gap-3 py-2 border-b border-border">
-                  <div className="h-10 w-10 bg-muted rounded-md overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1631729371254-42c2892f0e6e"
-                      alt="Product"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-medium">Bringadi Hair Oil</p>
-                    <p className="text-sm text-muted-foreground">95 sold</p>
-                  </div>
-                </div>
-                
-                <div className="flex gap-3 py-2 border-b border-border">
-                  <div className="h-10 w-10 bg-muted rounded-md overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1566958769312-82cef41d19ef"
-                      alt="Product"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-medium">Rose Jasmine Cleanser</p>
-                    <p className="text-sm text-muted-foreground">87 sold</p>
-                  </div>
-                </div>
-                
-                <div className="flex gap-3 py-2 border-b border-border">
-                  <div className="h-10 w-10 bg-muted rounded-md overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1601055903647-ddf1ee9701b1"
-                      alt="Product"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-medium">Pure Rose Water</p>
-                    <p className="text-sm text-muted-foreground">76 sold</p>
-                  </div>
-                </div>
-                
-                <div className="flex gap-3 py-2">
-                  <div className="h-10 w-10 bg-muted rounded-md overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1608571423539-e951a99b1e8a"
-                      alt="Product"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-medium">Youth-Clarifying Mask</p>
-                    <p className="text-sm text-muted-foreground">68 sold</p>
-                  </div>
-                </div>
+                {topProducts && topProducts.length > 0 ? (
+                  // Use actual data if available
+                  topProducts.slice(0, 5).map((product, index) => (
+                    <div key={product._id || index} className="flex gap-3 py-2 border-b border-border">
+                      <div className="h-10 w-10 bg-muted rounded-md overflow-hidden">
+                        {product.imageUrl ? (
+                          <img 
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              // Fallback for broken images
+                              const target = e.target as HTMLImageElement;
+                              target.src = 'https://placehold.co/100/gray/white?text=product';
+                            }}
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">No image</div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{product.name}</p>
+                        <p className="text-sm text-muted-foreground">₹{product.price}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  // Fallback sample data
+                  [
+                    { id: '1', name: 'Kumkumadi Face Oil', price: 1280, imgSrc: 'https://images.unsplash.com/photo-1629198735566-e36c0bd9ad76' },
+                    { id: '2', name: 'Bringadi Hair Oil', price: 950, imgSrc: 'https://images.unsplash.com/photo-1631729371254-42c2892f0e6e' },
+                    { id: '3', name: 'Rose Jasmine Cleanser', price: 870, imgSrc: 'https://images.unsplash.com/photo-1566958769312-82cef41d19ef' },
+                    { id: '4', name: 'Pure Rose Water', price: 760, imgSrc: 'https://images.unsplash.com/photo-1601055903647-ddf1ee9701b1' },
+                    { id: '5', name: 'Youth-Clarifying Mask', price: 680, imgSrc: 'https://images.unsplash.com/photo-1608571423539-e951a99b1e8a' }
+                  ].map((item, index) => (
+                    <div key={item.id || index} className="flex gap-3 py-2 border-b border-border">
+                      <div className="h-10 w-10 bg-muted rounded-md overflow-hidden">
+                        <img 
+                          src={item.imgSrc}
+                          alt={item.name}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'https://placehold.co/100/gray/white?text=product';
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-muted-foreground">₹{item.price}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </CardContent>
