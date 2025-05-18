@@ -1,51 +1,116 @@
 import React, { useRef, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Product } from "../../../../shared/schema";
+import { Product } from "@shared/schema";
 import { Link } from "wouter";
-import { formatCurrency } from "@/lib/utils";
 import { CartContext } from "@/contexts/CartContext";
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import ProductCard from "@/components/products/ProductCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Extended Product type with our custom fields for UI display
-interface ProductDisplay extends Partial<Product> {
+interface ProductDisplay extends Omit<Product, 'customSections'> {
+  // Add any additional fields needed for display
   rating?: number;
   reviewCount?: number;
-  // Using the correct property name from Product schema
-  stock?: number;
+  // Ensure customSections matches the expected type
+  customSections: Array<{
+    id: string;
+    title: string;
+    htmlContent: string;
+    displayOrder: number;
+    enabled: boolean;
+  }>;
 }
 
 // Sample fallback products
 const sampleProducts: ProductDisplay[] = [
   {
     _id: "1",
+    sku: "THYRO001",
     name: "Thyrobik Capsule - Ayurvedic Thyroid Capsule",
+    description: "Ayurvedic thyroid support capsule",
+    shortDescription: "Natural thyroid support",
     price: 1990,
+    discountedPrice: null,
     imageUrl: "/images/products/thyrobik.jpg",
+    stock: 10,
     rating: 4.8,
-    reviewCount: 343,
-    stock: 10
+    totalReviews: 12,
+    slug: "thyrobik-capsule",
+    categoryId: "thyroid",
+    featured: true,
+    bestseller: false,
+    isNew: true,
+    images: ["/images/products/thyrobik.jpg"],
+    faqs: [],
+    customSections: [],
+    ingredients: "Natural herbs and extracts",
+    structuredIngredients: [],
+    benefits: "Supports healthy thyroid function",
+    structuredBenefits: [],
+    minOrderValue: 0,
+    isFreeProduct: false,
+    usageFrequency: "Twice daily"
   },
   {
     _id: "2",
-    name: "Sheepala Curtail - Best Weight Loss Capsules for Fast & Effective Results",
+    sku: "WEIGHT001",
+    name: "Sheepala Curtail - Best Weight Loss Capsules",
+    description: "Ayurvedic weight management capsule",
+    shortDescription: "Natural weight management",
     price: 1499,
+    discountedPrice: 1299,
     imageUrl: "/images/products/curtail.jpg",
+    stock: 15,
     rating: 4.6,
-    reviewCount: 471,
-    stock: 15
+    totalReviews: 24,
+    slug: "sheepala-curtail",
+    categoryId: "weight-loss",
+    featured: true,
+    bestseller: true,
+    isNew: false,
+    images: ["/images/products/curtail.jpg"],
+    faqs: [],
+    customSections: [],
+    ingredients: "Natural herbs for weight management",
+    structuredIngredients: [],
+    benefits: "Supports healthy weight management",
+    structuredBenefits: [],
+    minOrderValue: 0,
+    isFreeProduct: false,
+    usageFrequency: "Once daily"
   },
   {
     _id: "3",
+    sku: "DIAB001",
     name: "Diabtose+ - Ayurvedic Diabetes Management",
+    description: "Ayurvedic diabetes management supplement",
+    shortDescription: "Blood sugar support",
     price: 1699,
+    discountedPrice: null,
     imageUrl: "/images/products/diabtose.jpg",
+    stock: 8,
     rating: 4.7,
-    reviewCount: 298,
-    stock: 8
+    totalReviews: 15,
+    slug: "diabtose-plus",
+    categoryId: "diabetes",
+    featured: false,
+    bestseller: false,
+    isNew: true,
+    images: ["/images/products/diabtose.jpg"],
+    faqs: [],
+    customSections: [],
+    ingredients: "Herbs for blood sugar support",
+    structuredIngredients: [],
+    benefits: "Supports healthy blood sugar levels",
+    structuredBenefits: [],
+    minOrderValue: 0,
+    isFreeProduct: false,
+    usageFrequency: "Twice daily"
   }
 ];
 
@@ -66,7 +131,55 @@ export default function FeaturedProductsSection() {
     },
   });
 
-  const displayProducts = products.length > 0 ? products : sampleProducts;
+  // Map products to ensure they match the expected Product type
+  const displayProducts = (products.length > 0 ? products : sampleProducts).map(product => {
+    // Create a base product with all required fields
+    const baseProduct = {
+      _id: product._id || '',
+      sku: product.sku || `SKU-${product._id || '000'}`,
+      name: product.name || 'Unnamed Product',
+      description: product.description || '',
+      shortDescription: product.shortDescription || '',
+      price: product.price || 0,
+      discountedPrice: product.discountedPrice || null,
+      imageUrl: product.imageUrl || '/images/placeholder-product.jpg',
+      stock: product.stock || 0,
+      rating: product.rating || 0,
+      totalReviews: product.totalReviews || 0,
+      slug: product.slug || `product-${product._id || 'unknown'}`.toLowerCase().replace(/\s+/g, '-'),
+      categoryId: product.categoryId || 'uncategorized',
+      featured: product.featured || false,
+      bestseller: product.bestseller || false,
+      isNew: product.isNew || false,
+      images: product.images || [product.imageUrl || '/images/placeholder-product.jpg'],
+      videoUrl: product.videoUrl || '',
+      faqs: product.faqs || [],
+      customSections: (product.customSections || []).map(section => ({
+        id: section.id || Math.random().toString(36).substr(2, 9),
+        title: section.title || '',
+        htmlContent: section.htmlContent || '',
+        displayOrder: section.displayOrder || 0,
+        enabled: section.enabled !== false
+      })),
+      ingredients: product.ingredients || '',
+      structuredIngredients: product.structuredIngredients || [],
+      howToUse: product.howToUse || '',
+      howToUseVideo: product.howToUseVideo || '',
+      howToUseSteps: product.howToUseSteps || [],
+      benefits: product.benefits || '',
+      structuredBenefits: product.structuredBenefits || [],
+      minOrderValue: product.minOrderValue || 0,
+      isFreeProduct: product.isFreeProduct || false,
+      usageFrequency: product.usageFrequency || ''
+    };
+
+    // Add our custom fields for display
+    return {
+      ...baseProduct,
+      // Add our custom fields
+      reviewCount: (product as any).reviewCount || 0
+    };
+  });
 
   // Custom arrow components for the slider
   const SliderArrow = ({ className, style, onClick, isNext = false }: any) => {
@@ -176,13 +289,13 @@ export default function FeaturedProductsSection() {
             </button>
             {isLoading ? (
               // Skeleton loading state
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-6">
                 {Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} className="w-full p-4 border border-neutral-sand rounded-lg animate-pulse">
-                    <div className="w-full h-48 bg-neutral-sand mb-4 rounded"></div>
-                    <div className="h-4 bg-neutral-sand rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-neutral-sand rounded w-1/2 mb-4"></div>
-                    <div className="h-8 bg-neutral-sand rounded w-full"></div>
+                  <div key={i} className="p-4">
+                    <Skeleton className="w-full h-64 rounded-lg" />
+                    <Skeleton className="h-4 w-3/4 mt-3" />
+                    <Skeleton className="h-4 w-1/2 mt-2" />
+                    <Skeleton className="h-10 w-full mt-4" />
                   </div>
                 ))}
               </div>
@@ -191,67 +304,7 @@ export default function FeaturedProductsSection() {
                 <Slider ref={sliderRef} {...sliderSettings}>
                   {displayProducts.map((product) => (
                     <div key={product._id} className="px-2">
-                      <div className="border border-neutral-sand rounded-lg hover:shadow-md transition-shadow p-4">
-                        <Link href={`/products/${product.slug || product._id}`}>
-                          <div className="w-full h-48 mb-4 relative">
-                            <img 
-                              src={product.imageUrl || '/images/placeholder-product.jpg'} 
-                              alt={product.name} 
-                              className="w-full h-full object-contain" 
-                            />
-                          </div>
-                        </Link>
-                        
-                        <Link href={`/products/${product.slug || product._id}`} className="block">
-                          <h3 className="text-lg font-medium text-primary mb-1 hover:text-secondary transition-colors line-clamp-2">
-                            {product.name}
-                          </h3>
-                        </Link>
-                        
-                        <div className="flex items-center mb-2">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <svg 
-                              key={i}
-                              xmlns="http://www.w3.org/2000/svg" 
-                              className={`h-4 w-4 ${i < Math.floor(product.rating || 0) ? 'text-yellow-400' : 'text-neutral-sand'}`} 
-                              viewBox="0 0 20 20" 
-                              fill="currentColor"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z" />
-                            </svg>
-                          ))}
-                          <span className="text-sm text-neutral-gray ml-1">{product.reviewCount || 0}</span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="text-lg font-medium text-primary">
-                            {formatCurrency(product.price || 0)}
-                          </div>
-                          <button 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              if (product._id) {
-                                addItem({ 
-                                  _id: product._id, 
-                                  name: product.name || '', 
-                                  price: product.price || 0,
-                                  imageUrl: product.imageUrl || '',
-                                  sku: product.sku || '',
-                                  description: product.description || '',
-                                  stock: product.stock || 0,
-                                  slug: product.slug || '',
-                                  categoryId: product.categoryId || '',
-                                  images: product.images || []
-                                });
-                              }
-                            }}
-                            className="px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md text-sm transition-colors"
-                            disabled={!(product.stock && product.stock > 0)}
-                          >
-                            Add to cart
-                          </button>
-                        </div>
-                      </div>
+                      <ProductCard product={product} showAddToCart={true} />
                     </div>
                   ))}
                 </Slider>

@@ -46,7 +46,7 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white w-full shadow-sm">
       <Helmet>
-        <meta property="og:site_name" content="Kama Ayurveda" />
+        <meta property="og:site_name" content="Shiv Ayurveda" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
         <meta property="og:image" content={window.location.origin + '/generated-icon.png'} />
@@ -108,7 +108,7 @@ export default function Header() {
           <div className="w-1/3 flex justify-center relative z-40">
             <Link href="/" className="block">
               <div className="flex flex-col items-center">
-                <h1 className="text-primary font-heading text-2xl md:text-3xl font-bold">KAMA</h1>
+                <h1 className="text-primary font-heading text-2xl md:text-3xl font-bold">SHIV</h1>
                 <p className="text-primary font-accent text-sm tracking-widest">AYURVEDA</p>
               </div>
             </Link>
