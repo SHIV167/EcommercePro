@@ -378,7 +378,7 @@ const ProductPage: React.FC = () => {
                       <span className="text-sm">Upto Rs.768 cashback on "Exclusive Offer"</span>
                     </li>
                     <li className="flex items-center">
-                      <span className="text-gray-400 mr-2 w-6 text-center"><img src="/uploads/minicart-offer.svg" alt="offer icon" className="w-4 h-4"/>➤</span>
+                      <span className="text-gray-400 mr-2 w-6 text-center"><img src="/uploads/minicart-offer.svg" alt="offer icon" className="w-4 h-4"/></span>
                       <span className="text-sm">Enjoy 30% "Premium Rewards" points on purchases with American Express®</span>
                     </li>
                   </ul>
@@ -434,7 +434,7 @@ const ProductPage: React.FC = () => {
              
 
               {/* Clinically Tested Section */}
-              <section className="mb-10">
+             {/* <section className="mb-10">
                 <h2 className="text-xl font-heading text-center mb-4">Clinically Tested To</h2>
                 <ul className="ml-2">
                   <li className="flex items-center">
@@ -445,7 +445,7 @@ const ProductPage: React.FC = () => {
                 <p className="text-xs text-gray-500 mt-2 ml-4">Based on clinical trials conducted over 30 days*</p>
               </section>
 
-              {/* Natural Sunscreen Ingredients */}
+               Natural Sunscreen Ingredients
               <section className="mb-12">
                 <h2 className="text-xl font-heading text-center mb-4">Natural Sunscreen Top Ingredients</h2>
                 <div className="mb-4">
@@ -459,7 +459,7 @@ const ProductPage: React.FC = () => {
                     <span className="absolute right-3 bottom-0 text-4xl font-bold text-amber-500">&rdquo;</span>
                   </div>
                 </div>
-              </section>
+              </section> */}
               
               {/* Original Sections */}
               <h2 className="text-2xl font-heading text-primary mb-6 mt-10">Product Details</h2>
@@ -660,9 +660,9 @@ const ProductPage: React.FC = () => {
               <section className="py-8 max-w-4xl mx-auto">
                 {extendedProduct.customHtmlSections
                   .filter(section => section.enabled)
-                  .sort((a, b) => a.displayOrder - b.displayOrder)
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
                   .map((section) => (
-                    <div key={section.id} className="custom-html-section mb-8 p-6 border rounded-md bg-white">
+                    <div key={section.id} className="custom-html-section mb-8 p-6 border border-black rounded-md bg-white">
                       <h2 className="text-2xl font-heading text-primary mb-4">{section.title}</h2>
                       <div className="custom-html-content prose max-w-none" dangerouslySetInnerHTML={{ __html: section.content }} />
                     </div>

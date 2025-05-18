@@ -36,13 +36,30 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   const [existingImages, setExistingImages] = useState<string[]>(product?.images || []);
   
   // Setup custom HTML sections field array
-  const [customSectionTemplates, setCustomSectionTemplates] = useState<{id: string, title: string, content: string, displayOrder?: number, enabled: boolean}[]>(
-    product?.customHtmlSections && product.customHtmlSections.length > 0 ? 
-    product.customHtmlSections : [
-    {
-      id: 'clinically-tested',
-      title: 'Clinically Tested To',
-      content: `<div>
+  const [customSectionTemplates, setCustomSectionTemplates] = useState<{id: string, title: string, content: string, displayOrder: number, enabled: boolean}[]>([]);
+
+  // Define the type for custom HTML sections
+  type CustomHtmlSection = {
+    id: string;
+    title: string;
+    content: string;
+    displayOrder: number;
+    enabled: boolean;
+  };
+
+  useEffect(() => {
+    if (product?.customHtmlSections && product.customHtmlSections.length > 0) {
+      const sectionsWithDisplayOrder = product.customHtmlSections.map((section: any) => ({
+        ...section,
+        displayOrder: section.displayOrder ?? 0
+      }));
+      setCustomSectionTemplates(sectionsWithDisplayOrder);
+    } else {
+      setCustomSectionTemplates([
+        {
+          id: 'clinically-tested',
+          title: 'Clinically Tested To',
+          content: `<div>
   <h3 class="text-xl font-medium mb-4">Clinically Tested To</h3>
   <ul class="list-disc pl-5 space-y-2">
     <li>Clinically Tested To Protect From UVA & UVB rays</li>
@@ -58,24 +75,28 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
     </blockquote>
   </div>
 </div>`,
-      displayOrder: 0,
-      enabled: false
-    },
-    {
-      id: 'ingredients-list',
-      title: 'Ingredients List',
-      content: `<div>
+          displayOrder: 0,
+          enabled: true
+        },
+        {
+          id: 'ingredients-list',
+          title: 'Ingredients List',
+          content: `<div>
   <h3 class="text-xl font-medium mb-4">Ingredients List</h3>
   <p class="mb-4">Purified Water, Elaeis Guineensis (Olive) Oil, Glycerin, Zinc Oxide & Titanium Dioxide (Natural Sun protection minerals), Cera Alba (Beeswax), Butyrospermum Parkii (Shea) Butter, Theobroma Cacao (Cocoa) Seed Butter, Xanthan Gum, Syzygium Aromaticum (Clove) Bud Oil, Citrus Aurantium Bergamia (Bergamot) Fruit Oil, Cetyl Alcohol.</p>
 </div>`,
-      displayOrder: 1,
-      enabled: false
+          displayOrder: 1,
+          enabled: true
+        }
+      ]);
     }
-  ]);
-  
+  }, [product]);
+
   // Log current custom sections for debugging
   useEffect(() => {
     console.log("Product custom HTML sections:", product?.customHtmlSections);
+    // Set form default values for customHtmlSections from customSectionTemplates
+    form.setValue('customHtmlSections', customSectionTemplates);
     console.log("Current custom section templates:", customSectionTemplates);
   }, [product?.customHtmlSections]);
 
@@ -94,29 +115,35 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   // Initialize form with default values or product data if editing
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: product
-      ? {
-          sku: product.sku,
-          name: product.name,
-          description: product.description,
-          shortDescription: product.shortDescription || "",
-          price: product.price,
-          discountedPrice: product.discountedPrice || null,
-          stock: product.stock,
-          categoryId: product.categoryId || "",
-          slug: product.slug,
-          featured: product.featured || false,
-          bestseller: product.bestseller || false,
-          isNew: product.isNew || false,
-          videoUrl: product.videoUrl || "",
-          imageUrl: product.imageUrl || "",
-          images: product.images || [],
-          faqs: product.faqs || [],
-          structuredIngredients: product.structuredIngredients || [],
-          howToUse: product.howToUse || "",
-          howToUseVideo: product.howToUseVideo || ""
-        }
-      : {}
+    defaultValues: {
+      sku: product?.sku || '',
+      name: product?.name || '',
+      description: product?.description || '',
+      shortDescription: product?.shortDescription || '',
+      price: product?.price || 0,
+      discountedPrice: product?.discountedPrice || 0,
+      imageUrl: product?.imageUrl || '',
+      stock: product?.stock || 0,
+      slug: product?.slug || '',
+      categoryId: product?.categoryId || '',
+      featured: product?.featured || false,
+      bestseller: product?.bestseller || false,
+      isNew: product?.isNew || false,
+      videoUrl: product?.videoUrl || '',
+      images: product?.images || [],
+      faqs: product?.faqs || [],
+      ingredients: product?.ingredients || '',
+      structuredIngredients: product?.structuredIngredients || [],
+      howToUse: product?.howToUse || '',
+      howToUseVideo: product?.howToUseVideo || '',
+      howToUseSteps: product?.howToUseSteps || [],
+      benefits: product?.benefits || '',
+      structuredBenefits: product?.structuredBenefits || [],
+      customHtmlSections: product?.customHtmlSections?.map((section: any) => ({
+        ...section,
+        displayOrder: section.displayOrder ?? 0
+      })) || []
+    }
   });
   
   // Setup field arrays for managing FAQs, ingredients, and how-to-use steps
@@ -163,29 +190,47 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
 
   // Form submission handler
   const onSubmit = async (values: ProductFormValues): Promise<void> => {
-    try {
-      setIsSubmitting(true);
+    setIsSubmitting(true);
 
-      // Extract values from the form
-      const { faqs, structuredIngredients, howToUseSteps, structuredBenefits, ...productData } = values;
-      
+    try {
+      // Set custom HTML sections from state
+      // Ensure all have displayOrder set
+      values.customHtmlSections = customSectionTemplates.map((section: CustomHtmlSection) => ({
+        ...section,
+        displayOrder: section.displayOrder || 0
+      }));
+
+      // Handle image uploads first
+      if (imageFiles.length > 0) {
+        const uploadPromises = imageFiles.map(async (file) => {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const response = await fetch('/api/admin/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to upload image');
+          }
+
+          const data = await response.json();
+          return data.imageUrl;
+        });
+
+        const uploadedImageUrls = await Promise.all(uploadPromises);
+        values.images = [...existingImages, ...uploadedImageUrls];
+      } else {
+        // If no new images, use existing ones
+        values.images = existingImages;
+      }
+
       // Create FormData instance
       const formData = new FormData();
       
-      // Log and add custom HTML sections to the product data
-      console.log('Custom HTML sections to save:', customSectionTemplates);
-      
-      const productWithCustomSections = {
-        ...productData,
-        customHtmlSections: customSectionTemplates,
-        faqs: faqs || [],
-        structuredIngredients: structuredIngredients || [],
-        howToUseSteps: howToUseSteps || [],
-        structuredBenefits: structuredBenefits || []
-      };
-      
       // Convert the product data with custom HTML sections to JSON and append it
-      formData.append('product', JSON.stringify(productWithCustomSections));
+      formData.append('product', JSON.stringify(values));
       
       // Also append customHtmlSections as a separate field for debugging
       formData.append('customHtmlSections', JSON.stringify(customSectionTemplates));
@@ -1290,15 +1335,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                 <div key={section.id} className="border rounded-lg p-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`section-enabled-${index}`}
+                      <Checkbox 
+                        id={`section-enabled-${section.id}`}
                         checked={section.enabled}
-                        onCheckedChange={(checked) => {
+                        onCheckedChange={(checked: boolean) => {
                           const updatedSections = [...customSectionTemplates];
                           updatedSections[index].enabled = !!checked;
                           setCustomSectionTemplates(updatedSections);
-                          console.log('Section enabled updated:', updatedSections[index]);
-                        }}
+                        }} 
                       />
                       <div>
                         <label
@@ -1345,7 +1389,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                           id={`section-order-${index}`}
                           type="number"
                           min="0"
-                          value={section.displayOrder?.toString() || '0'}
+                          value={section.displayOrder.toString()}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const updatedSections = [...customSectionTemplates];
                             updatedSections[index].displayOrder = parseInt(e.target.value) || 0;
