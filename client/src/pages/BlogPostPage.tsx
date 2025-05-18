@@ -6,7 +6,11 @@ import { Helmet } from 'react-helmet';
 import { Link } from 'wouter';
 import { Product } from '@/types/product';
 import { FaFacebook, FaTwitter, FaPinterest, FaEnvelope, FaLinkedin } from 'react-icons/fa';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 import '@/styles/blog-post.css';
+import '@/styles/blog-slider.css';
 
 interface Blog {
   _id: string;
@@ -56,6 +60,19 @@ export default function BlogPostPage() {
     },
     enabled: true,
   });
+  
+  // Fetch all blogs for the related blogs slider
+  const { data: allBlogs = [] } = useQuery<Blog[]>({
+    queryKey: ['/api/blogs'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/blogs');
+      return res.json();
+    },
+    enabled: true,
+  });
+  
+  // Filter out the current blog from the related blogs
+  const relatedBlogs = allBlogs.filter(b => b.slug !== slug);
 
   // Detect headings in blog content for highlights section
   useEffect(() => {
@@ -82,6 +99,26 @@ export default function BlogPostPage() {
       document.body.classList.remove('blog-post-page');
     };
   }, [blog]);
+  
+  // Initialize blog slider
+  useEffect(() => {
+    if (relatedBlogs.length > 0) {
+      // Initialize slider after component mount and when related blogs change
+      const timer = setTimeout(() => {
+        const sliderElem = document.querySelector('.blog-slider');
+        if (sliderElem && typeof (window as any).jQuery !== 'undefined') {
+          try {
+            (window as any).jQuery('.blog-slider').slick('unslick');
+            (window as any).jQuery('.blog-slider').slick();
+          } catch (e) {
+            console.log('Slick initialization error:', e);
+          }
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [relatedBlogs]);
   
   // Scroll to section when clicking on highlight item
   const scrollToSection = (id: string) => {
@@ -207,8 +244,8 @@ export default function BlogPostPage() {
         
         <div className="blog-container py-6 sm:py-8 pb-12 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm mt-12">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-            {/* Main content */}
-            <div className="w-full lg:w-2/3">
+            {/* Main content - order-2 on mobile, order-1 on lg */}
+            <div className="w-full lg:w-2/3 order-2 lg:order-1">
               {/* Blog content */}
               <div className="p-4 sm:p-6 md:p-8">
                 {/* Title and meta */}
@@ -313,10 +350,10 @@ export default function BlogPostPage() {
               </div>
             </div>
             
-            {/* Sidebar */}
-            <div className="w-full lg:w-1/3 space-y-4 sm:space-y-6 px-4 sm:px-0">
+            {/* Sidebar - order-1 on mobile, order-2 on lg */}
+            <div className="w-full lg:w-1/3 space-y-4 sm:space-y-6 px-4 sm:px-0 order-1 lg:order-2 mb-8 lg:mb-0">
               {/* Highlights box */}
-              <div className="blog-highlights bg-white/90 shadow-sm">
+              <div className="blog-highlights bg-white shadow-sm">
                 <h3 className="blog-highlights-title">Highlights</h3>
                 <ul className="blog-highlights-list">
                   {headings.map((heading) => (
@@ -386,59 +423,74 @@ export default function BlogPostPage() {
             </div>
           </div>
           
-          {/* Related blog posts - Styled like Kama Ayurveda */}
+          {/* Related blog posts - Dynamic slider like the one on homepage */}
           <div className="my-8 sm:my-12 px-4 sm:px-0 py-6 bg-white/80 rounded-lg shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
               <h2 className="text-xl sm:text-2xl font-serif">Kama Blog</h2>
               <Link href="/blogs" className="text-primary text-sm hover:underline">Explore All Blogs</Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-              {/* Blog post cards with text overlays like in screenshot */}
-              <div className="relative rounded-md overflow-hidden group cursor-pointer">
-                <img 
-                  src="/uploads/blog-1.jpg" 
-                  alt="How To Use Henna" 
-                  className="w-full h-52 object-cover transition-transform group-hover:scale-105"
-                  onError={(e) => (e.currentTarget.src = '/uploads/blog-default-banner.jpg')}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-                  <h3 className="text-white text-xl font-medium">How To Use Henna and Indigo Powder As Hair Dye?</h3>
-                  <Link href="/blogs/how-to-use-henna" className="text-white/80 text-sm mt-2 hover:text-white">
-                    Read More
-                  </Link>
-                </div>
+            
+            {relatedBlogs.length > 0 ? (
+              <Slider
+                key={`blog-slider-${relatedBlogs.length}`}
+                dots={true}
+                dotsClass="slick-dots custom-slick-dots"
+                infinite={relatedBlogs.length > 3}
+                speed={500}
+                slidesToShow={3}
+                slidesToScroll={1}
+                arrows={true}
+                autoplay={true}
+                autoplaySpeed={5000}
+                pauseOnHover={true}
+                className="blog-slider"
+                responsive={[
+                  {
+                    breakpoint: 1024,
+                    settings: {
+                      slidesToShow: 2,
+                      slidesToScroll: 1,
+                      arrows: true,
+                      dots: true
+                    }
+                  },
+                  {
+                    breakpoint: 640,
+                    settings: {
+                      slidesToShow: 1,
+                      slidesToScroll: 1,
+                      arrows: false,
+                      dots: true
+                    }
+                  }
+                ]}
+              >
+                {relatedBlogs.map((relatedBlog, index) => (
+                  <div key={`${relatedBlog._id}-${index}`} className="px-2">
+                    <Link href={`/blogs/${relatedBlog.slug}`} className="block group">
+                      <div className="relative aspect-[4/3] mb-4 overflow-hidden rounded">
+                        <img
+                          src={relatedBlog.imageUrl || '/uploads/blog-default-banner.jpg'}
+                          alt={relatedBlog.title}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          onError={(e) => (e.currentTarget.src = '/uploads/blog-default-banner.jpg')}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
+                          <h3 className="text-white text-xl font-medium">{relatedBlog.title}</h3>
+                          <div className="text-white/80 text-sm mt-2">
+                            <span className="text-white hover:underline">Read More</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                ))}
+              </Slider>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>No related blog posts available.</p>
               </div>
-              
-              <div className="relative rounded-md overflow-hidden group cursor-pointer">
-                <img 
-                  src="/uploads/blog-2.jpg" 
-                  alt="Aloe Vera For Face" 
-                  className="w-full h-52 object-cover transition-transform group-hover:scale-105"
-                  onError={(e) => (e.currentTarget.src = '/uploads/blog-default-banner.jpg')}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-                  <h3 className="text-white text-xl font-medium">Aloe Vera For Face and Skin – Top 10 Benefits & Uses</h3>
-                  <Link href="/blogs/aloe-vera-benefits" className="text-white/80 text-sm mt-2 hover:text-white">
-                    Read More
-                  </Link>
-                </div>
-              </div>
-              
-              <div className="relative rounded-md overflow-hidden group cursor-pointer">
-                <img 
-                  src="/uploads/blog-3.jpg" 
-                  alt="Pink Lips Naturally" 
-                  className="w-full h-52 object-cover transition-transform group-hover:scale-105"
-                  onError={(e) => (e.currentTarget.src = 'https://blog.kamaayurveda.com/wp-content/uploads/2022/03/avatar_user_20_1647310804.png')}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-                  <h3 className="text-white text-xl font-medium">Pink Lips Naturally – 14 Simple Home Remedies</h3>
-                  <Link href="/blogs/pink-lips-naturally" className="text-white/80 text-sm mt-2 hover:text-white">
-                    Read More
-                  </Link>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
