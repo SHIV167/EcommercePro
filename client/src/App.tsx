@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
+import ProgressBar from "./components/ui/ProgressBar";
 import Header from "./components/layout/Header";
 import CheckoutHeader from "./components/layout/CheckoutHeader";
 import NewsletterPopup from "./components/layout/NewsletterPopup";
@@ -32,9 +33,14 @@ import TrackingPage from "./pages/TrackingPage";
 export default function App() {
   const [location] = useLocation();
   const isCheckout = location === "/checkout";
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [location]);
   return (
     <div className="app">
       {isCheckout ? <CheckoutHeader /> : <Header />}
+      <ProgressBar />
       {!isCheckout && <NewsletterPopup />}
       {!isCheckout && <GiftPopup />}
       <Toaster />
