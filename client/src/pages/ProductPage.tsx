@@ -472,7 +472,21 @@ const ProductPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+              {/* Custom HTML Sections */}
+            {renderCustomHtmlSections()}
 
+{/* FAQ Section */}
+<section className="py-12 max-w-4xl mx-auto px-8 border rounded-md my-10 bg-white">
+  <h2 className="text-2xl font-heading text-primary mb-6 text-center">Frequently Asked Questions</h2>
+  {extendedProduct?.faqs && extendedProduct.faqs.length > 0 ? (
+    <ProductFAQ faqs={extendedProduct.faqs} />
+  ) : (
+    <div className="text-center p-6 bg-gray-50 rounded-md">
+      <p className="text-gray-600">No frequently asked questions are available for this product yet.</p>
+      <p className="text-sm text-gray-500 mt-2">Check back soon or contact customer support if you have specific questions.</p>
+    </div>
+  )}
+</section>
              
 
               {/* Clinically Tested Section */}
@@ -697,21 +711,7 @@ const ProductPage: React.FC = () => {
               </div>
             </section>
 
-            {/* Custom HTML Sections */}
-            {renderCustomHtmlSections()}
-
-            {/* FAQ Section */}
-            <section className="py-12 max-w-4xl mx-auto px-8 border rounded-md my-10 bg-white">
-              <h2 className="text-2xl font-heading text-primary mb-6 text-center">Frequently Asked Questions</h2>
-              {extendedProduct?.faqs && extendedProduct.faqs.length > 0 ? (
-                <ProductFAQ faqs={extendedProduct.faqs} />
-              ) : (
-                <div className="text-center p-6 bg-gray-50 rounded-md">
-                  <p className="text-gray-600">No frequently asked questions are available for this product yet.</p>
-                  <p className="text-sm text-gray-500 mt-2">Check back soon or contact customer support if you have specific questions.</p>
-                </div>
-              )}
-            </section>
+            
 
             {/* Bestsellers */}
             <section className="py-8">
