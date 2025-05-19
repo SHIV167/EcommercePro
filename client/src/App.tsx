@@ -53,7 +53,9 @@ export default function App() {
           <Route path="/thank-you/:orderId" component={ThankYouPage} />
           <Route path="/collections/:slug" component={CollectionPage} />
           <Route path="/categories/:slug" component={CategoryPage} />
-          <Route path="/products/:slug" component={ProductPage} />
+          <Route path="/products/:slug">
+            {(params) => <ProductPage params={params} />}
+          </Route>
           <Route path="/login" component={LoginPage} />
           <Route path="/forgot-password" component={ForgotPasswordPage} />
           <Route path="/reset-password" component={ResetPasswordPage} />

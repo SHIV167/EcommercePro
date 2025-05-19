@@ -1,17 +1,18 @@
 import { useState, useEffect } from "react";
 import React from "react";
-import { useParams, useLocation } from "wouter";
+import { useLocation, RouteComponentProps } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Product as BaseProduct, Review, Ingredient } from "@shared/schema";
 import { Product, FAQ } from "@/types/product";
 import ReviewForm from "@/components/product/ReviewForm";
-import { Button } from "@/components/ui/button";
+import AnimatedCartButton from "@/components/ui/AnimatedCartButton";
 import RatingStars from "@/components/products/RatingStars";
 import ProductCollection from "@/components/home/ProductCollection";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Helmet } from "react-helmet";
+import BannerLoader from "@/components/ui/BannerLoader";
 import StickyAddToCart from "@/components/products/StickyAddToCart";
 import { apiRequest } from "@/lib/queryClient";
 import SocialShare from "@/components/products/SocialShare";
@@ -33,8 +34,8 @@ type CustomHtmlSection = {
   enabled: boolean;
 };
 
-const ProductPage: React.FC = () => {
-  const { slug } = useParams();
+const ProductPage = ({ params }: RouteComponentProps<{ slug: string }>) => {
+  const { slug } = params;
   const [location, navigate] = useLocation();
   const [quantity, setQuantity] = useState(1);
   const [pincode, setPincode] = useState("");
@@ -231,13 +232,7 @@ const ProductPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-cover bg-center bg-fixed" style={{ backgroundImage: "url('/uploads/fullbg_Desktop.png')", backgroundSize:"cover"}}>
       {!isDataReady ? (
-        <div className="container mx-auto px-4 py-16 bg-white bg-opacity-50 rounded-md">
-          {productLoading ? (
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading Product...</h1>
-          ) : (
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
-          )}
-        </div>
+        <BannerLoader />
       ) : (
         <>
           <Helmet>
@@ -385,8 +380,20 @@ const ProductPage: React.FC = () => {
                 </div>
                 {/* Action Buttons */}
                 <div className="flex space-x-4 mt-4">
-                  <Button className="w-80 py-6" variant="default" onClick={() => handleAddToCart()}>Add To Cart</Button>
-                  <Button className="w-80 py-6" variant="secondary" onClick={() => handleBuyNow()}>Buy Now</Button>
+                  <AnimatedCartButton 
+                    className="w-80 py-6 bg-amber-500 hover:bg-amber-600" 
+                    onClick={() => handleAddToCart()}
+                    variant="primary"
+                  >
+                    Add To Cart
+                  </AnimatedCartButton>
+                  <AnimatedCartButton 
+                    className="w-80 py-6 bg-black hover:bg-neutral-900" 
+                    onClick={() => handleBuyNow()}
+                    variant="primary"
+                  >
+                    Buy Now
+                  </AnimatedCartButton>
                 </div>
                 <SocialShare url={window.location.href} title={extendedProduct!.name} />
               </div>
@@ -438,12 +445,13 @@ const ProductPage: React.FC = () => {
                       className="border border-gray-200 rounded-l px-3 py-2 w-full focus:outline-none"
                       maxLength={6}
                     />
-                    <button 
+                    <AnimatedCartButton 
                       onClick={checkPincodeAvailability}
-                      className="bg-gray-800 text-white px-4 py-2 rounded-r hover:bg-gray-700 transition"
+                      className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-r"
+                      variant="primary"
                     >
                       Check
-                    </button>
+                    </AnimatedCartButton>
                   </div>
                   
                   {pincodeAvailability && (
@@ -465,7 +473,10 @@ const ProductPage: React.FC = () => {
                       <span className="font-medium">Kama Ayurveda Loyalty Members can earn up to 535 points on purchase of this product.</span>
                     </p>
                     <div className="text-center">
-                      <button className="text-primary text-sm font-medium hover:underline">
+                      <button 
+                        className="text-primary text-sm font-medium hover:underline"
+                        onClick={() => window.open('/rewards', '_blank')}
+                      >
                         Know More
                       </button>
                     </div>
@@ -664,21 +675,21 @@ const ProductPage: React.FC = () => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-heading text-2xl text-primary">Reviews ({extendedProduct!.reviews?.length || 0})</h2>
                 {isAuthenticated ? (
-                  <Button
-                    variant="outline"
+                  <AnimatedCartButton
+                    variant="secondary"
                     onClick={() => setIsReviewFormOpen(true)}
-                    className="text-sm"
+                    className="text-sm border border-neutral-sand hover:bg-neutral-cream"
                   >
                     Write a Review
-                  </Button>
+                  </AnimatedCartButton>
                 ) : (
-                  <Button
-                    variant="outline"
+                  <AnimatedCartButton
+                    variant="secondary"
                     onClick={() => navigate('/login')}
-                    className="text-sm"
+                    className="text-sm border border-neutral-sand hover:bg-neutral-cream"
                   >
                     Write a Review
-                  </Button>
+                  </AnimatedCartButton>
                 )}
               </div>
               {isReviewFormOpen && (

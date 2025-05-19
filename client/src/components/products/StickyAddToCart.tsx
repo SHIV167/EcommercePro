@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import AnimatedCartButton from '@/components/ui/AnimatedCartButton';
 
 interface StickyAddToCartProps {
   product: any;
@@ -58,58 +59,13 @@ export default function StickyAddToCart({ product, quantity, setQuantity, onAddT
         }}
         id="mobile-add-to-cart-container"
       >
-        <button
+        <AnimatedCartButton
           onClick={onAddToCart}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            width: '100%',
-            maxWidth: '100%',
-            height: '44px',
-            backgroundColor: '#3f91eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontWeight: 600,
-            fontSize: '15px',
-            letterSpacing: '0.3px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            padding: '0 10px',
-            boxSizing: 'border-box',
-            WebkitTapHighlightColor: 'transparent',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            transition: 'all 0.2s ease',
-          }}
-          onTouchStart={(e) => {
-            // Add active state for better touch feedback
-            const target = e.currentTarget;
-            target.style.transform = 'scale(0.98)';
-            target.style.opacity = '0.9';
-            
-            // Reset after animation completes
-            setTimeout(() => {
-              target.style.transform = '';
-              target.style.opacity = '';
-            }, 150);
-          }}
+          className="flex-1 min-w-0 w-full max-w-full h-11 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm tracking-wide rounded-md shadow-lg"
+          variant="primary"
         >
-          <span style={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            maxWidth: '100%',
-            display: 'inline-block',
-            padding: '0 4px',
-          }}>
-            Add to Cart • ₹{product.price}
-          </span>
-        </button>
+          Add to Cart • ₹{product.price}
+        </AnimatedCartButton>
       </div>
       
       {/* Desktop version - only shown on desktop */}
@@ -138,13 +94,13 @@ export default function StickyAddToCart({ product, quantity, setQuantity, onAddT
             type="button"
           >+</button>
         </div>
-        <button
-          className="h-12 ml-4 px-8 bg-primary hover:bg-primary-dark text-white font-bold"
+        <AnimatedCartButton
+          className="h-12 ml-4 px-8 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-md"
           onClick={onAddToCart}
-          style={{ backgroundColor: '#3f91eb', border: 'none', borderRadius: '4px' }}
+          variant="primary"
         >
           Add to Cart
-        </button>
+        </AnimatedCartButton>
       </div>
     </>
   );

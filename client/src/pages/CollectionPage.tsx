@@ -14,6 +14,7 @@ import {
 import { Helmet } from 'react-helmet';
 import CollectionBanner from '@/components/layout/CollectionBanner';
 import GreenBoxSlider from '@/components/home/GreenBoxSlider';
+import BannerLoader from '@/components/ui/BannerLoader';
 
 export default function CollectionPage() {
   const { slug } = useParams();
@@ -94,30 +95,8 @@ export default function CollectionPage() {
     fetchPromoTimers();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="animate-pulse h-10 w-1/3 bg-neutral-sand mb-6"></div>
-        <div className="animate-pulse h-6 w-2/3 bg-neutral-sand mb-12"></div>
-        
-        <div className="flex justify-between items-center mb-8">
-          <div className="animate-pulse h-6 w-32 bg-neutral-sand"></div>
-          <div className="animate-pulse h-10 w-48 bg-neutral-sand"></div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="border border-neutral-sand p-6 animate-pulse">
-              <div className="mb-4 w-full h-64 bg-neutral-sand"></div>
-              <div className="w-24 h-3 bg-neutral-sand mb-2"></div>
-              <div className="w-full h-5 bg-neutral-sand mb-1"></div>
-              <div className="w-3/4 h-4 bg-neutral-sand mb-3"></div>
-              <div className="w-16 h-4 bg-neutral-sand"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+  if (collectionLoading || productsQuery.isLoading) {
+    return <BannerLoader />;
   }
   
   if (!collection && !isSpecial) {

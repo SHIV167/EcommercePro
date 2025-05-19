@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import AnimatedCartButton from "@/components/ui/AnimatedCartButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
@@ -171,22 +171,23 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, onClose }) => {
         </div>
 
         <div className="flex justify-end">
-          <Button
+          <AnimatedCartButton
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={onClose}
-            className="mr-2 border-neutral-sand text-neutral-gray hover:bg-neutral-cream"
+            className="mr-2 border border-neutral-sand text-neutral-gray hover:bg-neutral-cream"
             disabled={isSubmitting}
           >
             Cancel
-          </Button>
-          <Button
+          </AnimatedCartButton>
+          <AnimatedCartButton
             type="submit"
-            className="bg-primary hover:bg-primary-light text-white"
+            className="bg-amber-500 hover:bg-amber-600 text-white"
+            variant="primary"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Submitting..." : "Submit Review"}
-          </Button>
+          </AnimatedCartButton>
         </div>
       </form>
     </div>

@@ -3,7 +3,7 @@ import { Product } from "@shared/schema";
 import RatingStars from "./RatingStars";
 import PromoTimerBadge from "./PromoTimerBadge";
 import { useCart } from "@/hooks/useCart";
-import { Button } from "@/components/ui/button";
+import AnimatedCartButton from "@/components/ui/AnimatedCartButton";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useState } from "react";
@@ -128,14 +128,12 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
           )}
         </div>
         {/* Add to Bag Button */}
-        <Button
-          variant="outline"
-          size="lg"
-          className="w-full bg-black text-white border-0 rounded-none font-medium uppercase tracking-wide hover:bg-neutral-darkGray py-3 mt-auto"
+        <AnimatedCartButton
+          className="w-full bg-black hover:bg-neutral-darkGray text-white uppercase tracking-wide font-medium mt-auto"
           onClick={handleAddToCart}
         >
           Add to Bag
-        </Button>
+        </AnimatedCartButton>
       </div>
       <VideoModal open={showVideo && !!product.videoUrl} onClose={() => setShowVideo(false)}>
         <div className="w-full aspect-video bg-black flex items-center justify-center">

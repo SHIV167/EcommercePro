@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "@types/react-helmet": "^6.1.11",
-    "react-helmet": "^6.1.0"
+    "clsx": "^2.1.1",
+    "react-helmet": "^6.1.0",
+    "tailwind-merge": "^3.3.0"
   }
 }
