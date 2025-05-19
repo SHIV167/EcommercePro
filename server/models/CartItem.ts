@@ -1,15 +1,15 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface ICartItem extends Document {
-  cartId: string;
-  productId: string;
+  cartId: Types.ObjectId;
+  productId: Types.ObjectId;
   quantity: number;
   isFree: boolean;
 }
 
 const CartItemSchema: Schema = new Schema({
-  cartId: { type: String, required: true },
-  productId: { type: String, required: true },
+  cartId: { type: Schema.Types.ObjectId, required: true, ref: 'Cart' },
+  productId: { type: Schema.Types.ObjectId, required: true, ref: 'Product' },
   quantity: { type: Number, required: true, min: 1 },
   isFree: { type: Boolean, required: true, default: false }
 });

@@ -2,9 +2,15 @@ import { createContext, useState, useEffect, ReactNode } from "react";
 import { Product } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
+interface FreeProduct extends Product {
+  minOrderValue: number;
+  maxOrderValue?: number;
+  isFreeProduct: boolean;
+}
+
 interface CartItem {
-  id: number;
-  product: Product;
+  id: string;
+  product: Product | FreeProduct;
   quantity: number;
   isGift?: boolean;
 }
@@ -13,9 +19,9 @@ interface CartContextType {
   cartItems: CartItem[];
   addItem: (product: Product, quantity?: number) => Promise<void>;
   addGiftToCart: (product: Product & { isGift: boolean }, quantity?: number) => Promise<void>;
-  removeItem: (itemId: number) => Promise<void>;
+  removeItem: (itemId: string) => Promise<void>;
   removeItemFromCart: (productId: string) => Promise<void>;
-  updateQuantity: (itemId: number, quantity: number) => Promise<void>;
+  updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
   subtotal: number;
   totalItems: number;
@@ -89,6 +95,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
                   return {
                     ...productData,
                     minOrderValue: freeProduct.minOrderValue,
+                    maxOrderValue: freeProduct.maxOrderValue,
                     isFreeProduct: true
                   };
                 }
@@ -109,9 +116,15 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   // Check for eligible free products when subtotal changes and manage free products
   useEffect(() => {
-    const eligible = freeProducts.filter(
-      (product) => product && typeof product.minOrderValue === 'number' && product.minOrderValue <= subtotal
-    );
+    const eligible = (freeProducts as FreeProduct[]).filter((product) => {
+      if (!product || typeof product.minOrderValue !== 'number') return false;
+      
+      // Check if subtotal is within the valid range
+      const isAboveMin = product.minOrderValue <= subtotal;
+      const isBelowMax = !product.maxOrderValue || subtotal <= product.maxOrderValue;
+      
+      return isAboveMin && isBelowMax;
+    });
     setEligibleFreeProducts(eligible);
 
     // Get non-free items in cart
@@ -226,34 +239,25 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           quantity: updatedItems[existingItemIndex].quantity,
         });
       } else {
-        // Create a temporary item for new addition
-        const tempItem: CartItem = {
-          id: Date.now(),
-          product,
-          quantity: quantity,
-        };
-        setCartItems([...cartItems, tempItem]);
-
-        // Add to API
+        // Add to API first to get the real MongoDB ID
         const prodId = (product as any).id ?? (product as any)._id;
         const response = await apiRequest("POST", "/api/cart/items", {
           cartId: currentCartId,
           productId: prodId,
           quantity: quantity,
         });
-        // Defensive: handle empty or invalid JSON
-        let data: any = {};
-        try {
-          const text = await response.text();
-          data = text ? JSON.parse(text) : {};
-        } catch (err) {
-          data = {};
-        }
-        setCartItems((prev) =>
-          prev.map((item) =>
-            item.id === tempItem.id ? { ...item, id: (data as any)?.id ?? item.id } : item
-          )
-        );
+
+        // Parse the response to get the MongoDB ID
+        const data = await response.json();
+        const cartItemId = data._id;
+
+        // Add item with real MongoDB ID
+        const newItem: CartItem = {
+          id: cartItemId,
+          product,
+          quantity: quantity,
+        };
+        setCartItems([...cartItems, newItem]);
       }
     } catch (error) {
       console.error("Failed to add item to cart:", error);
@@ -263,7 +267,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   // Remove item from cart with optimistic updates
-  const removeItem = async (itemId: number) => {
+  const removeItem = async (itemId: string) => {
     // Store previous state for rollback
     const previousItems = [...cartItems];
     
@@ -283,7 +287,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   // Update item quantity with optimistic updates
-  const updateQuantity = async (itemId: number, quantity: number) => {
+  const updateQuantity = async (itemId: string, quantity: number) => {
     // Store previous state for rollback
     const previousItems = [...cartItems];
 
@@ -357,7 +361,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
       // Create optimistic update with gift flag
       const newItem: CartItem = {
-        id: Date.now(), // Temporary ID
+        id: String(Date.now()), // Temporary ID
         product: product,
         quantity: 1,
         isGift: true

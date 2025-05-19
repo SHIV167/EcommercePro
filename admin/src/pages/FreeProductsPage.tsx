@@ -71,7 +71,20 @@ export default function FreeProductsPage() {
   const loadFreeProducts = async () => {
     setLoading(true);
     try {
+      console.log('Fetching free products...');
       const response = await get('/api/admin/free-products');
+      console.log('Free products response:', response);
+      
+      if (!response || !response.data) {
+        console.error('No response or data received:', response);
+        toast({ 
+          title: 'Error loading free products', 
+          description: 'No data received from server',
+          variant: 'destructive' 
+        });
+        setFreeProducts([]);
+        return;
+      }
       
       // Check if data is an array before proceeding
       if (!Array.isArray(response.data)) {
@@ -85,17 +98,26 @@ export default function FreeProductsPage() {
         return;
       }
       
+      console.log('Free products found:', response.data.length);
+      
       // Fetch product details for each free product
       const freeProductsWithDetails = await Promise.all(
         response.data.map(async (freeProduct: FreeProduct) => {
           try {
+            console.log(`Fetching details for product ${freeProduct.productId}...`);
             const productResponse = await get(`/api/products/${freeProduct.productId}`);
+            console.log(`Product details for ${freeProduct.productId}:`, productResponse.data);
             return {
               ...freeProduct,
               product: productResponse.data
             };
           } catch (error) {
-            console.warn(`Failed to fetch details for product ${freeProduct.productId}:`, error);
+            console.error(`Failed to fetch details for product ${freeProduct.productId}:`, error);
+            toast({
+              title: 'Warning',
+              description: `Could not load details for a free product (ID: ${freeProduct.productId})`,
+              variant: 'default'
+            });
             return freeProduct;
           }
         })
@@ -104,10 +126,11 @@ export default function FreeProductsPage() {
       setFreeProducts(freeProductsWithDetails);
     } catch (error: any) {
       console.error('Error loading free products:', error);
-      toast({ 
-        title: 'Failed to load free products', 
-        description: error.message || 'Check authentication status',
-        variant: 'destructive' 
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to load free products';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive'
       });
       setFreeProducts([]);
     } finally {
