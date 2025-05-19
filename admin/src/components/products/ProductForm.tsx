@@ -28,7 +28,7 @@ const productSchema = z.object({
   price: z.number().min(0, "Price must be positive"),
   discountedPrice: z.number().optional().nullable(),
   stock: z.number().int().min(0, "Stock must be non-negative"),
-  sku: z.string().optional(),
+  sku: z.string().min(1, "SKU is required"),
   categoryId: z.string().min(1, "Category is required"),
   images: z.array(z.string()).default([]),
   featured: z.boolean().default(false),
@@ -382,11 +382,7 @@ const { fields: benefitFields, append: appendBenefit, remove: removeBenefit } = 
       const url = product ? `/api/products/${product._id}` : '/api/products';
       
       // Use JSON format instead of FormData for better consistency
-      const response = await apiRequest(method, url, { 
-        body: JSON.stringify(productData), 
-        includeAuth: true, 
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await apiRequest(method, url, productData);
 
       if (!response.ok) {
         const result = await response.json();
@@ -725,10 +721,9 @@ const { fields: benefitFields, append: appendBenefit, remove: removeBenefit } = 
                 <FormLabel>Short Description</FormLabel>
                 <FormControl>
                   <Textarea 
-                    placeholder="Brief description for product listings" 
-                    className="resize-none" 
-                    rows={2}
+                    rows={2} 
                     {...field} 
+                    placeholder="Brief description for product listings"
                   />
                 </FormControl>
                 <FormMessage />
@@ -1225,9 +1220,9 @@ const { fields: benefitFields, append: appendBenefit, remove: removeBenefit } = 
                       <FormItem>
                         <FormLabel>General Usage Instructions</FormLabel>
                         <FormControl>
-                          <Textarea
+                          <Textarea 
                             placeholder="Provide general instructions on how to use the product"
-                            {...field}
+                            {...field} 
                             className="min-h-[100px]"
                           />
                         </FormControl>
