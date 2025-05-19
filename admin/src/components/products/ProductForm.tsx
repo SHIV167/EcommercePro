@@ -91,9 +91,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>(product?.images || []);
   
-  // Setup custom HTML sections field array
-  const [customSectionTemplates, setCustomSectionTemplates] = useState<{id: string, title: string, content: string, displayOrder: number, enabled: boolean}[]>([]);
-
   // Define the type for custom HTML sections
   type CustomHtmlSection = {
     id: string;
@@ -102,6 +99,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
     displayOrder: number;
     enabled: boolean;
   };
+
+  // Setup custom HTML sections field array
+  const [customSectionTemplates, setCustomSectionTemplates] = useState<{id: string, title: string, content: string, displayOrder: number, enabled: boolean}[]>([]);
 
   useEffect(() => {
     if (product?.customHtmlSections && Array.isArray(product.customHtmlSections) && product.customHtmlSections.length > 0) {
@@ -196,9 +196,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   });
 
   // Initialize form with default values or product data if editing
-  // Using a workaround for the type definition issues
   const form = useForm<ProductFormValues>({
-    // @ts-ignore - bypass resolver type errors
     resolver: zodResolver(productSchema),
     defaultValues: {
       sku: product?.sku || '',
@@ -207,72 +205,54 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       shortDescription: product?.shortDescription || '',
       price: product?.price || 0,
       discountedPrice: product?.discountedPrice || null,
-      // imageUrl property is not in the schema and should be removed
       stock: product?.stock || 0,
       slug: product?.slug || '',
       categoryId: product?.categoryId || '',
+      images: product?.images || [],
       featured: product?.featured || false,
       bestseller: product?.bestseller || false,
       isNew: product?.isNew || false,
-      videoUrl: product?.videoUrl || '',
-      images: product?.images || [],
-      faqs: product?.faqs || [],
-      ingredients: product?.ingredients || '',
-      structuredIngredients: product?.structuredIngredients || [],
-      howToUse: product?.howToUse || '',
-      howToUseVideo: product?.howToUseVideo || '',
-      howToUseSteps: product?.howToUseSteps || [],
-      benefits: product?.benefits || '',
-      structuredBenefits: product?.structuredBenefits || [],
       weightGrams: product?.weightGrams || null,
-      dimensionsCm: product?.dimensionsCm || {
-        length: null,
-        width: null,
-        height: null
-      },
-      customHtmlSections: product?.customHtmlSections?.map((section: any) => ({
-        ...section,
-        displayOrder: section.displayOrder ?? 0
-      })) || []
+      dimensionsCm: product?.dimensionsCm || null,
+      videoUrl: product?.videoUrl || '',
+      ingredients: product?.ingredients || '',
+      benefits: product?.benefits || '',
+      howToUseVideo: product?.howToUseVideo || '',
+      customHtmlSections: product?.customHtmlSections || [],
+      faqs: product?.faqs || [],
+      structuredIngredients: product?.structuredIngredients || [],
+      generalBenefits: product?.generalBenefits || '',
+      structuredBenefits: product?.structuredBenefits || [],
+      howToUse: product?.howToUse || '',
+      howToUseSteps: product?.howToUseSteps || []
     }
   });
-  
-  // Setup field arrays for managing FAQs, ingredients, and how-to-use steps
-  // @ts-ignore - bypass type errors with field arrays
-const { fields: faqFields, append: appendFaq, remove: removeFaq } = useFieldArray({
-    control: form.control,
-    name: "faqs",
-  });
-  
-  // @ts-ignore - bypass type errors with field arrays
-const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({
-    control: form.control,
-    name: "structuredIngredients",
-  });
-  
-  // @ts-ignore - bypass type errors with field arrays
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { fields: howToUseStepFields, append: appendHowToUseStep, remove: removeHowToUseStep } = useFieldArray({
-    control: form.control,
-    name: "howToUseSteps",
+
+  // Setup field arrays for structured data
+  const { fields: howToUseStepFields, append: appendHowToUseStep, remove: removeHowToUseStep } = useFieldArray({
+    name: 'howToUseSteps',
+    control: form.control
   });
 
-  // @ts-ignore - bypass type errors with field arrays
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { fields: benefitFields, append: appendBenefit, remove: removeBenefit } = useFieldArray({
-    control: form.control,
-    name: "structuredBenefits",
+  const { fields: faqFields, append: appendFaq, remove: removeFaq } = useFieldArray({
+    name: 'faqs',
+    control: form.control
   });
 
-  // @ts-ignore - fixing the field array type to match our schema
-  // Using customHtmlSections which is the field in our schema
-  // @ts-ignore - fixing the field array type to match our schema
-  // @ts-ignore - bypass type errors with field arrays
+  const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({
+    name: 'structuredIngredients',
+    control: form.control
+  });
+
+  const { fields: benefitFields, append: appendStructuredBenefit, remove: removeStructuredBenefit } = useFieldArray({
+    name: 'structuredBenefits',
+    control: form.control
+  });
+
   const { fields: customSectionFields, append: appendCustomSection, remove: removeCustomSection } = useFieldArray({
-    // @ts-ignore - bypass type errors with form control
+    name: 'customHtmlSections',
     control: form.control,
-    name: "customHtmlSections",
-    keyName: "key" // Use key as keyName to avoid conflicts with id
+    keyName: 'key' // Use key as keyName to avoid conflicts with id
   });
   
   // Make sure customHtmlSections is properly initialized
@@ -1048,7 +1028,191 @@ const { fields: benefitFields, append: appendBenefit, remove: removeBenefit } = 
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Step-by-Step Instructions */}
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle>Step-by-Step Instructions</CardTitle>
+                <CardDescription>
+                  Add detailed steps for using the product
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {howToUseStepFields.map((field, index) => (
+                  <div key={field.id} className="border rounded-lg p-4 relative mb-4">
+                    <div className="absolute top-2 right-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeHowToUseStep(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <FormField
+                        control={form.control}
+                        name={`howToUseSteps.${index}.stepNumber`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Step Number</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`howToUseSteps.${index}.title`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Step Title</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., Apply to clean skin" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`howToUseSteps.${index}.description`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Step Description</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                {...field}
+                                placeholder="Detailed instructions for this step"
+                                className="min-h-[100px]"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendHowToUseStep({
+                    stepNumber: howToUseStepFields.length + 1,
+                    title: '',
+                    description: ''
+                  })}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Step
+                </Button>
+              </CardContent>
+            </Card>
             
+            {/* Structured Benefits */}
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle>Product Benefits</CardTitle>
+                <CardDescription>
+                  Add key benefits of the product
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {benefitFields.map((field, index) => (
+                    <div key={field.id} className="border rounded-lg p-4 relative">
+                      <div className="absolute top-2 right-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeStructuredBenefit(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid gap-4 mb-4">
+                        <FormField
+                          control={form.control}
+                          name={`structuredBenefits.${index}.title`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Benefit Title</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="e.g., Clinically Proven Results"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name={`structuredBenefits.${index}.description`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Describe the benefit in detail"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name={`structuredBenefits.${index}.imageUrl`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Image URL (Optional)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="URL to an image representing this benefit"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => appendStructuredBenefit({ title: '', description: '', imageUrl: '' })}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Benefit
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Custom HTML Sections */}
             <Card className="mt-4">
               <CardHeader>
@@ -1351,7 +1515,7 @@ const { fields: benefitFields, append: appendBenefit, remove: removeBenefit } = 
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => appendBenefit({ title: '', description: '', imageUrl: '' })}
+                      onClick={() => appendStructuredBenefit({ title: '', description: '', imageUrl: '' })}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Benefit
