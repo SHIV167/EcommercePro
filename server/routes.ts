@@ -151,13 +151,33 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // serve uploaded images
   app.use('/uploads', express.static(uploadDir));
   app.use('/admin/uploads', express.static(uploadDir));
+
   // local storage for product image uploads
-  const localStorage = multer.diskStorage({ destination: uploadDir, filename: (req, file, cb) => {
+  const localStorage = multer.diskStorage({
+    destination: uploadDir,
+    filename: (req, file, cb) => {
       console.log('[UPLOAD] Saving file:', file.originalname);
       cb(null, `${Date.now()}-${file.originalname}`);
     }
   });
   const uploadLocal = multer({ storage: localStorage });
+
+  // Admin image upload endpoint
+  app.post('/api/admin/upload', uploadLocal.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      // Return the URL to the uploaded file
+      const imageUrl = `/uploads/${req.file.filename}`;
+      console.log('[ADMIN UPLOAD] File saved:', imageUrl);
+      res.json({ imageUrl });
+    } catch (error) {
+      console.error('[ADMIN UPLOAD] Error:', error);
+      res.status(500).json({ message: 'Failed to upload file', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
 
   // Seed sample blogs if none exist
   const blogCount = await BlogModel.estimatedDocumentCount();

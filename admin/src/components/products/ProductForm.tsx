@@ -344,25 +344,35 @@ const { fields: benefitFields, append: appendBenefit, remove: removeBenefit } = 
 
       // Handle image uploads first
       if (imageFiles.length > 0) {
-        const uploadPromises = imageFiles.map(async (file) => {
-          const formData = new FormData();
-          formData.append('file', file);
+        try {
+          const uploadPromises = imageFiles.map(async (file) => {
+            const formData = new FormData();
+            formData.append('file', file);
 
-          const response = await fetch('/api/admin/upload', {
-            method: 'POST',
-            body: formData,
+            const response = await fetch('/api/admin/upload', {
+              method: 'POST',
+              body: formData,
+              credentials: 'include', // Important for auth cookies
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.message || 'Failed to upload image');
+            }
+
+            const data = await response.json();
+            console.log('Upload successful:', data);
+            return data.imageUrl;
           });
 
-          if (!response.ok) {
-            throw new Error('Failed to upload image');
-          }
-
-          const data = await response.json();
-          return data.imageUrl;
-        });
-
-        const uploadedImageUrls = await Promise.all(uploadPromises);
-        values.images = [...existingImages, ...uploadedImageUrls];
+          console.log('Uploading', imageFiles.length, 'images...');
+          const uploadedImageUrls = await Promise.all(uploadPromises);
+          console.log('All uploads completed:', uploadedImageUrls);
+          values.images = [...existingImages, ...uploadedImageUrls];
+        } catch (error) {
+          console.error('Image upload error:', error);
+          throw error;
+        }
       } else {
         // If no new images, use existing ones
         values.images = existingImages;
