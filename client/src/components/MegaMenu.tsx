@@ -32,7 +32,7 @@ export default function MegaMenu() {
   });
 
   // Update the slug to match 'best-sellers'
-  const bestsellers = collections.find((col: Collection) => col.slug === 'best-sellers');
+  const bestsellers = collections.find((col: Collection) => col.slug === 'bestsellers');
   const kumkumadi = collections.find((col: Collection) => col.slug === 'kumkumadi');
 
   const { data: bestsellerProducts = [] } = useQuery<Product[]>({
@@ -71,10 +71,10 @@ export default function MegaMenu() {
           >
             <a href={`/collections/${col.slug}`}>{col.name}</a>
             {/* Best Sellers MegaMenu */}
-            {col.slug === 'best-sellers' && hovered === 'best-sellers' && (
+            {col.slug === 'bestsellers' && hovered === 'bestsellers' && (
               <div
                 className="fixed left-1/2 -translate-x-1/2 top-[169px] z-[1000] bg-[#f8f6f2] border border-gray-200 shadow-xl w-[920px] rounded-none px-8 py-7 text-[15px] text-black"
-                onMouseEnter={() => setHovered('best-sellers')}
+                onMouseEnter={() => setHovered('bestsellers')}
                 onMouseLeave={() => setHovered(null)}
               >
                 <div className="flex flex-row gap-8 justify-center">
