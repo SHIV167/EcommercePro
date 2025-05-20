@@ -39,25 +39,33 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-// Dynamic storage: use Cloudinary in production, local disk in development
-const storage = process.env.NODE_ENV === 'production'
+// Determine if Cloudinary credentials are configured
+const isCloudinaryConfigured = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+);
+
+// Dynamic storage: use Cloudinary only in production when configured, otherwise local disk
+const storage = process.env.NODE_ENV === 'production' && isCloudinaryConfigured
   ? new CloudinaryStorage(<any>{
       cloudinary,
       params: {
         folder: 'ecommerce',
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-        public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, '')}`,
-      },
+        public_id: (req: any, file: any) =>
+          `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, '')}`
+      }
     })
   : multer.diskStorage({
-      destination: (req, file, cb) => {
+      destination: (req: any, file: any, cb: any) => {
         const uploadPath = getUploadPath(req);
         cb(null, uploadPath);
       },
-      filename: (req, file, cb) => {
+      filename: (req: any, file: any, cb: any) => {
         const cleanName = file.originalname.toLowerCase().replace(/[^a-z0-9.]/g, '-');
         cb(null, `${Date.now()}-${cleanName}`);
-      },
+      }
     });
 
 const fileFilter = (req: any, file: any, cb: any) => {
