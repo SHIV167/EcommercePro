@@ -2501,8 +2501,11 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
 
   // End of registerRoutes; popup and admin routes should use top-level middleware definitions
+
+  // Start HTTP server and return the HTTP server instance
   const PORT = parseInt(process.env.PORT || '5000', 10);
-  return createServer(app).listen(PORT, () => {
+  const server = createServer(app).listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
   });
+  return server;
 }
