@@ -326,7 +326,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
             formData.append('file', file);
 
             try {
-              const response = await fetch('/api/admin/upload', {
+              // Base API URL from env
+              const API_BASE = import.meta.env.VITE_API_URL || '';
+              const response = await fetch(`${API_BASE}/api/admin/upload`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include', // Important for auth cookies
