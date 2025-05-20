@@ -2,6 +2,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 // Provide __dirname in ES module scope
 const __filename = fileURLToPath(import.meta.url);
@@ -24,24 +26,40 @@ Object.values(directories).forEach(dir => {
 
 // Helper function to determine upload directory
 const getUploadPath = (req: any) => {
-  const path = req.path.toLowerCase();
-  if (path.includes('/banners')) return directories.banners;
-  if (path.includes('/products')) return directories.products;
+  const pathLower = req.path.toLowerCase();
+  if (pathLower.includes('/banners')) return directories.banners;
+  if (pathLower.includes('/products')) return directories.products;
   return directories.default;
 };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = getUploadPath(req);
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    // Clean the original filename
-    const cleanFileName = file.originalname.toLowerCase().replace(/[^a-z0-9.]/g, '-');
-    // Add timestamp to ensure uniqueness
-    cb(null, `${Date.now()}-${cleanFileName}`);
-  }
+// Configure Cloudinary for production uploads
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
+
+// Dynamic storage: use Cloudinary in production, local disk in development
+const storage = process.env.NODE_ENV === 'production'
+  ? new CloudinaryStorage({
+      cloudinary,
+      // @ts-ignore: bypass type checking for Cloudinary params
+      params: {
+        folder: 'ecommerce',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, '')}`,
+      } as any,
+    })
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        const uploadPath = getUploadPath(req);
+        cb(null, uploadPath);
+      },
+      filename: (req, file, cb) => {
+        const cleanName = file.originalname.toLowerCase().replace(/[^a-z0-9.]/g, '-');
+        cb(null, `${Date.now()}-${cleanName}`);
+      },
+    });
 
 const fileFilter = (req: any, file: any, cb: any) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -52,12 +70,6 @@ const fileFilter = (req: any, file: any, cb: any) => {
   }
 };
 
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  }
-});
+const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 export default upload;
