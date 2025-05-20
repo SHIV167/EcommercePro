@@ -33,9 +33,10 @@ type BannerFormProps = {
   onClose: () => void;
   onSave: (banner: Partial<Banner>, fileDesktop?: File, fileMobile?: File) => void;
   initial?: Partial<Banner>;
+  mainServerUrl: string;
 };
 
-function BannerForm({ open, onClose, onSave, initial }: BannerFormProps) {
+function BannerForm({ open, onClose, onSave, initial, mainServerUrl }: BannerFormProps) {
   const [title, setTitle] = useState(initial?.title || "");
   const [subtitle, setSubtitle] = useState(initial?.subtitle || "");
   const [alt, setAlt] = useState(initial?.alt || "");
@@ -132,7 +133,7 @@ function BannerForm({ open, onClose, onSave, initial }: BannerFormProps) {
                     src={desktopOption==='upload' ? URL.createObjectURL(fileDesktop!) : desktopUrl}
                     alt={alt || "Desktop banner image"}
                     className="h-14 mt-2 rounded"
-                    onError={(e: React.SyntheticEvent<HTMLImageElement>) => { const img=e.target as HTMLImageElement; img.onerror=null; img.src=import.meta.env.BASE_URL + "placeholder-desktop.png"; }}
+                    onError={(e: React.SyntheticEvent<HTMLImageElement>) => { const img=e.target as HTMLImageElement; img.onerror=null; img.src=`${mainServerUrl}/uploads/banners/placeholder.png`; }}
                   />
                 )}
               </div>
@@ -182,6 +183,7 @@ export default function BannersManagement() {
   const queryClient = useQueryClient();
   // Determine API base path: in dev, Vite admin proxy uses /admin/api; in prod/SSR, use /api
   const apiBase = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL ?? '');
+  const mainServerUrl = import.meta.env.DEV ? '' : 'https://ecommercepromern.onrender.com';
   const [formOpen, setFormOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | undefined>();
 
@@ -320,25 +322,25 @@ export default function BannersManagement() {
                     <tr key={banner.id || banner._id} className="border-b">
                       <td>
                         <img
-                          src={banner.desktopImageUrl ? (banner.desktopImageUrl.startsWith('http') ? banner.desktopImageUrl : banner.desktopImageUrl) : '/uploads/banners/placeholder.png'}
+                          src={banner.desktopImageUrl ? (banner.desktopImageUrl.startsWith('http') ? banner.desktopImageUrl : `${mainServerUrl}${banner.desktopImageUrl}`) : `${mainServerUrl}/uploads/banners/placeholder.png`}
                           alt={banner.alt ? banner.alt : "Desktop banner image"}
                           className="h-12 rounded"
                           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                             const img = e.target as HTMLImageElement;
                             img.onerror = null;
-                            img.src = '/uploads/banners/placeholder.png';
+                            img.src = `${mainServerUrl}/uploads/banners/placeholder.png`;
                           }}
                         />
                       </td>
                       <td>
                         <img
-                          src={banner.mobileImageUrl ? (banner.mobileImageUrl.startsWith('http') ? banner.mobileImageUrl : banner.mobileImageUrl) : '/uploads/banners/placeholder.png'}
+                          src={banner.mobileImageUrl ? (banner.mobileImageUrl.startsWith('http') ? banner.mobileImageUrl : `${mainServerUrl}${banner.mobileImageUrl}`) : `${mainServerUrl}/uploads/banners/placeholder.png`}
                           alt={banner.alt ? banner.alt : "Mobile banner image"}
                           className="h-12 rounded"
                           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                             const img = e.target as HTMLImageElement;
                             img.onerror = null;
-                            img.src = '/uploads/banners/placeholder.png';
+                            img.src = `${mainServerUrl}/uploads/banners/placeholder.png`;
                           }}
                         />
                       </td>
@@ -406,6 +408,7 @@ export default function BannersManagement() {
         onClose={() => { setFormOpen(false); setEditingBanner(undefined); }}
         onSave={handleSave}
         initial={editingBanner}
+        mainServerUrl={mainServerUrl}
       />
     </div>
   );

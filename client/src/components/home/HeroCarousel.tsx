@@ -13,7 +13,9 @@ export default function HeroCarousel() {
     queryFn: async () => {
       const res = await fetch('/api/banners?enabled=true');
       if (!res.ok) throw new Error('Failed to fetch banners');
-      return res.json();
+      const data = await res.json();
+      // Sort by position if not already sorted by backend
+      return data.sort((a: Banner, b: Banner) => (a.position ?? 0) - (b.position ?? 0));
     }
   });
   // Carousel index state
