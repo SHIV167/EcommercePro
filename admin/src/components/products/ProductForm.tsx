@@ -336,12 +336,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               try {
                 // Try to parse JSON regardless of content-type
                 responseData = await response.json();
+                console.log('Response data:', responseData);
               } catch (parseError) {
                 console.error('Failed to parse response as JSON:', parseError);
                 throw new Error('Server response was not valid JSON');
               }
 
-              if (!response.ok) {
+              if (!response.ok || !responseData.success) {
                 const errorMessage = responseData?.message || 'Failed to upload image';
                 throw new Error(errorMessage);
               }

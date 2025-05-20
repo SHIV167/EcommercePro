@@ -167,63 +167,55 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
   const uploadLocal = multer({ storage: localStorage });
 
-  // Handle multer errors
-  const handleMulterError = (err: any, req: Request, res: Response, next: NextFunction) => {
-    if (err instanceof multer.MulterError) {
-      // A Multer error occurred when uploading.
-      console.error('[MULTER ERROR]:', err);
-      res.status(400).json({
-        message: 'File upload error',
-        error: err.message
-      });
-    } else if (err) {
-      // An unknown error occurred when uploading.
-      console.error('[UPLOAD ERROR]:', err);
-      res.status(500).json({
-        message: 'Unknown upload error',
-        error: err.message
-      });
-    } else {
-      next();
-    }
-  };
-
   // Admin image upload endpoint
-  app.post('/api/admin/upload',
-    // Handle multer errors first
-    (req, res, next) => {
-      uploadLocal.single('file')(req, res, (err) => {
-        if (err) {
-          handleMulterError(err, req, res, next);
-        } else {
-          next();
-        }
+  app.post('/api/admin/upload', async (req, res) => {
+    // Set content type header early
+    res.setHeader('Content-Type', 'application/json');
+
+    try {
+      // Handle the file upload
+      await new Promise<void>((resolve, reject) => {
+        uploadLocal.single('file')(req, res, (err) => {
+          if (err) {
+            if (err instanceof multer.MulterError) {
+              console.error('[MULTER ERROR]:', err);
+              reject(new Error(`File upload error: ${err.message}`));
+            } else {
+              console.error('[UPLOAD ERROR]:', err);
+              reject(err);
+            }
+          } else {
+            resolve();
+          }
+        });
       });
-    },
-    // Then handle the actual upload
-    async (req, res) => {
-      try {
-        // Set content type header
-        res.setHeader('Content-Type', 'application/json');
 
-        if (!req.file) {
-          return res.status(400).json({ message: 'No file uploaded' });
-        }
-
-        // Return the URL to the uploaded file
-        const imageUrl = `/uploads/products/${req.file.filename}`;
-        console.log('[ADMIN UPLOAD] File saved:', imageUrl);
-        res.status(200).json({ imageUrl });
-      } catch (error) {
-        console.error('[ADMIN UPLOAD] Error:', error);
-        // Ensure error response is also JSON
-        res.status(500).json({ 
-          message: 'Failed to upload file', 
-          error: error instanceof Error ? error.message : 'Unknown error' 
+      // Check if file was uploaded
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'No file uploaded' 
         });
       }
+
+      // Return the URL to the uploaded file
+      const imageUrl = `/uploads/products/${req.file.filename}`;
+      console.log('[ADMIN UPLOAD] File saved:', imageUrl);
+      
+      return res.status(200).json({ 
+        success: true,
+        imageUrl 
+      });
+
+    } catch (error) {
+      console.error('[ADMIN UPLOAD] Error:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: 'Failed to upload file', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
-  );
+  });
 
   // Seed sample blogs if none exist
   const blogCount = await BlogModel.estimatedDocumentCount();

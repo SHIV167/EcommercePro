@@ -105,14 +105,18 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
         <Link href={`/products/${product.slug}`} className="block w-full mb-4">
           <div className="relative w-full aspect-square">
             <img 
-              src={product.imageUrl?.startsWith('http') ? product.imageUrl : `/uploads/products/${product.imageUrl?.split('/').pop()}`} 
+              src={product.imageUrl?.startsWith('http') ? product.imageUrl : 
+                   product.imageUrl?.startsWith('/uploads/products/') ? product.imageUrl : 
+                   `/uploads/products/${product.imageUrl?.split('/').pop() || 'placeholder.jpg'}`} 
               alt={product.name} 
               className={`w-full h-full object-contain absolute top-0 left-0 transition-opacity duration-300 ${isHovered && product.images?.[0] ? 'opacity-0' : 'opacity-100'}`}
               loading="lazy"
             />
             {product.images?.[0] && (
               <img 
-                src={product.images[0]?.startsWith('http') ? product.images[0] : `/uploads/products/${product.images[0]?.split('/').pop()}`} 
+                src={product.images[0]?.startsWith('http') ? product.images[0] : 
+                     product.images[0]?.startsWith('/uploads/products/') ? product.images[0] : 
+                     `/uploads/products/${product.images[0]?.split('/').pop() || 'placeholder.jpg'}`} 
                 alt={`${product.name} - alternate view`} 
                 className={`w-full h-full object-contain absolute top-0 left-0 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
                 loading="lazy"
