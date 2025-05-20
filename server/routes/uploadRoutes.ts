@@ -22,12 +22,19 @@ router.post('/api/upload/images', authenticateJWT, isAdmin, upload.array('images
       });
     }
 
-    const uploadedFiles = (req.files as Express.Multer.File[]).map(file => ({
-      filename: file.filename,
-      path: `/uploads/products/${file.filename}`,
-      size: file.size,
-      mimetype: file.mimetype
-    }));
+    const uploadedFiles = (req.files as any[]).map(file => {
+      // Determine URL: Cloudinary uses file.path, secure_url, or url
+      const rawUrl = (file as any).path || (file as any).secure_url || (file as any).url;
+      const url = typeof rawUrl === 'string' && /^https?:\/\//.test(rawUrl)
+        ? rawUrl
+        : `/uploads/products/${file.filename}`;
+      return {
+        filename: file.filename,
+        path: url,
+        size: file.size,
+        mimetype: file.mimetype
+      };
+    });
     console.log('[UPLOAD ROUTE] Responding with uploadedFiles:', uploadedFiles);
     return res.json({
       success: true,

@@ -46,8 +46,11 @@ const isCloudinaryConfigured = Boolean(
   process.env.CLOUDINARY_API_SECRET
 );
 
-// Dynamic storage: use Cloudinary only in production when configured, otherwise local disk
-const storage = process.env.NODE_ENV === 'production' && isCloudinaryConfigured
+// Debug: log storage type
+console.log('[UPLOAD] Storage type:', isCloudinaryConfigured ? 'cloudinary' : 'disk');
+
+// Dynamic storage: use Cloudinary when configured, otherwise local disk
+const storage = isCloudinaryConfigured
   ? new CloudinaryStorage(<any>{
       cloudinary,
       params: {
