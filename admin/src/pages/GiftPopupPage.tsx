@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { get, put } from '@/lib/apiUtils';
+import { useState, useEffect, ChangeEvent } from 'react';
+import { put } from '@/lib/apiUtils';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from 'lucide-react';
 import ProductSelector from '@/components/ProductSelector';
@@ -36,6 +36,9 @@ interface GiftPopupConfig {
   maxSelectableGifts: number;
   giftProducts: string[];
 }
+
+// Base API URL for backend
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function GiftPopupPage() {
   const { toast } = useToast();
@@ -87,7 +90,7 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-popup';
       }
       
-      const response = await fetch(endpoint);
+      const response = await fetch(`${API_BASE}${endpoint}`);
       if (!response.ok) {
         throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
       }
@@ -163,7 +166,7 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-products';
       }
       
-      const response = await fetch(endpoint);
+      const response = await fetch(`${API_BASE}${endpoint}`);
       if (!response.ok) {
         throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
       }
@@ -272,7 +275,7 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-popup';
       }
       
-      const response = await put<{data: GiftPopupConfig; status: number; message?: string}>(endpoint, updatedConfig);
+      const response = await put<{data: GiftPopupConfig; status: number; message?: string}>(`${API_BASE}${endpoint}`, updatedConfig);
       console.log('Gift popup save response:', response);
       
       // Check for API error responses
@@ -379,7 +382,7 @@ export default function GiftPopupPage() {
                 <Input
                   id="title"
                   value={config.title}
-                  onChange={(e) => setConfig({ ...config, title: e.target.value })}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setConfig({ ...config, title: e.target.value })}
                 />
               </div>
               
@@ -389,7 +392,7 @@ export default function GiftPopupPage() {
                 <Input
                   id="subTitle"
                   value={config.subTitle}
-                  onChange={(e) => setConfig({ ...config, subTitle: e.target.value })}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setConfig({ ...config, subTitle: e.target.value })}
                 />
                 <p className="text-sm text-muted-foreground">Example: "Choose Any 2"</p>
               </div>
@@ -401,7 +404,7 @@ export default function GiftPopupPage() {
                   id="minCartValue"
                   type="number"
                   value={config.minCartValue}
-                  onChange={(e) => setConfig({ ...config, minCartValue: parseFloat(e.target.value) })}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setConfig({ ...config, minCartValue: parseFloat(e.target.value) })}
                 />
                 <p className="text-sm text-muted-foreground">Popup will appear when cart value is at least this amount</p>
               </div>
@@ -413,7 +416,7 @@ export default function GiftPopupPage() {
                   id="maxCartValue"
                   type="number"
                   value={config.maxCartValue === null ? '' : config.maxCartValue}
-                  onChange={(e) => {
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
                     const value = e.target.value.trim() === '' ? null : parseFloat(e.target.value);
                     setConfig({ ...config, maxCartValue: value });
                   }}
@@ -430,7 +433,7 @@ export default function GiftPopupPage() {
                   type="number"
                   min="1"
                   value={config.maxSelectableGifts}
-                  onChange={(e) => handleMaxSelectableChange(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleMaxSelectableChange(e.target.value)}
                 />
                 <p className="text-sm text-muted-foreground">Number of gifts customer can select</p>
               </div>
