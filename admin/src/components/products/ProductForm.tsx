@@ -332,27 +332,28 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                 credentials: 'include', // Important for auth cookies
               });
 
-              // Check if response is ok and has content-type header
-              const contentType = response.headers.get('content-type');
+              let responseData;
+              try {
+                // Try to parse JSON regardless of content-type
+                responseData = await response.json();
+              } catch (parseError) {
+                console.error('Failed to parse response as JSON:', parseError);
+                throw new Error('Server response was not valid JSON');
+              }
+
               if (!response.ok) {
-                let errorMessage = 'Failed to upload image';
-                if (contentType?.includes('application/json')) {
-                  const errorData = await response.json();
-                  errorMessage = errorData.message || errorMessage;
-                }
+                const errorMessage = responseData?.message || 'Failed to upload image';
                 throw new Error(errorMessage);
               }
 
-              // Only try to parse JSON if content-type is application/json
-              if (contentType?.includes('application/json')) {
-                const data = await response.json();
-                console.log('Upload successful:', data);
-                return data.imageUrl;
-              } else {
-                throw new Error('Server returned invalid response format');
+              if (!responseData?.imageUrl) {
+                throw new Error('Server response missing imageUrl');
               }
+
+              console.log('Upload successful:', responseData);
+              return responseData.imageUrl;
             } catch (error) {
-              console.error('Upload error for file:', file.name, error);
+              console.error(`Upload error for file ${file.name}:`, error);
               throw error;
             }
           });
