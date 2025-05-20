@@ -45,12 +45,12 @@ export default function Sidebar() {
       )}>
         {!isCollapsed ? (
           <div className="flex flex-col items-center">
-            <h1 className="text-primary font-heading text-xl font-bold">KAMA</h1>
+            <h1 className="text-primary font-heading text-xl font-bold">SHIV</h1>
             <p className="text-primary font-accent text-xs tracking-wider">ADMIN</p>
           </div>
         ) : (
           <div className="flex items-center justify-center">
-            <span className="text-primary font-heading text-xl font-bold">K</span>
+            <span className="text-primary font-heading text-xl font-bold">S</span>
           </div>
         )}
         
