@@ -18,8 +18,17 @@ export const useProducts = ({
   bestsellers = false,
   newArrivals = false,
 }: UseProductsOptions = {}) => {
+  // Build query key with all parameters for proper cache management
   let queryKey: (string | number)[] = ['/api/products'];
   let queryUrl = '/api/products';
+
+  // Add all parameters to query key for proper cache segmentation
+  if (limit) queryKey.push('limit', limit);
+  if (categoryId) queryKey.push('category', categoryId);
+  if (collectionId) queryKey.push('collection', collectionId);
+  if (featured) queryKey.push('featured');
+  if (bestsellers) queryKey.push('bestsellers');
+  if (newArrivals) queryKey.push('newArrivals');
   
   // Handle special product types
   if (featured) {

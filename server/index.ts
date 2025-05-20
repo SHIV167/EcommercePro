@@ -16,6 +16,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+// Serve static files from public/uploads directory
+app.use('/uploads', express.static('public/uploads'));
+
 const allowedOriginsEnv = process.env.CORS_ORIGINS;
 if (!allowedOriginsEnv) {
   console.warn('CORS_ORIGINS environment variable is not set. Defaulting to localhost:3000');

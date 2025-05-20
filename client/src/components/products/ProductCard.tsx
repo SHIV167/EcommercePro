@@ -35,6 +35,7 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
   };
 
   const [showVideo, setShowVideo] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Helper to check if a URL is YouTube
   const isYouTubeUrl = (url?: string) => url && /youtu(be)?\.([a-z]+)/i.test(url);
@@ -54,7 +55,11 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
   const promoTimer = promoTimers?.find(t => t.enabled && (t.productId === product._id || t.productId === product.slug));
 
   return (
-    <div className="product-card bg-white border border-neutral-sand hover:shadow-lg transition-all duration-300 flex flex-col h-full">
+    <div 
+      className="product-card bg-white border border-neutral-sand hover:shadow-lg transition-all duration-300 flex flex-col h-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="relative pt-6 px-6 flex flex-col items-center">
         {/* Promo Timer Badge */}
         {promoTimer && <PromoTimerBadge endTime={promoTimer.endTime} />}
@@ -98,11 +103,22 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
         )}
         {/* Product Image */}
         <Link href={`/products/${product.slug}`} className="block w-full mb-4">
-          <img 
-            src={product.imageUrl} 
-            alt={product.name}
-            className="mx-auto w-[180px] h-[180px] object-contain rounded bg-neutral-cream"
-          />
+          <div className="relative w-full aspect-square">
+            <img 
+              src={product.imageUrl?.startsWith('http') ? product.imageUrl : `/uploads/products/${product.imageUrl?.split('/').pop()}`} 
+              alt={product.name} 
+              className={`w-full h-full object-contain absolute top-0 left-0 transition-opacity duration-300 ${isHovered && product.images?.[0] ? 'opacity-0' : 'opacity-100'}`}
+              loading="lazy"
+            />
+            {product.images?.[0] && (
+              <img 
+                src={product.images[0]?.startsWith('http') ? product.images[0] : `/uploads/products/${product.images[0]?.split('/').pop()}`} 
+                alt={`${product.name} - alternate view`} 
+                className={`w-full h-full object-contain absolute top-0 left-0 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+                loading="lazy"
+              />
+            )}
+          </div>
         </Link>
       </div>
       <div className="flex flex-col flex-1 px-6 pb-6">

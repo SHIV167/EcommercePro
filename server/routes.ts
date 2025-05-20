@@ -13,6 +13,8 @@ import ScannerModel from "./models/Scanner"; // Import ScannerModel
 import TestimonialModel from "./models/Testimonial"; // Import TestimonialModel for seeding
 import FreeProductModel from "./models/FreeProduct"; // Import FreeProductModel
 
+
+
 import { v4 as uuidv4 } from "uuid"; // Import uuid
 import { z } from "zod";
 import { CartItem, Product } from "../shared/schema";
@@ -116,16 +118,17 @@ const bannerSchema = bannerObjectSchema
 const bannerUpdateSchema = bannerObjectSchema.partial();
 
 // Import routes
-import couponRoutes from './routes/couponRoutes';
-import giftCardRoutes from './routes/giftCardRoutes';
-import giftCardTemplateRoutes from './routes/giftCardTemplateRoutes';
-import giftPopupRoutes from './routes/giftPopupRoutes'; // Import gift popup routes
-import authRoutes from './routes/authRoutes'; // Import auth routes
-import scannerRoutes from './routes/scannerRoutes'; // Import scanner routes
-import testimonialRoutes from './routes/testimonialRoutes'; // Import testimonial routes
-import freeProductRoutes from './routes/freeProductRoutes'; // Import freeProduct routes
-import reviewRoutes from './routes/reviewRoutes'; // Import review routes
-import cartRoutes from './routes/cartRoutes'; // Import cart routes
+import couponRoutes from './routes/couponRoutes.js';
+import giftCardRoutes from './routes/giftCardRoutes.js';
+import giftCardTemplateRoutes from './routes/giftCardTemplateRoutes.js';
+import giftPopupRoutes from './routes/giftPopupRoutes.js'; // Import gift popup routes
+import authRoutes from './routes/authRoutes.js'; // Import auth routes
+import scannerRoutes from './routes/scannerRoutes.js'; // Import scanner routes
+import testimonialRoutes from './routes/testimonialRoutes.js'; // Import testimonial routes
+import freeProductRoutes from './routes/freeProductRoutes.js'; // Import freeProduct routes
+import reviewRoutes from './routes/reviewRoutes.js'; // Import review routes
+import cartRoutes from './routes/cartRoutes.js'; // Import cart routes
+import bannerRoutes from './routes/bannerRoutes.js'; // Import banner routes
 
 // Import controllers for coupons
 
@@ -138,6 +141,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', authRoutes);
   app.use('/api', couponRoutes);
   app.use('/api', giftCardRoutes);
+  app.use('/api', bannerRoutes); // Add banner routes
   app.use('/api', giftCardTemplateRoutes);
   app.use('/api', giftPopupRoutes); // Add gift popup routes
   app.use('/api', scannerRoutes);
@@ -147,14 +151,15 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', cartRoutes); // Add cart routes
   // ensure upload directory exists in public/uploads
   const uploadDir = path.join(__dirname, '../public/uploads');
-  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+  const productsDir = path.join(uploadDir, 'products');
+  if (!fs.existsSync(productsDir)) fs.mkdirSync(productsDir, { recursive: true });
   // serve uploaded images
   app.use('/uploads', express.static(uploadDir));
   app.use('/admin/uploads', express.static(uploadDir));
 
   // local storage for product image uploads
   const localStorage = multer.diskStorage({
-    destination: uploadDir,
+    destination: productsDir,
     filename: (req, file, cb) => {
       console.log('[UPLOAD] Saving file:', file.originalname);
       cb(null, `${Date.now()}-${file.originalname}`);
@@ -170,7 +175,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
       }
 
       // Return the URL to the uploaded file
-      const imageUrl = `/uploads/${req.file.filename}`;
+      const imageUrl = `/uploads/products/${req.file.filename}`;
       console.log('[ADMIN UPLOAD] File saved:', imageUrl);
       res.json({ imageUrl });
     } catch (error) {
@@ -368,8 +373,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
       let desktopUrl = desktopImageUrl;
       let mobileUrl = mobileImageUrl;
       const files = req.files as Record<string, Express.Multer.File[]>;
-      if (files?.desktopImage) desktopUrl = `/uploads/${files.desktopImage[0].filename}`;
-      if (files?.mobileImage) mobileUrl = `/uploads/${files.mobileImage[0].filename}`;
+      if (files?.desktopImage) desktopUrl = `/uploads/banners/${files.desktopImage[0].filename}`;
+      if (files?.mobileImage) mobileUrl = `/uploads/banners/${files.mobileImage[0].filename}`;
       const banner = new BannerModel({ id, title, subtitle, desktopImageUrl: desktopUrl, mobileImageUrl: mobileUrl, alt, linkUrl, enabled: enabled === 'true' || enabled === true, position: parseInt(position, 10) });
       await banner.save();
       return res.status(201).json(banner);
@@ -388,8 +393,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
       let desktopUrl = desktopImageUrl;
       let mobileUrl = mobileImageUrl;
       const files = req.files as Record<string, Express.Multer.File[]>;
-      if (files?.desktopImage) desktopUrl = `/uploads/${files.desktopImage[0].filename}`;
-      if (files?.mobileImage) mobileUrl = `/uploads/${files.mobileImage[0].filename}`;
+      if (files?.desktopImage) desktopUrl = `/uploads/banners/${files.desktopImage[0].filename}`;
+      if (files?.mobileImage) mobileUrl = `/uploads/banners/${files.mobileImage[0].filename}`;
       banner.title = title;
       banner.subtitle = subtitle;
       banner.alt = alt;

@@ -187,9 +187,16 @@ export default function BannersManagement() {
 
   // Use the Banner type consistently throughout the component
   // Fetch banners from the correct API endpoint
-  const { data: bannersData = [], isLoading } = useQuery({
+  const { data: bannersData = [], isLoading } = useQuery<Banner[]>({
     queryKey: ['banners'],
-    queryFn: () => fetch(`${apiBase}/api/banners`).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`${apiBase}/api/banners`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch banners');
+      }
+      const data = await res.json();
+      return data.sort((a: Banner, b: Banner) => (a.position || 0) - (b.position || 0));
+    },
   });
 
   // Mutations for create, update, delete
@@ -203,7 +210,7 @@ export default function BannersManagement() {
       formData.append('alt', alt!);
       if (linkUrl !== undefined) formData.append('linkUrl', linkUrl!);
       if (enabled !== undefined) formData.append('enabled', enabled.toString());
-      if (position !== undefined) formData.append('position', position.toString());
+      formData.append('position', (position ?? 0).toString());
       if (fileDesktop) {
         formData.append('desktopImage', fileDesktop);
       } else if (desktopImageUrl !== undefined) {
@@ -235,7 +242,7 @@ export default function BannersManagement() {
       formData.append('alt', alt!);
       if (linkUrl !== undefined) formData.append('linkUrl', linkUrl!);
       if (enabled !== undefined) formData.append('enabled', enabled.toString());
-      if (position !== undefined) formData.append('position', position.toString());
+      formData.append('position', (position ?? 0).toString());
       if (fileDesktop) {
         formData.append('desktopImage', fileDesktop);
       } else if (desktopImageUrl !== undefined) {
@@ -313,25 +320,25 @@ export default function BannersManagement() {
                     <tr key={banner.id || banner._id} className="border-b">
                       <td>
                         <img
-                          src={banner.desktopImageUrl}
+                          src={banner.desktopImageUrl ? (banner.desktopImageUrl.startsWith('http') ? banner.desktopImageUrl : banner.desktopImageUrl) : '/uploads/banners/placeholder.png'}
                           alt={banner.alt ? banner.alt : "Desktop banner image"}
                           className="h-12 rounded"
                           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                             const img = e.target as HTMLImageElement;
                             img.onerror = null;
-                            img.src = import.meta.env.BASE_URL + "placeholder-desktop.png";
+                            img.src = '/uploads/banners/placeholder.png';
                           }}
                         />
                       </td>
                       <td>
                         <img
-                          src={banner.mobileImageUrl}
+                          src={banner.mobileImageUrl ? (banner.mobileImageUrl.startsWith('http') ? banner.mobileImageUrl : banner.mobileImageUrl) : '/uploads/banners/placeholder.png'}
                           alt={banner.alt ? banner.alt : "Mobile banner image"}
                           className="h-12 rounded"
-                          onError={e => {
+                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                             const img = e.target as HTMLImageElement;
                             img.onerror = null;
-                            img.src = import.meta.env.BASE_URL + "placeholder-mobile.png";
+                            img.src = '/uploads/banners/placeholder.png';
                           }}
                         />
                       </td>
@@ -340,7 +347,22 @@ export default function BannersManagement() {
                       <td>
                         <Switch checked={banner.enabled} onCheckedChange={checked => updateBanner.mutate({ id: banner.id || banner._id!, banner: { enabled: checked } })} />
                       </td>
-                      <td>{banner.position}</td>
+                      <td>
+                        <Input
+                          type="number"
+                          value={banner.position || 0}
+                          className="w-20"
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const newPosition = parseInt(e.target.value);
+                            if (!isNaN(newPosition)) {
+                              updateBanner.mutate({
+                                id: banner.id || banner._id!,
+                                banner: { position: newPosition }
+                              });
+                            }
+                          }}
+                        />
+                      </td>
                       <td>
                         {/* Disable actions if banner.id is missing */}
                         <Button
