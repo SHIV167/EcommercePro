@@ -15,7 +15,7 @@ router.post('/api/upload/images', authenticateJWT, isAdmin, upload.array('images
 
     const uploadedFiles = (req.files as Express.Multer.File[]).map(file => ({
       filename: file.filename,
-      path: `/uploads/${file.filename}`,
+      path: `/uploads/products/${file.filename}`,
       size: file.size,
       mimetype: file.mimetype
     }));
