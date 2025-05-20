@@ -105,18 +105,54 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
         <Link href={`/products/${product.slug}`} className="block w-full mb-4">
           <div className="relative w-full aspect-square">
             <img 
-              src={product.imageUrl?.startsWith('http') ? product.imageUrl : 
-                   product.imageUrl?.startsWith('/uploads/products/') ? product.imageUrl : 
-                   `/uploads/products/${product.imageUrl?.split('/').pop() || 'placeholder.jpg'}`} 
+              src={(() => {
+                // Use first image from images array as primary thumbnail
+                const primaryImage = product.images?.[0];
+                
+                if (!primaryImage) return '/uploads/products/placeholder.jpg';
+                
+                // Clean up double uploads if present
+                const cleanImageUrl = primaryImage.replace('/uploads/products//uploads/', '/uploads/products/');
+                
+                // If it's already a correct uploads path, use it
+                if (cleanImageUrl.startsWith('/uploads/products/')) return cleanImageUrl;
+                
+                // For any URL (local or external), extract just the filename
+                if (cleanImageUrl.includes('/')) {
+                  const filename = cleanImageUrl.split('/').pop();
+                  return `/uploads/products/${filename}`;
+                }
+                
+                // For just filename, add the uploads path
+                return `/uploads/products/${cleanImageUrl}`;
+              })()}  
               alt={product.name} 
               className={`w-full h-full object-contain absolute top-0 left-0 transition-opacity duration-300 ${isHovered && product.images?.[0] ? 'opacity-0' : 'opacity-100'}`}
               loading="lazy"
             />
-            {product.images?.[0] && (
+            {/* Show second image on hover if available */}
+            {product.images?.length > 1 && (
               <img 
-                src={product.images[0]?.startsWith('http') ? product.images[0] : 
-                     product.images[0]?.startsWith('/uploads/products/') ? product.images[0] : 
-                     `/uploads/products/${product.images[0]?.split('/').pop() || 'placeholder.jpg'}`} 
+                src={(() => {
+                  // Get hover image (second image if available, otherwise first)
+                  const hoverImage = product.images?.length > 1 ? product.images[1] : product.images?.[0];
+                  if (!hoverImage) return '/uploads/products/placeholder.jpg';
+                  
+                  // Clean up double uploads if present
+                  const cleanHoverImage = hoverImage.replace('/uploads/products//uploads/', '/uploads/products/');
+                  
+                  // If it's already a correct uploads path, use it
+                  if (cleanHoverImage.startsWith('/uploads/products/')) return cleanHoverImage;
+                  
+                  // For any URL (local or external), extract just the filename
+                  if (cleanHoverImage.includes('/')) {
+                    const filename = cleanHoverImage.split('/').pop();
+                    return `/uploads/products/${filename}`;
+                  }
+                  
+                  // For just filename, add the uploads path
+                  return `/uploads/products/${cleanHoverImage}`;
+                })()} 
                 alt={`${product.name} - alternate view`} 
                 className={`w-full h-full object-contain absolute top-0 left-0 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
                 loading="lazy"

@@ -1066,12 +1066,29 @@ export async function registerRoutes(app: Application): Promise<Server> {
           existingImages = productData.existingImages.split(',').map((s: string) => s.trim()).filter(Boolean);
         }
       }
-      // New uploaded images
-      const newImages = files && files.length > 0 ? files.map(f => `/uploads/${f.filename}`) : [];
-      // Final images array: merge existing + new
-      const images = [...existingImages, ...newImages];
+      // New uploaded images with correct path
+      const newImages = files && files.length > 0 ? files.map(f => `/uploads/products/${f.filename}`) : [];
+      
+      // Clean existing images to ensure they have correct path
+      const cleanExistingImages = existingImages.map(img => {
+        if (img.startsWith('/uploads/products/')) return img;
+        const filename = img.split('/').pop();
+        return `/uploads/products/${filename}`;
+      });
+      
+      // Final images array: merge cleaned existing + new
+      const images = [...cleanExistingImages, ...newImages];
+      
       // Always set imageUrl to first image (if any)
       const imageUrl = images.length > 0 ? images[0] : undefined;
+      
+      console.log('[DEBUG] Image paths:', {
+        existingImages,
+        cleanExistingImages,
+        newImages,
+        finalImages: images,
+        imageUrl
+      });
       const existingProduct = await storage.getProductById(productId);
       if (!existingProduct) {
         console.error('[PRODUCT UPDATE ERROR] Product not found:', productId);
@@ -1140,10 +1157,14 @@ export async function registerRoutes(app: Application): Promise<Server> {
         benefits: productData.benefits || ''
       });
       
+      // Always set imageUrl to first image in the array
+      const finalImages = [...existingImages, ...newImages].filter(Boolean);
+      const finalImageUrl = finalImages.length > 0 ? finalImages[0] : undefined;
+      
       const updateData = { 
         ...productData, 
-        images, 
-        imageUrl, 
+        images: finalImages,
+        imageUrl: finalImageUrl, // Set primary thumbnail to first image
         faqs, 
         structuredIngredients,
         howToUseSteps,
