@@ -161,8 +161,10 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   
+  // Public auth routes (login, logout, verify, refresh)
+  app.use('/api', authRoutes);
+  
   // Mount admin API routers
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, authRoutes);
   app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, couponRoutes);
   app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, giftCardRoutes);
   app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, bannerRoutes); // Add banner routes
@@ -2499,4 +2501,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
 
   // End of registerRoutes; popup and admin routes should use top-level middleware definitions
+  const PORT = parseInt(process.env.PORT || '5000', 10);
+  return createServer(app).listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+  });
 }
