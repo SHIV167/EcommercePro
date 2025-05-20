@@ -161,8 +161,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   
-  // Public auth routes (login, logout, verify, refresh)
-  app.use('/api', authRoutes);
+  // Protected auth routes (login, logout, verify, refresh)
+  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, authRoutes);
   
   // Mount admin API routers
   app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, couponRoutes);

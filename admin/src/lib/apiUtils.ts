@@ -18,7 +18,7 @@ export const apiRequest = async (url: string, options: RequestInit = {}) => {
   options.credentials = 'include';
 
   // Get API URL from environment variables
-  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.VITE_APP_ENV === 'production' ? '/' : '');
+  const apiUrl = import.meta.env.VITE_API_URL || '';
   
   // Ensure URL starts with API URL
   const fullUrl = url.startsWith('http') ? url : `${apiUrl}${url}`;
