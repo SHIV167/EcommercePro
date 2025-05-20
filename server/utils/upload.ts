@@ -41,14 +41,13 @@ cloudinary.config({
 
 // Dynamic storage: use Cloudinary in production, local disk in development
 const storage = process.env.NODE_ENV === 'production'
-  ? new CloudinaryStorage({
+  ? new CloudinaryStorage(<any>{
       cloudinary,
-      // @ts-ignore: bypass type checking for Cloudinary params
       params: {
         folder: 'ecommerce',
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
         public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, '')}`,
-      } as any,
+      },
     })
   : multer.diskStorage({
       destination: (req, file, cb) => {
