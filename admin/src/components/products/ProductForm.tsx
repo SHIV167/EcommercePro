@@ -325,20 +325,36 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
             const formData = new FormData();
             formData.append('file', file);
 
-            const response = await fetch('/api/admin/upload', {
-              method: 'POST',
-              body: formData,
-              credentials: 'include', // Important for auth cookies
-            });
+            try {
+              const response = await fetch('/api/admin/upload', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include', // Important for auth cookies
+              });
 
-            if (!response.ok) {
-              const errorData = await response.json().catch(() => ({}));
-              throw new Error(errorData.message || 'Failed to upload image');
+              // Check if response is ok and has content-type header
+              const contentType = response.headers.get('content-type');
+              if (!response.ok) {
+                let errorMessage = 'Failed to upload image';
+                if (contentType?.includes('application/json')) {
+                  const errorData = await response.json();
+                  errorMessage = errorData.message || errorMessage;
+                }
+                throw new Error(errorMessage);
+              }
+
+              // Only try to parse JSON if content-type is application/json
+              if (contentType?.includes('application/json')) {
+                const data = await response.json();
+                console.log('Upload successful:', data);
+                return data.imageUrl;
+              } else {
+                throw new Error('Server returned invalid response format');
+              }
+            } catch (error) {
+              console.error('Upload error for file:', file.name, error);
+              throw error;
             }
-
-            const data = await response.json();
-            console.log('Upload successful:', data);
-            return data.imageUrl;
           });
 
           console.log('Uploading', imageFiles.length, 'images...');

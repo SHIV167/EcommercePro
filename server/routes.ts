@@ -170,6 +170,9 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Admin image upload endpoint
   app.post('/api/admin/upload', uploadLocal.single('file'), async (req, res) => {
     try {
+      // Set content type header
+      res.setHeader('Content-Type', 'application/json');
+
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
       }
@@ -177,10 +180,14 @@ export async function registerRoutes(app: Application): Promise<Server> {
       // Return the URL to the uploaded file
       const imageUrl = `/uploads/products/${req.file.filename}`;
       console.log('[ADMIN UPLOAD] File saved:', imageUrl);
-      res.json({ imageUrl });
+      res.status(200).json({ imageUrl });
     } catch (error) {
       console.error('[ADMIN UPLOAD] Error:', error);
-      res.status(500).json({ message: 'Failed to upload file', error: error instanceof Error ? error.message : 'Unknown error' });
+      // Ensure error response is also JSON
+      res.status(500).json({ 
+        message: 'Failed to upload file', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
   });
 
