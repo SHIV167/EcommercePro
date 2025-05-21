@@ -1,4 +1,15 @@
-export async function uploadImages(files: File[]): Promise<{ files: { path: string }[] }> {
+interface UploadResponse {
+  success: boolean;
+  files: Array<{
+    filename: string;
+    path: string;
+    size: number;
+    mimetype: string;
+    storage: 'cloudinary' | 'local';
+  }>;
+}
+
+export async function uploadImages(files: File[]): Promise<UploadResponse> {
   try {
     const formData = new FormData();
     files.forEach(file => {
@@ -25,6 +36,7 @@ export async function uploadImages(files: File[]): Promise<{ files: { path: stri
       throw new Error(data.message || 'Upload failed');
     }
 
+    console.log('Upload response:', data);
     return data;
   } catch (error: any) {
     console.error('Image upload error:', error);

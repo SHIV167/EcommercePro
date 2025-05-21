@@ -27,12 +27,23 @@ router.post('/api/upload/images', authenticateJWT, isAdmin, upload.array('images
       // Handle Cloudinary vs local file paths
       let url;
       if (isCloudinaryConfigured) {
-        // For Cloudinary, use the provided path (which is the full URL)
-        url = file.path;
+        // For Cloudinary, prefer secure_url, fallback to path
+        url = (file as any).secure_url || file.path;
+        // Ensure we're using HTTPS
+        if (url && !url.startsWith('https://')) {
+          url = url.replace('http://', 'https://');
+        }
       } else {
         // For local storage, construct the URL
         url = `/uploads/products/${file.filename}`;
       }
+      
+      // Debug logging
+      console.log('[UPLOAD ROUTE] File URL:', {
+        secure_url: (file as any).secure_url,
+        path: file.path,
+        final_url: url
+      });
       
       return {
         filename: file.filename,
