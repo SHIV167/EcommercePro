@@ -11,6 +11,30 @@ router.use((req, res, next) => {
   next();
 });
 
+router.post('/api/admin/upload', authenticateJWT, isAdmin, upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+
+  // Get the URL based on storage type
+  let imageUrl;
+  if (isCloudinaryConfigured) {
+    // For Cloudinary, use secure_url if available, fallback to path
+    imageUrl = (req.file as any).secure_url || req.file.path;
+    // Ensure HTTPS
+    if (imageUrl && !imageUrl.startsWith('https://')) {
+      imageUrl = imageUrl.replace('http://', 'https://');
+    }
+    console.log('[UPLOAD] Cloudinary URL:', imageUrl);
+  } else {
+    // For local storage
+    imageUrl = `/uploads/products/${req.file.filename}`;
+    console.log('[UPLOAD] Local URL:', imageUrl);
+  }
+
+  res.json({ success: true, imageUrl });
+});
+
 router.post('/api/upload/images', authenticateJWT, isAdmin, upload.array('images', 10), async (req, res) => {
   // Ensure JSON response
   res.setHeader('Content-Type', 'application/json');

@@ -1,13 +1,6 @@
 import React from "react";
 import { MongoProduct, MongoCategory } from "@/types/mongo";
 
-// Local interface to replace missing @shared/schema
-interface ProductCollection {
-  _id?: string;
-  id?: string;
-  productId: string;
-  collectionId: string;
-}
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -31,13 +24,6 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onDele
   });
   const categories = Array.isArray(categoriesData) ? categoriesData as MongoCategory[] : [];
 
-  // Fetch all collections
-  const { data: collectionsData } = useQuery({
-    queryKey: ['/api/collections'],
-    queryFn: async () => (await apiRequest('GET', '/api/collections')).json()
-  });
-  const collections = Array.isArray(collectionsData) ? collectionsData as MongoCategory[] : [];
-
   // Helper: map product to its categories
   const getCategoryName = (categoryId: string | number) => {
     const idStr = categoryId.toString();
@@ -47,49 +33,26 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, isLoading, onDele
     return category ? category.name : `Category ${idStr}`;
   };
 
-  // Helper: map product to its collections via ProductCollection join
-  // Use error handling for product collections query
-  const { data: pcData } = useQuery({
-    queryKey: ['/api/product-collections'],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest('GET', '/api/product-collections');
-        return response.json();
-      } catch (error) {
-        console.error('Error fetching product collections:', error);
-        return []; // Return empty array on error to prevent UI crashes
-      }
-    },
-    // Add retry to false to prevent multiple failed attempts
-    retry: false
-  });
-  const pcs = Array.isArray(pcData) ? pcData as ProductCollection[] : [];
-  // Collection mapping functionality (currently unused but may be needed later)
-  const getCollectionsForProduct = (prod: MongoProduct) => {
-    const pid = prod._id?.toString() || prod.id?.toString();
-    return pcs
-      .filter(pc => pc.productId === pid)
-      .map(pc => {
-        const idStr = pc.collectionId;
-        const col = collections.find(c =>
-          c._id?.toString() === idStr || c.id?.toString() === idStr
-        );
-        return col ? col.name : `Collection ${idStr}`;
-      });
-  };
-
   // Helper function to get the product image URL
   const getProductImageUrl = (product: MongoProduct) => {
     // First check if the product has an images array with at least one item
     if (product.images && Array.isArray(product.images) && product.images.length > 0) {
       const firstImage = product.images[0];
       if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
+        // If it's a Cloudinary URL, ensure it's using HTTPS
+        if (firstImage.includes('cloudinary.com') && firstImage.startsWith('http://')) {
+          return firstImage.replace('http://', 'https://');
+        }
         return firstImage;
       }
     }
     
     // Then check for main imageUrl
     if (product.imageUrl && typeof product.imageUrl === 'string' && product.imageUrl.trim() !== '') {
+      // If it's a Cloudinary URL, ensure it's using HTTPS
+      if (product.imageUrl.includes('cloudinary.com') && product.imageUrl.startsWith('http://')) {
+        return product.imageUrl.replace('http://', 'https://');
+      }
       return product.imageUrl;
     }
     

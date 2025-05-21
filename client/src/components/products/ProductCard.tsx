@@ -106,29 +106,39 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
           <div className="relative w-full aspect-square">
             <img 
               src={(() => {
-                // Use first image from images array as primary thumbnail
-                const primaryImage = product.images?.[0];
+                // Get main image
+                const mainImage = product.images?.[0] || product.imageUrl;
+                if (!mainImage) return '/uploads/products/placeholder.jpg';
                 
-                if (!primaryImage) return '/uploads/products/placeholder.jpg';
+                // If it's a Cloudinary URL, use it directly
+                if (mainImage.includes('cloudinary.com')) {
+                  // Ensure HTTPS
+                  return mainImage.startsWith('http://') ? mainImage.replace('http://', 'https://') : mainImage;
+                }
                 
                 // Clean up double uploads if present
-                const cleanImageUrl = primaryImage.replace('/uploads/products//uploads/', '/uploads/products/');
+                const cleanMainImage = mainImage.replace('/uploads/products//uploads/', '/uploads/products/');
                 
                 // If it's already a correct uploads path, use it
-                if (cleanImageUrl.startsWith('/uploads/products/')) return cleanImageUrl;
+                if (cleanMainImage.startsWith('/uploads/products/')) return cleanMainImage;
                 
                 // For any URL (local or external), extract just the filename
-                if (cleanImageUrl.includes('/')) {
-                  const filename = cleanImageUrl.split('/').pop();
+                if (cleanMainImage.includes('/')) {
+                  const filename = cleanMainImage.split('/').pop();
                   return `/uploads/products/${filename}`;
                 }
                 
                 // For just filename, add the uploads path
-                return `/uploads/products/${cleanImageUrl}`;
-              })()}  
+                return `/uploads/products/${cleanMainImage}`;
+              })()} 
               alt={product.name} 
               className={`w-full h-full object-contain absolute top-0 left-0 transition-opacity duration-300 ${isHovered && product.images?.[0] ? 'opacity-0' : 'opacity-100'}`}
               loading="lazy"
+              onError={(e) => {
+                const img = e.target as HTMLImageElement;
+                img.onerror = null; // Prevent infinite fallback loop
+                img.src = '/uploads/products/placeholder.jpg';
+              }}
             />
             {/* Show second image on hover if available */}
             {product.images?.length > 1 && (
@@ -137,6 +147,12 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
                   // Get hover image (second image if available, otherwise first)
                   const hoverImage = product.images?.length > 1 ? product.images[1] : product.images?.[0];
                   if (!hoverImage) return '/uploads/products/placeholder.jpg';
+                  
+                  // If it's a Cloudinary URL, use it directly
+                  if (hoverImage.includes('cloudinary.com')) {
+                    // Ensure HTTPS
+                    return hoverImage.startsWith('http://') ? hoverImage.replace('http://', 'https://') : hoverImage;
+                  }
                   
                   // Clean up double uploads if present
                   const cleanHoverImage = hoverImage.replace('/uploads/products//uploads/', '/uploads/products/');
@@ -156,6 +172,11 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
                 alt={`${product.name} - alternate view`} 
                 className={`w-full h-full object-contain absolute top-0 left-0 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
                 loading="lazy"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.onerror = null; // Prevent infinite fallback loop
+                  img.src = '/uploads/products/placeholder.jpg';
+                }}
               />
             )}
           </div>
