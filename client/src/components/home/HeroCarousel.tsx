@@ -40,12 +40,36 @@ export default function HeroCarousel() {
       <div className="flex w-full transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${current * 100}%)` }}>
         {banners.map((banner, idx) => (
           <picture key={idx} className="w-full flex-shrink-0">
-            <source media="(max-width: 767px)" srcSet={banner.mobileImageUrl} />
+            <source 
+              media="(max-width: 767px)" 
+              srcSet={banner.mobileImageUrl} 
+              onError={(e) => {
+                const source = e.target as HTMLSourceElement;
+                source.onerror = null;
+                source.srcset = '/uploads/banners/placeholder.jpg';
+              }}
+            />
             <img
-              src={banner.desktopImageUrl}
+              src={(() => {
+                // Get desktop image URL
+                const imageUrl = banner.desktopImageUrl;
+                if (!imageUrl) return '/uploads/banners/placeholder.jpg';
+                
+                // If it's a Cloudinary URL, ensure HTTPS
+                if (imageUrl.includes('cloudinary.com') && imageUrl.startsWith('http://')) {
+                  return imageUrl.replace('http://', 'https://');
+                }
+                
+                return imageUrl;
+              })()}
               alt={banner.alt}
               className="w-full h-auto object-cover"
               style={{ maxHeight: '100%' }}
+              onError={(e) => {
+                const img = e.target as HTMLImageElement;
+                img.onerror = null;
+                img.src = '/uploads/banners/placeholder.jpg';
+              }}
             />
           </picture>
         ))}

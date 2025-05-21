@@ -322,7 +322,17 @@ export default function BannersManagement() {
                     <tr key={banner.id || banner._id} className="border-b">
                       <td>
                         <img
-                          src={banner.desktopImageUrl || `${mainServerUrl}/uploads/banners/placeholder.png`}
+                          src={(() => {
+                            const imageUrl = banner.desktopImageUrl;
+                            if (!imageUrl) return `${mainServerUrl}/uploads/banners/placeholder.png`;
+                            
+                            // If it's a Cloudinary URL, ensure HTTPS
+                            if (imageUrl.includes('cloudinary.com') && imageUrl.startsWith('http://')) {
+                              return imageUrl.replace('http://', 'https://');
+                            }
+                            
+                            return imageUrl;
+                          })()}
                           alt={banner.alt ? banner.alt : "Desktop banner image"}
                           className="h-12 rounded"
                           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -334,7 +344,17 @@ export default function BannersManagement() {
                       </td>
                       <td>
                         <img
-                          src={banner.mobileImageUrl || `${mainServerUrl}/uploads/banners/placeholder.png`}
+                          src={(() => {
+                            const imageUrl = banner.mobileImageUrl;
+                            if (!imageUrl) return `${mainServerUrl}/uploads/banners/placeholder.png`;
+                            
+                            // If it's a Cloudinary URL, ensure HTTPS
+                            if (imageUrl.includes('cloudinary.com') && imageUrl.startsWith('http://')) {
+                              return imageUrl.replace('http://', 'https://');
+                            }
+                            
+                            return imageUrl;
+                          })()}
                           alt={banner.alt ? banner.alt : "Mobile banner image"}
                           className="h-12 rounded"
                           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
