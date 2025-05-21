@@ -37,31 +37,51 @@ const getUploadPath = (req: any) => {
   return directories.default;
 };
 
-// Debug: log storage type
-console.log('[UPLOAD] Storage type:', isCloudinaryConfigured ? 'cloudinary' : 'disk');
+// Configure storage based on environment
+let storage: multer.StorageEngine;
 
-// Dynamic storage: use Cloudinary when configured, otherwise local disk
-const storage = isCloudinaryConfigured
-  ? new CloudinaryStorage(<any>{
-      cloudinary,
-      params: {
-        folder: 'ecommerce',
-        public_id: (req: any, file: any) =>
-          `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, '')}`
-      }
-    })
-  : multer.diskStorage({
-      destination: (req: any, file: any, cb: any) => {
-        const uploadPath = getUploadPath(req);
-        cb(null, uploadPath);
+if (isCloudinaryConfigured) {
+  // Use Cloudinary storage
+  storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: (req: any, file: any): string => {
+        return req.originalUrl.includes('/banners') ? 'banners' : 'products';
       },
-      filename: (req: any, file: any, cb: any) => {
-        const cleanName = file.originalname.toLowerCase().replace(/[^a-z0-9.]/g, '-');
-        cb(null, `${Date.now()}-${cleanName}`);
+      format: async (req: any, file: any): Promise<string> => {
+        if (file.mimetype === 'image/jpeg') return 'jpg';
+        if (file.mimetype === 'image/png') return 'png';
+        if (file.mimetype === 'image/webp') return 'webp';
+        return 'jpg'; // default format
+      },
+      public_id: (req: any, file: any): string => {
+        return `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9]/g, '-')}`;
+      },
+      transformation: [
+        { quality: 'auto:good' },
+        { fetch_format: 'auto' },
+        { flags: 'progressive' }
+      ]
+    }
+  } as any); // Type assertion needed due to CloudinaryStorage types
+} else {
+  // Use local disk storage
+  storage = multer.diskStorage({
+    destination: function (req: any, file: any, cb: (error: Error | null, destination: string) => void) {
+      let uploadDir = path.join(__dirname, '../../public/uploads/products');
+      if (req.originalUrl.includes('/banners')) {
+        uploadDir = path.join(__dirname, '../../public/uploads/banners');
       }
-    });
+      cb(null, uploadDir);
+    },
+    filename: function (req: any, file: any, cb: (error: Error | null, filename: string) => void) {
+      const cleanName = file.originalname.replace(/[^a-zA-Z0-9.]/g, '-');
+      cb(null, `${Date.now()}-${cleanName}`);
+    }
+  });
+}
 
-const fileFilter = (req: any, file: any, cb: any) => {
+const fileFilter = (req: any, file: any, cb: multer.FileFilterCallback): void => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
@@ -70,6 +90,10 @@ const fileFilter = (req: any, file: any, cb: any) => {
   }
 };
 
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({ 
+  storage, 
+  fileFilter, 
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 export default upload;

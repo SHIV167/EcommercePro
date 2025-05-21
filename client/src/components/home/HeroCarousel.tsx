@@ -1,94 +1,119 @@
-import { useState, useEffect } from "react";
-import { Link } from "wouter";
-import AnimatedCartButton from "@/components/ui/AnimatedCartButton";
-import BannerLoader from "@/components/ui/BannerLoader";
-import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { Banner } from "@shared/schema";
+import React, { useRef, useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
-export default function HeroCarousel() {
-  // Fetch banners from backend
+type Banner = {
+  id?: string;
+  _id?: string;
+  title: string;
+  subtitle?: string;
+  desktopImageUrl: string;
+  mobileImageUrl: string;
+  alt: string;
+  linkUrl?: string;
+  enabled: boolean;
+  position: number;
+};
+
+const HeroCarousel: React.FC = () => {
+  const sliderRef = useRef<Slider | null>(null);
+  
   const { data: banners = [], isLoading } = useQuery<Banner[]>({
     queryKey: ['banners'],
     queryFn: async () => {
       const res = await fetch('/api/banners?enabled=true');
       if (!res.ok) throw new Error('Failed to fetch banners');
       const data = await res.json();
-      // Sort by position if not already sorted by backend
       return data.sort((a: Banner, b: Banner) => (a.position ?? 0) - (b.position ?? 0));
     }
   });
-  // Carousel index state
+
+  useEffect(() => {
+    // Re-initialize Slick when banners are loaded
+    if (banners.length > 0 && sliderRef.current) {
+      sliderRef.current.slickGoTo(0);
+    }
+  }, [banners]);
+
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    pauseOnHover: true,
+    lazyLoad: 'ondemand' as const
+  };
+
+  const getImageUrl = (url: string) => {
+    if (!url) return '/uploads/banners/placeholder.jpg';
+    
+    // If it's a Cloudinary URL, ensure HTTPS and add w_auto,c_scale
+    if (url.includes('cloudinary.com')) {
+      const secureUrl = url.startsWith('http://') 
+        ? url.replace('http://', 'https://') 
+        : url;
+      
+      // Add Cloudinary transformations if not already present
+      if (!secureUrl.includes('/upload/w_auto')) {
+        return secureUrl.replace('/upload/', '/upload/w_auto,c_scale/');
+      }
+      return secureUrl;
+    }
+    
+    return url;
+  };
+
   const [current, setCurrent] = useState(0);
 
-  // Define goPrev/goNext before useEffect to avoid initialization error
   const goPrev = () => setCurrent((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
   const goNext = () => setCurrent((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
 
-  // Auto-slide every 5s
   useEffect(() => {
     const timer = setInterval(() => goNext(), 5000);
     return () => clearInterval(timer);
   }, [banners]);
 
   if (isLoading || banners.length === 0) {
-    return <BannerLoader />;
+    return <div className="w-full h-64 bg-gray-100 animate-pulse"></div>;
   }
 
   return (
     <div className="relative w-full border border-neutral-sand overflow-hidden bg-[#f8f4ea] md:top-0 -top-16">
-      <div className="flex w-full transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${current * 100}%)` }}>
+      <Slider ref={sliderRef} {...settings}>
         {banners.map((banner, idx) => (
-          <picture key={idx} className="w-full flex-shrink-0">
-            <source 
-              media="(max-width: 767px)" 
-              srcSet={(() => {
-                const imageUrl = banner.mobileImageUrl;
-                if (!imageUrl) return '/uploads/banners/placeholder.jpg';
-                
-                // If it's a Cloudinary URL, ensure HTTPS
-                if (imageUrl.includes('cloudinary.com')) {
-                  const secureUrl = imageUrl.startsWith('http://') 
-                    ? imageUrl.replace('http://', 'https://') 
-                    : imageUrl;
-                  // Add proper descriptor for srcset
-                  return `${secureUrl} 1x`;
-                }
-                
-                // For local uploads, add descriptor
-                return `${imageUrl} 1x`;
-              })()} 
-              onError={(e) => {
-                const source = e.target as HTMLSourceElement;
-                source.onerror = null;
-                source.srcset = '/uploads/banners/placeholder.jpg 1x';
-              }}
-            />
-            <img
-              src={(() => {
-                // Get desktop image URL
-                const imageUrl = banner.desktopImageUrl;
-                if (!imageUrl) return '/uploads/banners/placeholder.jpg';
-                
-                // If it's a Cloudinary URL, ensure HTTPS
-                if (imageUrl.includes('cloudinary.com') && imageUrl.startsWith('http://')) {
-                  return imageUrl.replace('http://', 'https://');
-                }
-                
-                return imageUrl;
-              })()}
-              alt={banner.alt}
-              className="w-full h-auto object-cover"
-              style={{ maxHeight: '100%' }}
-              onError={(e) => {
-                const img = e.target as HTMLImageElement;
-                img.onerror = null;
-                img.src = '/uploads/banners/placeholder.jpg';
-              }}
-            />
-          </picture>
+          <div key={idx} className="w-full flex-shrink-0">
+            <picture>
+              <source 
+                media="(max-width: 767px)" 
+                srcSet={`${getImageUrl(banner.mobileImageUrl)} 1x`}
+                type="image/jpeg"
+                onError={(e) => {
+                  const source = e.target as HTMLSourceElement;
+                  source.onerror = null;
+                  source.srcset = '/uploads/banners/placeholder.jpg 1x';
+                }}
+              />
+              <img
+                src={getImageUrl(banner.desktopImageUrl)}
+                alt={banner.alt || 'Banner image'}
+                className="w-full h-auto object-cover"
+                style={{ maxHeight: '100%' }}
+                loading="lazy"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.onerror = null;
+                  img.src = '/uploads/banners/placeholder.jpg';
+                }}
+              />
+            </picture>
+          </div>
         ))}
-      </div>
+      </Slider>
       {/* Slider Controls */}
       <button
         aria-label="Previous banner"
