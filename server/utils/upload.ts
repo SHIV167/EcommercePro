@@ -27,8 +27,13 @@ Object.values(directories).forEach(dir => {
 // Helper function to determine upload directory
 const getUploadPath = (req: any) => {
   const pathLower = req.path.toLowerCase();
-  if (pathLower.includes('/banners')) return directories.banners;
-  if (pathLower.includes('/products')) return directories.products;
+  if (pathLower.includes('/banners')) {
+    return directories.banners;
+  }
+  // Map general image uploads to products folder
+  if (pathLower.includes('/upload/images') || pathLower.includes('/products')) {
+    return directories.products;
+  }
   return directories.default;
 };
 
@@ -39,12 +44,16 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-// Determine if Cloudinary credentials are configured
-const isCloudinaryConfigured = Boolean(
-  process.env.CLOUDINARY_CLOUD_NAME &&
-  process.env.CLOUDINARY_API_KEY &&
-  process.env.CLOUDINARY_API_SECRET
-);
+// Control Cloudinary usage with explicit flag
+// Set CLOUDINARY_ENABLED='true' in production env to enable
+const isCloudinaryEnabled = process.env.CLOUDINARY_ENABLED === 'true';
+const isCloudinaryConfigured =
+  isCloudinaryEnabled &&
+  Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  );
 
 // Debug: log storage type
 console.log('[UPLOAD] Storage type:', isCloudinaryConfigured ? 'cloudinary' : 'disk');
@@ -55,7 +64,6 @@ const storage = isCloudinaryConfigured
       cloudinary,
       params: {
         folder: 'ecommerce',
-        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
         public_id: (req: any, file: any) =>
           `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, '')}`
       }
