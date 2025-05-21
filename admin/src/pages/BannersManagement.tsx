@@ -322,7 +322,7 @@ export default function BannersManagement() {
                     <tr key={banner.id || banner._id} className="border-b">
                       <td>
                         <img
-                          src={banner.desktopImageUrl ? (banner.desktopImageUrl.startsWith('http') ? banner.desktopImageUrl : `${mainServerUrl}${banner.desktopImageUrl}`) : `${mainServerUrl}/uploads/banners/placeholder.png`}
+                          src={banner.desktopImageUrl || `${mainServerUrl}/uploads/banners/placeholder.png`}
                           alt={banner.alt ? banner.alt : "Desktop banner image"}
                           className="h-12 rounded"
                           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -334,7 +334,7 @@ export default function BannersManagement() {
                       </td>
                       <td>
                         <img
-                          src={banner.mobileImageUrl ? (banner.mobileImageUrl.startsWith('http') ? banner.mobileImageUrl : `${mainServerUrl}${banner.mobileImageUrl}`) : `${mainServerUrl}/uploads/banners/placeholder.png`}
+                          src={banner.mobileImageUrl || `${mainServerUrl}/uploads/banners/placeholder.png`}
                           alt={banner.alt ? banner.alt : "Mobile banner image"}
                           className="h-12 rounded"
                           onError={(e: React.SyntheticEvent<HTMLImageElement>) => {

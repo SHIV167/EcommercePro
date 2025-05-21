@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { isCloudinaryConfigured } from '../utils/cloudinary';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,6 +38,14 @@ router.post('/api/banners', authenticateJWT, isAdmin, upload.fields([
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     console.log('[BANNER] Uploaded files:', files);
+    // Process image URLs based on storage type
+    const getImageUrl = (file: Express.Multer.File) => {
+      if (isCloudinaryConfigured) {
+        return (file as any).secure_url || file.path;
+      }
+      return `/uploads/banners/${file.filename}`;
+    };
+
     const bannerData = {
       id: uuidv4(),
       title: req.body.title,
@@ -45,9 +54,11 @@ router.post('/api/banners', authenticateJWT, isAdmin, upload.fields([
       linkUrl: req.body.linkUrl,
       enabled: req.body.enabled === 'true',
       position: parseInt(req.body.position) || 0,
-      desktopImageUrl: files?.desktopImage ? `/uploads/banners/${files.desktopImage[0].filename}` : req.body.desktopImageUrl,
-      mobileImageUrl: files?.mobileImage ? `/uploads/banners/${files.mobileImage[0].filename}` : req.body.mobileImageUrl
+      desktopImageUrl: files?.desktopImage ? getImageUrl(files.desktopImage[0]) : req.body.desktopImageUrl,
+      mobileImageUrl: files?.mobileImage ? getImageUrl(files.mobileImage[0]) : req.body.mobileImageUrl
     };
+
+    console.log('[BANNER] Processed banner data:', bannerData);
 
     const banner = new Banner(bannerData);
     await banner.save();
@@ -76,17 +87,27 @@ router.put('/api/banners/:id', authenticateJWT, isAdmin, upload.fields([
       updateData.enabled = req.body.enabled === 'true';
     }
 
+    // Process image URLs based on storage type
+    const getImageUrl = (file: Express.Multer.File) => {
+      if (isCloudinaryConfigured) {
+        return (file as any).secure_url || file.path;
+      }
+      return `/uploads/banners/${file.filename}`;
+    };
+
     if (files?.desktopImage) {
-      updateData.desktopImageUrl = `/uploads/banners/${files.desktopImage[0].filename}`;
+      updateData.desktopImageUrl = getImageUrl(files.desktopImage[0]);
     } else if (req.body.desktopImageUrl) {
       updateData.desktopImageUrl = req.body.desktopImageUrl;
     }
 
     if (files?.mobileImage) {
-      updateData.mobileImageUrl = `/uploads/banners/${files.mobileImage[0].filename}`;
+      updateData.mobileImageUrl = getImageUrl(files.mobileImage[0]);
     } else if (req.body.mobileImageUrl) {
       updateData.mobileImageUrl = req.body.mobileImageUrl;
     }
+
+    console.log('[BANNER] Updating banner with data:', updateData);
 
     const banner = await Banner.findOneAndUpdate(
       { $or: [{ id: req.params.id }, { _id: req.params.id }] },
