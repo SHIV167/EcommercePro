@@ -1,8 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from "wouter";
+import AnimatedCartButton from "@/components/ui/AnimatedCartButton";
+import BannerLoader from "@/components/ui/BannerLoader";
 import { useQuery } from '@tanstack/react-query';
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
 
 type Banner = {
   id?: string;
@@ -18,8 +18,8 @@ type Banner = {
 };
 
 const HeroCarousel: React.FC = () => {
-  const sliderRef = useRef<Slider | null>(null);
-  
+  const [current, setCurrent] = useState(0);
+
   const { data: banners = [], isLoading } = useQuery<Banner[]>({
     queryKey: ['banners'],
     queryFn: async () => {
@@ -30,24 +30,13 @@ const HeroCarousel: React.FC = () => {
     }
   });
 
-  useEffect(() => {
-    // Re-initialize Slick when banners are loaded
-    if (banners.length > 0 && sliderRef.current) {
-      sliderRef.current.slickGoTo(0);
-    }
-  }, [banners]);
+  const goPrev = () => setCurrent((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
+  const goNext = () => setCurrent((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
 
-  const settings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 3000,
-    pauseOnHover: true,
-    lazyLoad: 'ondemand' as const
-  };
+  useEffect(() => {
+    const timer = setInterval(() => goNext(), 5000);
+    return () => clearInterval(timer);
+  }, [banners]);
 
   const getImageUrl = (url: string) => {
     if (!url) return '/uploads/banners/placeholder.jpg';
@@ -68,52 +57,44 @@ const HeroCarousel: React.FC = () => {
     return url;
   };
 
-  const [current, setCurrent] = useState(0);
-
-  const goPrev = () => setCurrent((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
-  const goNext = () => setCurrent((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
-
-  useEffect(() => {
-    const timer = setInterval(() => goNext(), 5000);
-    return () => clearInterval(timer);
-  }, [banners]);
-
   if (isLoading || banners.length === 0) {
     return <div className="w-full h-64 bg-gray-100 animate-pulse"></div>;
   }
 
   return (
     <div className="relative w-full border border-neutral-sand overflow-hidden bg-[#f8f4ea] md:top-0 -top-16">
-      <Slider ref={sliderRef} {...settings}>
-        {banners.map((banner, idx) => (
-          <div key={idx} className="w-full flex-shrink-0">
-            <picture>
-              <source 
-                media="(max-width: 767px)" 
-                srcSet={`${getImageUrl(banner.mobileImageUrl)} 1x`}
-                type="image/jpeg"
-                onError={(e) => {
-                  const source = e.target as HTMLSourceElement;
-                  source.onerror = null;
-                  source.srcset = '/uploads/banners/placeholder.jpg 1x';
-                }}
-              />
-              <img
-                src={getImageUrl(banner.desktopImageUrl)}
-                alt={banner.alt || 'Banner image'}
-                className="w-full h-auto object-cover"
-                style={{ maxHeight: '100%' }}
-                loading="lazy"
-                onError={(e) => {
-                  const img = e.target as HTMLImageElement;
-                  img.onerror = null;
-                  img.src = '/uploads/banners/placeholder.jpg';
-                }}
-              />
-            </picture>
-          </div>
-        ))}
-      </Slider>
+      {banners.map((banner, idx) => (
+        <div 
+          key={idx} 
+          className={`absolute inset-0 transition-opacity duration-500 ${idx === current ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+        >
+          <picture>
+            <source 
+              media="(max-width: 767px)" 
+              srcSet={`${getImageUrl(banner.mobileImageUrl)} 1x`}
+              type="image/jpeg"
+              onError={(e) => {
+                const source = e.target as HTMLSourceElement;
+                source.onerror = null;
+                source.srcset = '/uploads/banners/placeholder.jpg 1x';
+              }}
+            />
+            <img
+              src={getImageUrl(banner.desktopImageUrl)}
+              alt={banner.alt || 'Banner image'}
+              className="w-full h-auto object-cover"
+              style={{ maxHeight: '100%' }}
+              loading="lazy"
+              onError={(e) => {
+                const img = e.target as HTMLImageElement;
+                img.onerror = null;
+                img.src = '/uploads/banners/placeholder.jpg';
+              }}
+            />
+          </picture>
+        </div>
+      ))}
+      
       {/* Slider Controls */}
       <button
         aria-label="Previous banner"
@@ -131,6 +112,7 @@ const HeroCarousel: React.FC = () => {
         <span className="sr-only">Next</span>
         <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
       </button>
+      
       {/* Dots */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 pointer-events-auto z-20">
         {banners.map((_, idx) => (
