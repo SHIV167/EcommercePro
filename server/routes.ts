@@ -134,45 +134,22 @@ import uploadRoutes from './routes/uploadRoutes.js';
 // Import controllers for coupons
 
 
-// Authentication & admin-check middleware for protected endpoints
-export function isAuthenticatedMiddleware(req: Request, res: Response, next: NextFunction) {
-  try {
-    const token = req.cookies.token;
-    if (!token) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as Secret);
-    (req as any).user = decoded;
-    next();
-  } catch {
-    return res.status(401).json({ message: 'Not authenticated' });
-  }
-}
-
-export function isAdminMiddleware(req: Request, res: Response, next: NextFunction) {
-  if (!(req as any).user || !(req as any).user.isAdmin) {
-    return res.status(403).json({ message: 'Forbidden: Admin access required' });
-  }
-  next();
-}
-
 export async function registerRoutes(app: Application): Promise<Server> {
   // Enable JSON and URL-encoded body parsing for incoming requests
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-  
   // Mount admin API routers
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, authRoutes);
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, couponRoutes);
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, giftCardRoutes);
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, bannerRoutes); // Add banner routes
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, giftCardTemplateRoutes);
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, giftPopupRoutes); // Add gift popup routes
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, scannerRoutes);
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, testimonialRoutes);
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, freeProductRoutes);
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, reviewRoutes); // Add review routes
-  app.use('/api', isAuthenticatedMiddleware, isAdminMiddleware, cartRoutes); // Add cart routes
+  app.use('/api', authRoutes);
+  app.use('/api', couponRoutes);
+  app.use('/api', giftCardRoutes);
+  app.use('/api', bannerRoutes); // Add banner routes
+  app.use('/api', giftCardTemplateRoutes);
+  app.use('/api', giftPopupRoutes); // Add gift popup routes
+  app.use('/api', scannerRoutes);
+  app.use('/api', testimonialRoutes);
+  app.use('/api', freeProductRoutes);
+  app.use('/api', reviewRoutes); // Add review routes
+  app.use('/api', cartRoutes); // Add cart routes
   app.use(uploadRoutes);
   // ensure upload directory exists in public/uploads
   const uploadDir = path.join(__dirname, '../public/uploads');
@@ -181,6 +158,66 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // serve uploaded images
   app.use('/uploads', express.static(uploadDir));
   app.use('/admin/uploads', express.static(uploadDir));
+
+  // local storage for product image uploads
+  const localStorage = multer.diskStorage({
+    destination: productsDir,
+    filename: (req, file, cb) => {
+      console.log('[UPLOAD] Saving file:', file.originalname);
+      cb(null, `${Date.now()}-${file.originalname}`);
+    }
+  });
+  const uploadLocal = multer({ storage: localStorage });
+
+  // Admin image upload endpoint
+  app.post('/api/admin/upload', async (req, res) => {
+    // Set content type header early
+    res.setHeader('Content-Type', 'application/json');
+
+    try {
+      // Handle the file upload
+      await new Promise<void>((resolve, reject) => {
+        uploadLocal.single('file')(req, res, (err) => {
+          if (err) {
+            if (err instanceof multer.MulterError) {
+              console.error('[MULTER ERROR]:', err);
+              reject(new Error(`File upload error: ${err.message}`));
+            } else {
+              console.error('[UPLOAD ERROR]:', err);
+              reject(err);
+            }
+          } else {
+            resolve();
+          }
+        });
+      });
+
+      // Check if file was uploaded
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'No file uploaded' 
+        });
+      }
+
+      // Return the URL to the uploaded file
+      const imageUrl = `/uploads/products/${req.file.filename}`;
+      console.log('[ADMIN UPLOAD] File saved:', imageUrl);
+      
+      return res.status(200).json({ 
+        success: true,
+        imageUrl 
+      });
+
+    } catch (error) {
+      console.error('[ADMIN UPLOAD] Error:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: 'Failed to upload file', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
 
   // Seed sample blogs if none exist
   const blogCount = await BlogModel.estimatedDocumentCount();
@@ -870,7 +907,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
   
   // Create product with multiple images (robust handling for images and type conversion)
-  app.post("/api/products", upload.array('images', 5), async (req, res) => {
+  app.post("/api/products", uploadLocal.array('images', 5), async (req, res) => {
     console.log('[PRODUCT CREATE] Incoming request:', {
       body: req.body,
       files: req.files,
@@ -992,7 +1029,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
 
   // Update product with multiple images (MERGE EXISTING/NEW IMAGES)
-  app.put("/api/products/:id", upload.array('images', 5), async (req, res) => {
+  app.put("/api/products/:id", uploadLocal.array('images', 5), async (req, res) => {
     console.log('[PRODUCT UPDATE] Incoming request:', {
       params: req.params,
       body: {
@@ -1188,7 +1225,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   });
 
   // endpoint: upload multiple images for a product
-  app.post('/api/products/:id/images', upload.array('images'), async (req, res) => {
+  app.post('/api/products/:id/images', uploadLocal.array('images'), async (req, res) => {
     try {
       const { id } = req.params;
       const files = Array.isArray(req.files) ? req.files as Express.Multer.File[] : [];
@@ -2498,6 +2535,107 @@ export async function registerRoutes(app: Application): Promise<Server> {
     }
   });
 
-  // End of registerRoutes; popup and admin routes should use top-level middleware definitions
-  return createServer(app);
- }
+  // Authentication middleware
+  const isAuthenticatedMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const token = req.cookies.token;
+      if (!token) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as Secret);
+      (req as any).user = decoded;
+      next();
+    } catch (error) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+  };
+
+  // Admin check middleware
+  const isAdminMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    if (!(req as any).user || !(req as any).user.isAdmin) {
+      return res.status(403).json({ message: 'Forbidden: Admin access required' });
+    }
+    next();
+  };
+
+  // Register routes
+  app.use('/api/admin', authRoutes); 
+  app.use('/api/admin', couponRoutes); 
+  app.use('/api/admin', giftCardTemplateRoutes);
+  app.use('/api/admin', giftCardRoutes);
+  app.use('/api/admin', scannerRoutes); 
+  app.use('/api/admin', testimonialRoutes);
+
+  // ===== Popup route handling =====
+  // Must come BEFORE static file handling to prevent HTML responses
+  
+  // Admin popup routes (protected)
+  app.get('/api/admin/popup', isAdminMiddleware, getPopupSetting);
+  app.put('/api/admin/popup', isAdminMiddleware, updatePopupSetting);
+  
+  // Public popup routes (for the frontend)
+  app.get('/api/popup-settings', (req, res) => {
+    console.log('Public popup settings request');
+    return getPopupSetting(req, res);
+  });
+  
+  // Public PUT route also needs auth - frontend will use this when admin is logged in
+  app.put('/api/popup-settings', isAdminMiddleware, (req, res) => {
+    console.log('Public popup settings update');
+    return updatePopupSetting(req, res);
+  });
+
+  // ===== Gift Popup routes =====
+  // Admin gift popup routes (protected)
+  app.get('/api/admin/gift-popup', isAdminMiddleware, getGiftPopupConfig);
+  app.put('/api/admin/gift-popup', isAdminMiddleware, updateGiftPopupConfig);
+  app.get('/api/admin/gift-products', isAdminMiddleware, getGiftProducts);
+  
+  // Public gift popup routes (for the frontend)
+  app.get('/api/gift-popup', getGiftPopupConfig);
+  app.get('/api/gift-products', getGiftProducts);
+  
+  // Development test routes for admin panel (NOT FOR PRODUCTION)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Registering development test endpoints for gift popup');
+    // Non-authenticated versions for development/testing
+    app.get('/api/dev/gift-popup', getGiftPopupConfig);
+    app.put('/api/dev/gift-popup', updateGiftPopupConfig);
+    app.get('/api/dev/gift-products', (req, res) => {
+      console.log('Dev gift products API called');
+      return ProductModel.find({})
+        .select('_id name price images')
+        .then((products: any[]) => {
+          console.log(`Found ${products.length} products for dev API`);
+          res.json(products);
+        })
+        .catch((error: Error) => {
+          console.error('Error in dev gift products API:', error);
+          res.status(500).json({
+            message: 'Error fetching products',
+            error: error.message
+          });
+        });
+    });
+  }
+
+  app.get('/api/health', (req: Request, res: Response) => {
+    res.status(200).json({ message: 'OK' });
+  });
+
+  // Error handling middleware to ensure JSON responses
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  });
+
+  // Catch requests to /admin/popup and return an error to prevent serving HTML
+  app.get('/admin/popup', (req: Request, res: Response) => {
+    console.log('Request to /admin/popup received. This is not the correct endpoint for popup settings.');
+    res.status(400).json({ error: 'Invalid endpoint. Use /api/popup-settings for popup settings.' });
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
