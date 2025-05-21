@@ -5,7 +5,7 @@ import { isCloudinaryConfigured } from '../utils/cloudinary';
 
 const router = express.Router();
 
-// Debug: log incoming upload requests
+// Debug: log incoming upload request made website
 router.use((req, res, next) => {
   console.log('[UPLOAD ROUTE] Received', req.method, req.originalUrl);
   next();
