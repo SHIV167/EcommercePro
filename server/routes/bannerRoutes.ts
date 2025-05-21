@@ -41,17 +41,24 @@ router.post('/api/banners', authenticateJWT, isAdmin, upload.fields([
     // Process image URLs based on storage type
     const getImageUrl = (file: Express.Multer.File) => {
       if (isCloudinaryConfigured) {
-        // For Cloudinary, use secure_url if available, fallback to path
-        let imageUrl = (file as any).secure_url || file.path;
-        // Ensure HTTPS
-        if (imageUrl && !imageUrl.startsWith('https://')) {
-          imageUrl = imageUrl.replace('http://', 'https://');
+        // For Cloudinary, always use secure_url if available
+        if ((file as any).secure_url) {
+          const secureUrl = (file as any).secure_url;
+          console.log('[BANNER] Using Cloudinary secure URL:', secureUrl);
+          return secureUrl;
         }
-        console.log('[BANNER] Cloudinary URL:', imageUrl);
-        return imageUrl;
+        // If no secure_url, ensure path is HTTPS
+        if (file.path) {
+          const secureUrl = file.path.startsWith('http://') 
+            ? file.path.replace('http://', 'https://') 
+            : file.path;
+          console.log('[BANNER] Using Cloudinary path URL:', secureUrl);
+          return secureUrl;
+        }
       }
+      // For local storage
       const localUrl = `/uploads/banners/${file.filename}`;
-      console.log('[BANNER] Local URL:', localUrl);
+      console.log('[BANNER] Using local URL:', localUrl);
       return localUrl;
     };
 
@@ -99,17 +106,24 @@ router.put('/api/banners/:id', authenticateJWT, isAdmin, upload.fields([
     // Process image URLs based on storage type
     const getImageUrl = (file: Express.Multer.File) => {
       if (isCloudinaryConfigured) {
-        // For Cloudinary, use secure_url if available, fallback to path
-        let imageUrl = (file as any).secure_url || file.path;
-        // Ensure HTTPS
-        if (imageUrl && !imageUrl.startsWith('https://')) {
-          imageUrl = imageUrl.replace('http://', 'https://');
+        // For Cloudinary, always use secure_url if available
+        if ((file as any).secure_url) {
+          const secureUrl = (file as any).secure_url;
+          console.log('[BANNER] Using Cloudinary secure URL:', secureUrl);
+          return secureUrl;
         }
-        console.log('[BANNER] Cloudinary URL:', imageUrl);
-        return imageUrl;
+        // If no secure_url, ensure path is HTTPS
+        if (file.path) {
+          const secureUrl = file.path.startsWith('http://') 
+            ? file.path.replace('http://', 'https://') 
+            : file.path;
+          console.log('[BANNER] Using Cloudinary path URL:', secureUrl);
+          return secureUrl;
+        }
       }
+      // For local storage
       const localUrl = `/uploads/banners/${file.filename}`;
-      console.log('[BANNER] Local URL:', localUrl);
+      console.log('[BANNER] Using local URL:', localUrl);
       return localUrl;
     };
 

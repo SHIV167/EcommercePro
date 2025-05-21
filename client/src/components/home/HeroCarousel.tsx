@@ -42,11 +42,26 @@ export default function HeroCarousel() {
           <picture key={idx} className="w-full flex-shrink-0">
             <source 
               media="(max-width: 767px)" 
-              srcSet={banner.mobileImageUrl} 
+              srcSet={(() => {
+                const imageUrl = banner.mobileImageUrl;
+                if (!imageUrl) return '/uploads/banners/placeholder.jpg';
+                
+                // If it's a Cloudinary URL, ensure HTTPS
+                if (imageUrl.includes('cloudinary.com')) {
+                  const secureUrl = imageUrl.startsWith('http://') 
+                    ? imageUrl.replace('http://', 'https://') 
+                    : imageUrl;
+                  // Add proper descriptor for srcset
+                  return `${secureUrl} 1x`;
+                }
+                
+                // For local uploads, add descriptor
+                return `${imageUrl} 1x`;
+              })()} 
               onError={(e) => {
                 const source = e.target as HTMLSourceElement;
                 source.onerror = null;
-                source.srcset = '/uploads/banners/placeholder.jpg';
+                source.srcset = '/uploads/banners/placeholder.jpg 1x';
               }}
             />
             <img
