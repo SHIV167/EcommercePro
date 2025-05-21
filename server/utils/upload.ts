@@ -2,8 +2,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary, { isCloudinaryConfigured } from './cloudinary';
 
 // Provide __dirname in ES module scope
 const __filename = fileURLToPath(import.meta.url);
@@ -36,24 +36,6 @@ const getUploadPath = (req: any) => {
   }
   return directories.default;
 };
-
-// Configure Cloudinary for production uploads
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-  api_key: process.env.CLOUDINARY_API_KEY!,
-  api_secret: process.env.CLOUDINARY_API_SECRET!,
-});
-
-// Control Cloudinary usage with explicit flag
-// Set CLOUDINARY_ENABLED='true' in production env to enable
-const isCloudinaryEnabled = process.env.CLOUDINARY_ENABLED === 'true';
-const isCloudinaryConfigured =
-  isCloudinaryEnabled &&
-  Boolean(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-    process.env.CLOUDINARY_API_KEY &&
-    process.env.CLOUDINARY_API_SECRET
-  );
 
 // Debug: log storage type
 console.log('[UPLOAD] Storage type:', isCloudinaryConfigured ? 'cloudinary' : 'disk');

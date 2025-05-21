@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateJWT, isAdmin } from '../middleware/auth';
 import upload from '../utils/upload';
+import { isCloudinaryConfigured } from '../utils/cloudinary';
 
 const router = express.Router();
 
@@ -23,16 +24,23 @@ router.post('/api/upload/images', authenticateJWT, isAdmin, upload.array('images
     }
 
     const uploadedFiles = (req.files as any[]).map(file => {
-      // Determine URL: Cloudinary uses file.path, secure_url, or url
-      const rawUrl = (file as any).path || (file as any).secure_url || (file as any).url;
-      const url = typeof rawUrl === 'string' && /^https?:\/\//.test(rawUrl)
-        ? rawUrl
-        : `/uploads/products/${file.filename}`;
+      // Handle Cloudinary vs local file paths
+      let url;
+      if (isCloudinaryConfigured) {
+        // For Cloudinary, use the provided path (which is the full URL)
+        url = file.path;
+      } else {
+        // For local storage, construct the URL
+        url = `/uploads/products/${file.filename}`;
+      }
+      
       return {
         filename: file.filename,
         path: url,
         size: file.size,
-        mimetype: file.mimetype
+        mimetype: file.mimetype,
+        // Add source information for debugging
+        storage: isCloudinaryConfigured ? 'cloudinary' : 'local'
       };
     });
     console.log('[UPLOAD ROUTE] Responding with uploadedFiles:', uploadedFiles);
