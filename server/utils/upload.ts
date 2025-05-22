@@ -40,10 +40,10 @@ const getUploadPath = (req: any) => {
 // Configure storage based on environment
 let storage: multer.StorageEngine;
 
+// Always use Cloudinary storage when configured
 if (isCloudinaryConfigured) {
-  // Use Cloudinary storage
   storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
+    cloudinary,
     params: {
       folder: (req: any, file: any): string => {
         return req.originalUrl.includes('/banners') ? 'banners' : 'products';

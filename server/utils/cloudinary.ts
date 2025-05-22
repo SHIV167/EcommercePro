@@ -3,14 +3,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const isCloudinaryEnabled = process.env.CLOUDINARY_ENABLED === 'true';
-export const isCloudinaryConfigured =
-  isCloudinaryEnabled &&
-  Boolean(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-    process.env.CLOUDINARY_API_KEY &&
-    process.env.CLOUDINARY_API_SECRET
-  );
+// Auto-detect Cloudinary when credentials are set
+export const isCloudinaryConfigured = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+);
 
 if (isCloudinaryConfigured) {
   cloudinary.config({
