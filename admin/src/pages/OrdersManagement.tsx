@@ -644,8 +644,8 @@ export default function OrdersManagement() {
 
                 <div className="space-x-2">
                   <Button variant="outline">Print Invoice</Button>
-                  <Button className="bg-primary hover:bg-primary-light text-white" onClick={handleUpdateOrder} disabled={updateOrderMutation.status === 'loading'}>
-                    {updateOrderMutation.status === 'loading' ? "Updating..." : "Update Order"}
+                  <Button className="bg-primary hover:bg-primary-light text-white" onClick={handleUpdateOrder} disabled={updateOrderMutation.status === 'pending'}>
+                    {updateOrderMutation.status === 'pending' ? "Updating..." : "Update Order"}
                   </Button>
                 </div>
               </div>

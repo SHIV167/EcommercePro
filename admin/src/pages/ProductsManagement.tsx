@@ -83,7 +83,7 @@ export default function ProductsManagement() {
   const categories = Array.isArray(categoriesData) ? categoriesData as MongoCategory[] : [];
   
   // Delete product mutation
-  const deleteProductMutation = useMutation({
+  const { mutate: deleteProduct, status } = useMutation<void, Error, string | number>({
     mutationFn: async (productId: string | number) => {
       await apiRequest("DELETE", `/api/products/${productId}`);
     },
@@ -97,10 +97,10 @@ export default function ProductsManagement() {
       setIsDeleteDialogOpen(false);
       setProductToDelete(null);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error deleting product",
-        description: "There was an error deleting the product. Please try again.",
+        description: error.message,
         variant: "destructive",
       });
       console.error("Error deleting product:", error);
@@ -130,7 +130,7 @@ export default function ProductsManagement() {
     // Use either _id or id; ensure defined
     const productId = productToDelete._id ?? productToDelete.id;
     if (productId === undefined) return;
-    deleteProductMutation.mutate(productId);
+    deleteProduct(productId);
   };
   
   const handleSearch = (e: FormEvent) => {
@@ -449,9 +449,9 @@ export default function ProductsManagement() {
             <Button 
               variant="destructive" 
               onClick={confirmDeleteProduct}
-              disabled={deleteProductMutation.isLoading}
+              disabled={status === 'pending'}
             >
-              {deleteProductMutation.isLoading ? "Deleting..." : "Delete"}
+              {status === 'pending' ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

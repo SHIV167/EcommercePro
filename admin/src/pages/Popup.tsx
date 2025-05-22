@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { DateRange, Range } from 'react-date-range';
+import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { apiRequest } from '@/lib/queryClient';
 
+// Custom type for date selection
+interface DateSelection {
+  startDate: Date;
+  endDate: Date;
+  key: string;
+}
+
 export default function Popup() {
   const [enabled, setEnabled] = useState<boolean>(false);
-  const [range, setRange] = useState<Range[]>([
+  const [range, setRange] = useState<DateSelection[]>([
     { startDate: new Date(), endDate: new Date(), key: 'selection' }
   ]);
   const [bgImage, setBgImage] = useState<string>("");
@@ -92,7 +99,7 @@ export default function Popup() {
     setEnabled(v => !v);
   };
 
-  const onRangeChange = (item: any) => {
+  const onRangeChange = (item: { selection: DateSelection }) => {
     const sel = item.selection;
     setRange([sel]);
   };
@@ -112,8 +119,8 @@ export default function Popup() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         enabled,
-        startDate: range[0]?.startDate?.toISOString(),
-        endDate: range[0]?.endDate?.toISOString(),
+        startDate: range[0].startDate.toISOString(),
+        endDate: range[0].endDate.toISOString(),
         bgImage,
       }),
     });

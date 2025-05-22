@@ -53,7 +53,7 @@ const ReviewManagement = () => {
   });
 
   // Update review status mutation
-  const { mutate: updateReviewStatus, isLoading: isUpdating } = useMutation({
+  const { mutate: updateReviewStatus, status } = useMutation<any, Error, { reviewId: string; status: 'approved' | 'rejected' }>({
     mutationFn: async ({ reviewId, status }: { reviewId: string; status: 'approved' | 'rejected' }) => {
       const response = await apiRequest(`/api/admin/reviews/${reviewId}/status`, {
         method: 'PATCH',
@@ -72,6 +72,9 @@ const ReviewManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
     }
   });
+
+  // Mutation status
+  const isUpdating = status === 'pending';
 
   // Handle approve/reject actions
   const handleApprove = (reviewId: string) => {

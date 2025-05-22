@@ -1,11 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "@/hooks/use-toast";
-import { Product } from "@shared/schema";
+import { MongoProduct } from "@/types/mongo";
 
 export default function QRScannerManagement() {
   const { toast } = useToast();
@@ -15,11 +14,11 @@ export default function QRScannerManagement() {
     ? window.location.origin.replace('-admin', '-0ukc')
     : window.location.origin);
   // Products for QR generation
-  const { data: prodData } = useQuery({
+  const { data: prodData } = useQuery<MongoProduct[]>({
     queryKey: ["products_all"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/products?page=1&limit=1000");
-      return (await res.json()).products as Product[];
+      return (await res.json()).products as MongoProduct[];
     },
   });
   const products = prodData || [];
@@ -27,43 +26,6 @@ export default function QRScannerManagement() {
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [qrValue, setQrValue] = useState<string>("");
   const [emailAddr, setEmailAddr] = useState<string>("");
-
-  // Fetch available coupons for QR codes
-  const { data: couponsData } = useQuery({
-    queryKey: ["coupons"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/admin/coupons");
-      return await res.json();
-    },
-  });
-  const coupons = couponsData || [];
-
-  // Function to create a QR-specific coupon if none exist
-  const createQrCoupon = useMutation({
-    mutationFn: async () => {
-      const couponData = {
-        code: `QR-SCAN-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-        description: "Auto-generated QR Scan Discount",
-        discountType: "percentage",
-        discountAmount: 10, // 10% discount
-        minimumOrderValue: 0,
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
-        usageLimit: 1000,
-        usageLimitPerUser: 1,
-        isActive: true,
-      };
-      const res = await apiRequest("POST", "/api/admin/coupons", couponData);
-      return res.json();
-    },
-    onSuccess: (newCoupon) => {
-      toast({ title: "QR Coupon Created", description: `Coupon ${newCoupon.code} created for QR scans.` });
-    },
-    onError: (error) => {
-      console.error("Failed to create QR coupon", error);
-      toast({ title: "Failed to create QR coupon", variant: "destructive" });
-    },
-  });
 
   // Scanner data
   const { data: scanners, refetch, isLoading, error } = useQuery({
@@ -136,14 +98,6 @@ export default function QRScannerManagement() {
     createScanner.mutate({ data: url, productId: selectedProduct, scannedAt: new Date().toISOString() });
   };
 
-  const handleGenerateAll = () => {
-    products.forEach((prod) => {
-      const urlAll = `${clientOrigin}/products/${prod.slug}`;
-      createScanner.mutate({ data: urlAll, productId: prod._id, scannedAt: new Date().toISOString() });
-    });
-    toast({ title: "All QR codes generated" });
-  };
-
   const handleShare = () => {
     navigator.clipboard.writeText(qrValue);
     toast({ title: "URL copied" });
@@ -158,18 +112,6 @@ export default function QRScannerManagement() {
     } catch (error) {
       console.error(error);
       toast({ title: "Email send failed", variant: "destructive" });
-    }
-  };
-
-  const handleDownload = () => {
-    if (qrRef.current) {
-      const dataUrl = qrRef.current.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `${selectedProduct || "qr"}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
     }
   };
 
@@ -235,7 +177,7 @@ export default function QRScannerManagement() {
             <select
               id="productSelect"
               value={selectedProduct}
-              onChange={e => setSelectedProduct(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedProduct(e.target.value)}
               className="w-full p-2 border rounded"
             >
               <option value="">-- Select Product --</option>
@@ -252,7 +194,7 @@ export default function QRScannerManagement() {
               id="emailAddr"
               type="email"
               value={emailAddr}
-              onChange={e => setEmailAddr(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmailAddr(e.target.value)}
               placeholder="Enter email to share"
               className="w-full p-2 border rounded"
             />
@@ -314,7 +256,7 @@ export default function QRScannerManagement() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <Input
                       value={s.couponCode || ''}
-                      onChange={(e) => handleCouponCodeChange(s._id, e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCouponCodeChange(s._id, e.target.value)}
                       placeholder="Enter coupon code"
                       className="w-40"
                     />
@@ -324,7 +266,7 @@ export default function QRScannerManagement() {
                       <Input
                         type="email"
                         value={rowEmails[s._id] || ''}
-                        onChange={(e) => handleRowEmailChange(s._id, e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleRowEmailChange(s._id, e.target.value)}
                         placeholder="Enter email"
                         className="w-40"
                       />
@@ -355,14 +297,14 @@ export default function QRScannerManagement() {
             <input
               type="text"
               value={scanData}
-              onChange={e => setScanData(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setScanData(e.target.value)}
               placeholder="Scanned data"
               className="p-1 border rounded w-32"
             />
             <input
               type="text"
               value={scanProductId}
-              onChange={e => setScanProductId(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setScanProductId(e.target.value)}
               placeholder="Product ID (optional)"
               className="p-1 border rounded w-32"
             />

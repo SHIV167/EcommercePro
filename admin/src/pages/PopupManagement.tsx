@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DateRange, Range } from 'react-date-range';
+import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 
@@ -12,9 +12,12 @@ function validatePopupSettings(settings: any) {
   return null;
 }
 
+// Define our own range type with startDate/endDate
+type DateSelection = { startDate: Date; endDate: Date; key: string };
+
 export default function Popup() {
   const [enabled, setEnabled] = useState<boolean>(false);
-  const [range, setRange] = useState<Range[]>([
+  const [range, setRange] = useState<DateSelection[]>([
     { startDate: new Date(), endDate: new Date(), key: 'selection' }
   ]);
   const [bg, setBg] = useState<string>('');
