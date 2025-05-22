@@ -34,28 +34,9 @@ router.post('/api/banners', authenticateJWT, isAdmin, upload.fields([
   { name: 'desktopImage', maxCount: 1 },
   { name: 'mobileImage', maxCount: 1 }
 ]), async (req, res) => {
-  console.log('[BANNER] Creating new banner:', req.body);
-  console.log('[BANNER] Cloudinary configured:', isCloudinaryConfigured);
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    console.log('[BANNER] Uploaded files:', files);
-    // Determine the correct image URL (Cloudinary or local)
-    const getImageUrl = (file: Express.Multer.File) => {
-      // Try Cloudinary props first
-      if (isCloudinaryConfigured) {
-        const anyFile = file as any;
-        const remoteUrl = anyFile.secure_url || anyFile.url || anyFile.path;
-        if (remoteUrl) {
-          // Ensure HTTPS
-          return remoteUrl.startsWith('http://')
-            ? remoteUrl.replace('http://', 'https://')
-            : remoteUrl;
-        }
-      }
-      // Fallback to local path
-      return `/uploads/banners/${file.filename}`;
-    };
-
+    // Process URLs via existing logic
     const bannerData = {
       id: uuidv4(),
       title: req.body.title,
@@ -64,11 +45,9 @@ router.post('/api/banners', authenticateJWT, isAdmin, upload.fields([
       linkUrl: req.body.linkUrl,
       enabled: req.body.enabled === 'true',
       position: parseInt(req.body.position) || 0,
-      desktopImageUrl: files?.desktopImage ? getImageUrl(files.desktopImage[0]) : req.body.desktopImageUrl,
-      mobileImageUrl: files?.mobileImage ? getImageUrl(files.mobileImage[0]) : req.body.mobileImageUrl
+      desktopImageUrl: files?.desktopImage ? `/uploads/banners/${files.desktopImage[0].filename}` : req.body.desktopImageUrl,
+      mobileImageUrl: files?.mobileImage ? `/uploads/banners/${files.mobileImage[0].filename}` : req.body.mobileImageUrl
     };
-
-    console.log('[BANNER] Processed banner data:', bannerData);
 
     const banner = new Banner(bannerData);
     await banner.save();
@@ -97,34 +76,16 @@ router.put('/api/banners/:id', authenticateJWT, isAdmin, upload.fields([
       updateData.enabled = req.body.enabled === 'true';
     }
 
-    // Determine the correct image URL (Cloudinary or local)
-    const getImageUrl = (file: Express.Multer.File) => {
-      // Try Cloudinary props first
-      if (isCloudinaryConfigured) {
-        const anyFile = file as any;
-        const remoteUrl = anyFile.secure_url || anyFile.url || anyFile.path;
-        if (remoteUrl) {
-          // Ensure HTTPS
-          return remoteUrl.startsWith('http://')
-            ? remoteUrl.replace('http://', 'https://')
-            : remoteUrl;
-        }
-      }
-      // Fallback to local path
-      return `/uploads/banners/${file.filename}`;
-    };
-
+    // Process URLs via existing logic
     // Only update desktopImageUrl when a new file is uploaded
     if (files?.desktopImage) {
-      updateData.desktopImageUrl = getImageUrl(files.desktopImage[0]);
+      updateData.desktopImageUrl = `/uploads/banners/${files.desktopImage[0].filename}`;
     }
 
     // Only update mobileImageUrl when a new file is uploaded
     if (files?.mobileImage) {
-      updateData.mobileImageUrl = getImageUrl(files.mobileImage[0]);
+      updateData.mobileImageUrl = `/uploads/banners/${files.mobileImage[0].filename}`;
     }
-
-    console.log('[BANNER] Updating banner with data:', updateData);
 
     const banner = await Banner.findOneAndUpdate(
       { $or: [{ id: req.params.id }, { _id: req.params.id }] },
