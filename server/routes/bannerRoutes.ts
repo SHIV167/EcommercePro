@@ -39,29 +39,21 @@ router.post('/api/banners', authenticateJWT, isAdmin, upload.fields([
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     console.log('[BANNER] Uploaded files:', files);
-    // Process image URLs based on storage type
+    // Determine the correct image URL (Cloudinary or local)
     const getImageUrl = (file: Express.Multer.File) => {
-      console.log('[BANNER] getImageUrl file:', file);
+      // Try Cloudinary props first
       if (isCloudinaryConfigured) {
-        // For Cloudinary, always use secure_url if available
-        if ((file as any).secure_url) {
-          const secureUrl = (file as any).secure_url;
-          console.log('[BANNER] Using Cloudinary secure URL:', secureUrl);
-          return secureUrl;
-        }
-        // If no secure_url, ensure path is HTTPS
-        if (file.path) {
-          const secureUrl = file.path.startsWith('http://') 
-            ? file.path.replace('http://', 'https://') 
-            : file.path;
-          console.log('[BANNER] Using Cloudinary path URL:', secureUrl);
-          return secureUrl;
+        const anyFile = file as any;
+        const remoteUrl = anyFile.secure_url || anyFile.url || anyFile.path;
+        if (remoteUrl) {
+          // Ensure HTTPS
+          return remoteUrl.startsWith('http://')
+            ? remoteUrl.replace('http://', 'https://')
+            : remoteUrl;
         }
       }
-      // For local storage
-      const localUrl = `/uploads/banners/${file.filename}`;
-      console.log('[BANNER] Using local URL:', localUrl);
-      return localUrl;
+      // Fallback to local path
+      return `/uploads/banners/${file.filename}`;
     };
 
     const bannerData = {
@@ -105,28 +97,21 @@ router.put('/api/banners/:id', authenticateJWT, isAdmin, upload.fields([
       updateData.enabled = req.body.enabled === 'true';
     }
 
-    // Process image URLs based on storage type
+    // Determine the correct image URL (Cloudinary or local)
     const getImageUrl = (file: Express.Multer.File) => {
+      // Try Cloudinary props first
       if (isCloudinaryConfigured) {
-        // For Cloudinary, always use secure_url if available
-        if ((file as any).secure_url) {
-          const secureUrl = (file as any).secure_url;
-          console.log('[BANNER] Using Cloudinary secure URL:', secureUrl);
-          return secureUrl;
-        }
-        // If no secure_url, ensure path is HTTPS
-        if (file.path) {
-          const secureUrl = file.path.startsWith('http://') 
-            ? file.path.replace('http://', 'https://') 
-            : file.path;
-          console.log('[BANNER] Using Cloudinary path URL:', secureUrl);
-          return secureUrl;
+        const anyFile = file as any;
+        const remoteUrl = anyFile.secure_url || anyFile.url || anyFile.path;
+        if (remoteUrl) {
+          // Ensure HTTPS
+          return remoteUrl.startsWith('http://')
+            ? remoteUrl.replace('http://', 'https://')
+            : remoteUrl;
         }
       }
-      // For local storage
-      const localUrl = `/uploads/banners/${file.filename}`;
-      console.log('[BANNER] Using local URL:', localUrl);
-      return localUrl;
+      // Fallback to local path
+      return `/uploads/banners/${file.filename}`;
     };
 
     // Only update desktopImageUrl when a new file is uploaded

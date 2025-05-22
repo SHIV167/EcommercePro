@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import cloudinary, { isCloudinaryConfigured } from './cloudinary';
 
+console.log('[UPLOAD.TS] isCloudinaryConfigured:', isCloudinaryConfigured);
+
 // Provide __dirname in ES module scope
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,8 +42,10 @@ const getUploadPath = (req: any) => {
 // Configure storage based on environment
 let storage: multer.StorageEngine;
 
-// Always use Cloudinary storage when configured
+console.log('[UPLOAD.TS] Configuring storage. Using CloudinaryStorage?', isCloudinaryConfigured);
+
 if (isCloudinaryConfigured) {
+  console.log('[UPLOAD.TS] Storage branch: CloudinaryStorage');
   storage = new CloudinaryStorage({
     cloudinary,
     params: {
@@ -73,7 +77,7 @@ if (isCloudinaryConfigured) {
     }
   } as any); // Type assertion needed due to CloudinaryStorage types
 } else {
-  // Use local disk storage
+  console.log('[UPLOAD.TS] Storage branch: diskStorage');
   storage = multer.diskStorage({
     destination: function (req: any, file: any, cb: (error: Error | null, destination: string) => void) {
       let uploadDir = path.join(__dirname, '../../public/uploads/products');
