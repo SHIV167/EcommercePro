@@ -6,16 +6,6 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Banner } from "@shared/schema";
 
-// Helper function for logging Cloudinary URLs
-const logImageDetails = (url: string, type: string) => {
-  console.log(`[BANNER] ${type} Image URL:`, url);
-  if (url.includes('cloudinary.com')) {
-    console.log(`[BANNER] Using Cloudinary for ${type} image`);
-  } else {
-    console.log(`[BANNER] Using local upload for ${type} image`);
-  }
-};
-
 export default function HeroCarousel() {
   // Fetch banners from backend
   const { data: banners = [], isLoading } = useQuery<Banner[]>({
@@ -56,11 +46,12 @@ export default function HeroCarousel() {
                 const imageUrl = banner.mobileImageUrl;
                 if (!imageUrl) return '/uploads/banners/placeholder.jpg';
                 
-                // Directly use the cloudinary URL without modification if it's already one
+                // If it's a Cloudinary URL, ensure HTTPS
                 if (imageUrl.includes('cloudinary.com')) {
-                  // Just ensure it uses https
-                  const secureUrl = imageUrl.replace('http://', 'https://');
-                  console.log('[BANNER] Using mobile Cloudinary URL:', secureUrl);
+                  const secureUrl = imageUrl.startsWith('http://') 
+                    ? imageUrl.replace('http://', 'https://') 
+                    : imageUrl;
+                  // Add proper descriptor for srcset
                   return `${secureUrl} 1x`;
                 }
                 
@@ -79,12 +70,9 @@ export default function HeroCarousel() {
                 const imageUrl = banner.desktopImageUrl;
                 if (!imageUrl) return '/uploads/banners/placeholder.jpg';
                 
-                // Directly use the cloudinary URL without modification if it's already one
-                if (imageUrl.includes('cloudinary.com')) {
-                  // Just ensure it uses https
-                  const secureUrl = imageUrl.replace('http://', 'https://');
-                  console.log('[BANNER] Using desktop Cloudinary URL:', secureUrl);
-                  return secureUrl;
+                // If it's a Cloudinary URL, ensure HTTPS
+                if (imageUrl.includes('cloudinary.com') && imageUrl.startsWith('http://')) {
+                  return imageUrl.replace('http://', 'https://');
                 }
                 
                 return imageUrl;

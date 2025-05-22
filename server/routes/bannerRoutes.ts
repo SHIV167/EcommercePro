@@ -6,9 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import cloudinary, { isCloudinaryConfigured } from '../utils/cloudinary';
-import { optimizeBannerImageUrl } from '../utils/cloudinaryHelper';
-import { getCloudinaryUrlFromFile, fixCloudinaryUrl } from '../utils/cloudinaryFix';
+import { isCloudinaryConfigured } from '../utils/cloudinary';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,8 +70,8 @@ router.post('/api/banners', authenticateJWT, isAdmin, upload.fields([
       linkUrl: req.body.linkUrl,
       enabled: req.body.enabled === 'true',
       position: parseInt(req.body.position) || 0,
-      desktopImageUrl: files?.desktopImage ? getCloudinaryUrlFromFile(files.desktopImage[0], 'banners') : fixCloudinaryUrl(req.body.desktopImageUrl, 'banners'),
-      mobileImageUrl: files?.mobileImage ? getCloudinaryUrlFromFile(files.mobileImage[0], 'banners') : fixCloudinaryUrl(req.body.mobileImageUrl, 'banners')
+      desktopImageUrl: files?.desktopImage ? getImageUrl(files.desktopImage[0]) : req.body.desktopImageUrl,
+      mobileImageUrl: files?.mobileImage ? getImageUrl(files.mobileImage[0]) : req.body.mobileImageUrl
     };
 
     console.log('[BANNER] Processed banner data:', bannerData);
@@ -130,17 +128,15 @@ router.put('/api/banners/:id', authenticateJWT, isAdmin, upload.fields([
     };
 
     if (files?.desktopImage) {
-      updateData.desktopImageUrl = getCloudinaryUrlFromFile(files.desktopImage[0], 'banners');
+      updateData.desktopImageUrl = getImageUrl(files.desktopImage[0]);
     } else if (req.body.desktopImageUrl) {
-      // Fix and optimize existing URL using our helper functions
-      updateData.desktopImageUrl = fixCloudinaryUrl(req.body.desktopImageUrl, 'banners');
+      updateData.desktopImageUrl = req.body.desktopImageUrl;
     }
 
     if (files?.mobileImage) {
-      updateData.mobileImageUrl = getCloudinaryUrlFromFile(files.mobileImage[0], 'banners');
+      updateData.mobileImageUrl = getImageUrl(files.mobileImage[0]);
     } else if (req.body.mobileImageUrl) {
-      // Fix and optimize existing URL using our helper functions
-      updateData.mobileImageUrl = fixCloudinaryUrl(req.body.mobileImageUrl, 'banners');
+      updateData.mobileImageUrl = req.body.mobileImageUrl;
     }
 
     console.log('[BANNER] Updating banner with data:', updateData);
