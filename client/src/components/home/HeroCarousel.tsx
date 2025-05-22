@@ -6,6 +6,23 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Banner } from "@shared/schema";
 
+// Helper function for Cloudinary URL optimization
+const optimizeCloudinaryUrl = (url: string, options: { width?: number, quality?: number, format?: string } = {}) => {
+  if (!url || !url.includes('cloudinary.com')) return url;
+  
+  // Ensure HTTPS
+  let optimizedUrl = url.replace('http://', 'https://');
+  
+  // Check if URL already has transformation parameters
+  if (optimizedUrl.includes('/upload/')) {
+    // Insert transformation parameters after /upload/
+    const transformationString = `w_${options.width || 'auto'},q_${options.quality || 80},f_${options.format || 'auto'}`;
+    optimizedUrl = optimizedUrl.replace('/upload/', `/upload/${transformationString}/`);
+  }
+  
+  return optimizedUrl;
+};
+
 export default function HeroCarousel() {
   // Fetch banners from backend
   const { data: banners = [], isLoading } = useQuery<Banner[]>({
@@ -46,13 +63,9 @@ export default function HeroCarousel() {
                 const imageUrl = banner.mobileImageUrl;
                 if (!imageUrl) return '/uploads/banners/placeholder.jpg';
                 
-                // If it's a Cloudinary URL, ensure HTTPS
+                // Optimize Cloudinary URL with mobile-specific parameters
                 if (imageUrl.includes('cloudinary.com')) {
-                  const secureUrl = imageUrl.startsWith('http://') 
-                    ? imageUrl.replace('http://', 'https://') 
-                    : imageUrl;
-                  // Add proper descriptor for srcset
-                  return `${secureUrl} 1x`;
+                  return `${optimizeCloudinaryUrl(imageUrl, { width: 768, quality: 80, format: 'auto' })} 1x`;
                 }
                 
                 // For local uploads, add descriptor
@@ -70,9 +83,9 @@ export default function HeroCarousel() {
                 const imageUrl = banner.desktopImageUrl;
                 if (!imageUrl) return '/uploads/banners/placeholder.jpg';
                 
-                // If it's a Cloudinary URL, ensure HTTPS
-                if (imageUrl.includes('cloudinary.com') && imageUrl.startsWith('http://')) {
-                  return imageUrl.replace('http://', 'https://');
+                // Optimize Cloudinary URL with desktop-specific parameters
+                if (imageUrl.includes('cloudinary.com')) {
+                  return optimizeCloudinaryUrl(imageUrl, { width: 1920, quality: 85, format: 'auto' });
                 }
                 
                 return imageUrl;

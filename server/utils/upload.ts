@@ -60,8 +60,16 @@ if (isCloudinaryConfigured) {
       transformation: [
         { quality: 'auto:good' },
         { fetch_format: 'auto' },
-        { flags: 'progressive' }
-      ]
+        { flags: 'progressive' },
+        { dpr: 'auto' },
+        { responsive: true },
+        { crop: 'limit' }
+      ],
+      resource_type: 'image',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'],
+      use_filename: true,
+      unique_filename: true,
+      overwrite: true
     }
   } as any); // Type assertion needed due to CloudinaryStorage types
 } else {

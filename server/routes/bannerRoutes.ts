@@ -6,7 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { isCloudinaryConfigured } from '../utils/cloudinary';
+import cloudinary, { isCloudinaryConfigured } from '../utils/cloudinary';
+import { optimizeBannerImageUrl } from '../utils/cloudinaryHelper';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -130,13 +131,15 @@ router.put('/api/banners/:id', authenticateJWT, isAdmin, upload.fields([
     if (files?.desktopImage) {
       updateData.desktopImageUrl = getImageUrl(files.desktopImage[0]);
     } else if (req.body.desktopImageUrl) {
-      updateData.desktopImageUrl = req.body.desktopImageUrl;
+      // Optimize existing URL using our helper function
+      updateData.desktopImageUrl = optimizeBannerImageUrl(req.body.desktopImageUrl, true);
     }
 
     if (files?.mobileImage) {
       updateData.mobileImageUrl = getImageUrl(files.mobileImage[0]);
     } else if (req.body.mobileImageUrl) {
-      updateData.mobileImageUrl = req.body.mobileImageUrl;
+      // Optimize existing URL using our helper function
+      updateData.mobileImageUrl = optimizeBannerImageUrl(req.body.mobileImageUrl, false);
     }
 
     console.log('[BANNER] Updating banner with data:', updateData);
