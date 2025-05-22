@@ -35,11 +35,13 @@ router.post('/api/banners', authenticateJWT, isAdmin, upload.fields([
   { name: 'mobileImage', maxCount: 1 }
 ]), async (req, res) => {
   console.log('[BANNER] Creating new banner:', req.body);
+  console.log('[BANNER] Cloudinary configured:', isCloudinaryConfigured);
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     console.log('[BANNER] Uploaded files:', files);
     // Process image URLs based on storage type
     const getImageUrl = (file: Express.Multer.File) => {
+      console.log('[BANNER] getImageUrl file:', file);
       if (isCloudinaryConfigured) {
         // For Cloudinary, always use secure_url if available
         if ((file as any).secure_url) {
@@ -127,16 +129,14 @@ router.put('/api/banners/:id', authenticateJWT, isAdmin, upload.fields([
       return localUrl;
     };
 
+    // Only update desktopImageUrl when a new file is uploaded
     if (files?.desktopImage) {
       updateData.desktopImageUrl = getImageUrl(files.desktopImage[0]);
-    } else if (req.body.desktopImageUrl) {
-      updateData.desktopImageUrl = req.body.desktopImageUrl;
     }
 
+    // Only update mobileImageUrl when a new file is uploaded
     if (files?.mobileImage) {
       updateData.mobileImageUrl = getImageUrl(files.mobileImage[0]);
-    } else if (req.body.mobileImageUrl) {
-      updateData.mobileImageUrl = req.body.mobileImageUrl;
     }
 
     console.log('[BANNER] Updating banner with data:', updateData);
