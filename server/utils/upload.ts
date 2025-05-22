@@ -40,12 +40,10 @@ const getUploadPath = (req: any) => {
 // Configure storage based on environment
 let storage: multer.StorageEngine;
 
-// Remove debug logs
-
 if (isCloudinaryConfigured) {
   // Use Cloudinary storage
   storage = new CloudinaryStorage({
-    cloudinary,
+    cloudinary: cloudinary,
     params: {
       folder: (req: any, file: any): string => {
         return req.originalUrl.includes('/banners') ? 'banners' : 'products';
@@ -62,16 +60,8 @@ if (isCloudinaryConfigured) {
       transformation: [
         { quality: 'auto:good' },
         { fetch_format: 'auto' },
-        { flags: 'progressive' },
-        { dpr: 'auto' },
-        { responsive: true },
-        { crop: 'limit' }
-      ],
-      resource_type: 'image',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'],
-      use_filename: true,
-      unique_filename: true,
-      overwrite: true
+        { flags: 'progressive' }
+      ]
     }
   } as any); // Type assertion needed due to CloudinaryStorage types
 } else {

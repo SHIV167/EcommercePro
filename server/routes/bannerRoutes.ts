@@ -34,9 +34,34 @@ router.post('/api/banners', authenticateJWT, isAdmin, upload.fields([
   { name: 'desktopImage', maxCount: 1 },
   { name: 'mobileImage', maxCount: 1 }
 ]), async (req, res) => {
+  console.log('[BANNER] Creating new banner:', req.body);
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    // Process URLs via existing logic
+    console.log('[BANNER] Uploaded files:', files);
+    // Process image URLs based on storage type
+    const getImageUrl = (file: Express.Multer.File) => {
+      if (isCloudinaryConfigured) {
+        // For Cloudinary, always use secure_url if available
+        if ((file as any).secure_url) {
+          const secureUrl = (file as any).secure_url;
+          console.log('[BANNER] Using Cloudinary secure URL:', secureUrl);
+          return secureUrl;
+        }
+        // If no secure_url, ensure path is HTTPS
+        if (file.path) {
+          const secureUrl = file.path.startsWith('http://') 
+            ? file.path.replace('http://', 'https://') 
+            : file.path;
+          console.log('[BANNER] Using Cloudinary path URL:', secureUrl);
+          return secureUrl;
+        }
+      }
+      // For local storage
+      const localUrl = `/uploads/banners/${file.filename}`;
+      console.log('[BANNER] Using local URL:', localUrl);
+      return localUrl;
+    };
+
     const bannerData = {
       id: uuidv4(),
       title: req.body.title,
@@ -45,9 +70,11 @@ router.post('/api/banners', authenticateJWT, isAdmin, upload.fields([
       linkUrl: req.body.linkUrl,
       enabled: req.body.enabled === 'true',
       position: parseInt(req.body.position) || 0,
-      desktopImageUrl: files?.desktopImage ? `/uploads/banners/${files.desktopImage[0].filename}` : req.body.desktopImageUrl,
-      mobileImageUrl: files?.mobileImage ? `/uploads/banners/${files.mobileImage[0].filename}` : req.body.mobileImageUrl
+      desktopImageUrl: files?.desktopImage ? getImageUrl(files.desktopImage[0]) : req.body.desktopImageUrl,
+      mobileImageUrl: files?.mobileImage ? getImageUrl(files.mobileImage[0]) : req.body.mobileImageUrl
     };
+
+    console.log('[BANNER] Processed banner data:', bannerData);
 
     const banner = new Banner(bannerData);
     await banner.save();
@@ -76,16 +103,43 @@ router.put('/api/banners/:id', authenticateJWT, isAdmin, upload.fields([
       updateData.enabled = req.body.enabled === 'true';
     }
 
-    // Process URLs via existing logic
-    // Only update desktopImageUrl when a new file is uploaded
+    // Process image URLs based on storage type
+    const getImageUrl = (file: Express.Multer.File) => {
+      if (isCloudinaryConfigured) {
+        // For Cloudinary, always use secure_url if available
+        if ((file as any).secure_url) {
+          const secureUrl = (file as any).secure_url;
+          console.log('[BANNER] Using Cloudinary secure URL:', secureUrl);
+          return secureUrl;
+        }
+        // If no secure_url, ensure path is HTTPS
+        if (file.path) {
+          const secureUrl = file.path.startsWith('http://') 
+            ? file.path.replace('http://', 'https://') 
+            : file.path;
+          console.log('[BANNER] Using Cloudinary path URL:', secureUrl);
+          return secureUrl;
+        }
+      }
+      // For local storage
+      const localUrl = `/uploads/banners/${file.filename}`;
+      console.log('[BANNER] Using local URL:', localUrl);
+      return localUrl;
+    };
+
     if (files?.desktopImage) {
-      updateData.desktopImageUrl = `/uploads/banners/${files.desktopImage[0].filename}`;
+      updateData.desktopImageUrl = getImageUrl(files.desktopImage[0]);
+    } else if (req.body.desktopImageUrl) {
+      updateData.desktopImageUrl = req.body.desktopImageUrl;
     }
 
-    // Only update mobileImageUrl when a new file is uploaded
     if (files?.mobileImage) {
-      updateData.mobileImageUrl = `/uploads/banners/${files.mobileImage[0].filename}`;
+      updateData.mobileImageUrl = getImageUrl(files.mobileImage[0]);
+    } else if (req.body.mobileImageUrl) {
+      updateData.mobileImageUrl = req.body.mobileImageUrl;
     }
+
+    console.log('[BANNER] Updating banner with data:', updateData);
 
     const banner = await Banner.findOneAndUpdate(
       { $or: [{ id: req.params.id }, { _id: req.params.id }] },

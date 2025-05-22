@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Auto-detect Cloudinary when credentials are set
 export const isCloudinaryEnabled = process.env.CLOUDINARY_ENABLED === 'true';
 export const isCloudinaryConfigured =
   isCloudinaryEnabled &&
@@ -23,7 +22,5 @@ if (isCloudinaryConfigured) {
 } else {
   console.warn('[CLOUDINARY] Not configured. Check environment variables.');
 }
-
-// no debug logs
 
 export default cloudinary;
