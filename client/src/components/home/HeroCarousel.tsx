@@ -6,21 +6,14 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Banner } from "@shared/schema";
 
-// Helper function for Cloudinary URL optimization
-const optimizeCloudinaryUrl = (url: string, options: { width?: number, quality?: number, format?: string } = {}) => {
-  if (!url || !url.includes('cloudinary.com')) return url;
-  
-  // Ensure HTTPS
-  let optimizedUrl = url.replace('http://', 'https://');
-  
-  // Check if URL already has transformation parameters
-  if (optimizedUrl.includes('/upload/')) {
-    // Insert transformation parameters after /upload/
-    const transformationString = `w_${options.width || 'auto'},q_${options.quality || 80},f_${options.format || 'auto'}`;
-    optimizedUrl = optimizedUrl.replace('/upload/', `/upload/${transformationString}/`);
+// Helper function for logging Cloudinary URLs
+const logImageDetails = (url: string, type: string) => {
+  console.log(`[BANNER] ${type} Image URL:`, url);
+  if (url.includes('cloudinary.com')) {
+    console.log(`[BANNER] Using Cloudinary for ${type} image`);
+  } else {
+    console.log(`[BANNER] Using local upload for ${type} image`);
   }
-  
-  return optimizedUrl;
 };
 
 export default function HeroCarousel() {
@@ -63,9 +56,12 @@ export default function HeroCarousel() {
                 const imageUrl = banner.mobileImageUrl;
                 if (!imageUrl) return '/uploads/banners/placeholder.jpg';
                 
-                // Optimize Cloudinary URL with mobile-specific parameters
+                // Directly use the cloudinary URL without modification if it's already one
                 if (imageUrl.includes('cloudinary.com')) {
-                  return `${optimizeCloudinaryUrl(imageUrl, { width: 768, quality: 80, format: 'auto' })} 1x`;
+                  // Just ensure it uses https
+                  const secureUrl = imageUrl.replace('http://', 'https://');
+                  console.log('[BANNER] Using mobile Cloudinary URL:', secureUrl);
+                  return `${secureUrl} 1x`;
                 }
                 
                 // For local uploads, add descriptor
@@ -83,9 +79,12 @@ export default function HeroCarousel() {
                 const imageUrl = banner.desktopImageUrl;
                 if (!imageUrl) return '/uploads/banners/placeholder.jpg';
                 
-                // Optimize Cloudinary URL with desktop-specific parameters
+                // Directly use the cloudinary URL without modification if it's already one
                 if (imageUrl.includes('cloudinary.com')) {
-                  return optimizeCloudinaryUrl(imageUrl, { width: 1920, quality: 85, format: 'auto' });
+                  // Just ensure it uses https
+                  const secureUrl = imageUrl.replace('http://', 'https://');
+                  console.log('[BANNER] Using desktop Cloudinary URL:', secureUrl);
+                  return secureUrl;
                 }
                 
                 return imageUrl;
