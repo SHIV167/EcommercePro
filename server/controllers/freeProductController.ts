@@ -4,7 +4,7 @@ import FreeProductModel from '../models/FreeProduct';
 // Get all free products
 export async function getAllFreeProducts(req: Request, res: Response) {
   try {
-    const isAdminRoute = req.baseUrl && req.baseUrl.includes('/admin');
+    const isAdminRoute = req.path.startsWith('/admin');
     const query = isAdminRoute ? {} : { enabled: true };
     const freeProducts = await FreeProductModel.find(query);
     res.json(freeProducts);
@@ -18,7 +18,7 @@ export async function getAllFreeProducts(req: Request, res: Response) {
 export async function getFreeProductById(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const isAdminRoute = req.baseUrl && req.baseUrl.includes('/admin');
+    const isAdminRoute = req.path.startsWith('/admin');
     const freeProduct = await FreeProductModel.findById(id);
     
     if (!freeProduct) {

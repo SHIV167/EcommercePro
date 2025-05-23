@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Transition } from '@headlessui/react';
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +19,7 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { totalItems } = useCart();
   const { isAuthenticated } = useAuth();
+  const [location] = useLocation();
   
   // Get categories for navigation
   const { data: categories = [] } = useQuery<Category[]>({
@@ -42,6 +43,15 @@ export default function Header() {
     }, 5000);
     return () => clearInterval(interval);
   }, [announcementMessages.length]);
+
+  // Auto-open mini cart when items are added
+  const prevTotalItemsRef = useRef(totalItems);
+  useEffect(() => {
+    if (totalItems > prevTotalItemsRef.current && !location.startsWith('/checkout')) {
+      setIsMiniCartOpen(true);
+    }
+    prevTotalItemsRef.current = totalItems;
+  }, [totalItems, location]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white w-full shadow-sm">

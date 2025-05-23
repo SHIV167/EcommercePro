@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../hooks/useCart';
 import { X } from 'lucide-react';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
 interface GiftProduct {
   _id: string;
@@ -29,14 +32,22 @@ interface GiftPopupConfig {
 // Grid layout component for gift products
 
 export default function GiftPopup() {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState<GiftPopupConfig | null>(null);
   const [giftProducts, setGiftProducts] = useState<GiftProduct[]>([]);
   const [selectedGifts, setSelectedGifts] = useState<string[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const { cart, addGiftToCart, removeItemFromCart } = useCart();
+  const [loading, setLoading] = useState(true);
+  const { cart, cartItems, addGiftToCart, removeItemFromCart } = useCart();
   const [dismissedUntilCartChange, setDismissedUntilCartChange] = useState(false);
-  const [lastCartId, setLastCartId] = useState('');
+
+  const sliderSettings = {
+    dots: true,
+    infinite: false,
+    speed: 500,
+    slidesToShow: config?.maxSelectableGifts || 2,
+    slidesToScroll: 1,
+    adaptiveHeight: true,
+  };
 
   // Load gift popup configuration and products
   useEffect(() => {
@@ -68,91 +79,69 @@ export default function GiftPopup() {
     fetchGiftProducts();
   }, []);
 
-  // Check if cart value is within range and show popup
+  // Reset dismissal and selection when cart changes
   useEffect(() => {
-    if (!config || !config.active || loading) return;
-    
-    // Reset dismissed state if cart has changed
-    if (cart.id !== lastCartId) {
-      setDismissedUntilCartChange(false);
-      setLastCartId(cart.id || ''); // Handle potential null value
-    }
-    
+    setDismissedUntilCartChange(false);
+    setSelectedGifts([]);
+  }, [cart.id]);
+
+  // Auto-remove all gift items when cart out of eligible range and control popup
+  useEffect(() => {
+    if (!config?.active || loading) return;
     const cartTotal = cart.totalPrice;
-    const isCartEligible = 
-      cartTotal >= config.minCartValue && 
+    const isCartEligible =
+      cartTotal >= config.minCartValue &&
       (config.maxCartValue === null || cartTotal <= config.maxCartValue);
-    
-    const shouldShowPopup = 
-      isCartEligible &&
-      !dismissedUntilCartChange &&
-      giftProducts.length > 0;
-    
-    // Auto-remove gift items if cart total falls below threshold
-    if (!isCartEligible && selectedGifts.length > 0) {
-      console.log('Cart total below threshold, removing gift items');
-      // Remove all selected gift items from cart
-      selectedGifts.forEach(giftId => {
-        removeItemFromCart(giftId);
+
+    // Remove all gift items from cart if not eligible
+    if (!isCartEligible) {
+      cartItems.filter(item => item.isGift).forEach(item => {
+        const pid = (item.product as any)._id || (item.product as any).id;
+        removeItemFromCart(pid);
       });
-      // Reset selected gifts
       setSelectedGifts([]);
     }
-    
-    // If popup should be shown, open it
-    if (shouldShowPopup) {
-      // Clear any previously selected gifts that might have been added to cart
-      setSelectedGifts([]);
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
-    }
-  }, [cart.totalPrice, config, loading, dismissedUntilCartChange, cart.id, lastCartId, giftProducts.length, selectedGifts]);
+
+    // Show or hide popup
+    setIsOpen(isCartEligible && !dismissedUntilCartChange && giftProducts.length > 0);
+  }, [cart.totalPrice, config?.active, loading, giftProducts.length]);
 
   // Handle selecting a gift
   const handleSelectGift = (productId: string) => {
+    // Enforce max selectable gifts
+    if (!config) return;
+    if (!selectedGifts.includes(productId) && selectedGifts.length >= (config.maxSelectableGifts || 2)) return;
     setSelectedGifts(prev => {
       // If already selected, remove it
       if (prev.includes(productId)) {
-        // Remove from cart
         removeItemFromCart(productId);
         return prev.filter(id => id !== productId);
       }
       
-      // Otherwise, add it if we haven't hit the limit
-      if (prev.length < (config?.maxSelectableGifts || 2)) {
-        // Add to cart
-        const product = giftProducts.find(p => p._id === productId);
-        if (product) {
-          // Create a complete product object with all required fields for the Product type
-          // Cast to any to bypass type checking since this is a special gift product
-          // that doesn't need all the fields of a regular product
-          addGiftToCart({
-            _id: product._id,
-            sku: `gift-${product._id}`,
-            name: product.name,
-            description: product.description || product.name,
-            price: 0, // Free gift
-            imageUrl: product.images?.[0] || '',
-            stock: 1,
-            slug: `gift-${product._id}`,
-            categoryId: 'gifts',
-            images: product.images || [],
-            // Add all required fields with empty values
-            faqs: [],
-            customSections: [],
-            structuredIngredients: [],
-            structuredBenefits: [],
-            howToUse: '',
-            shortDescription: 'Complimentary gift',
-            // Add the gift flag
-            isGift: true
-          } as any);
-        }
-        return [...prev, productId];
+      // Otherwise, add it
+      const product = giftProducts.find(p => p._id === productId);
+      if (product) {
+        addGiftToCart({
+          _id: product._id,
+          sku: `gift-${product._id}`,
+          name: product.name,
+          description: product.description || product.name,
+          price: 0,
+          imageUrl: product.images?.[0] || '',
+          stock: 1,
+          slug: `gift-${product._id}`,
+          categoryId: 'gifts',
+          images: product.images || [],
+          faqs: [],
+          customSections: [],
+          structuredIngredients: [],
+          structuredBenefits: [],
+          howToUse: '',
+          shortDescription: 'Complimentary gift',
+          isGift: true
+        } as any);
       }
-      
-      return prev;
+      return [...prev, productId];
     });
   };
 
@@ -212,65 +201,65 @@ export default function GiftPopup() {
           <p className="text-amber-800 font-medium">{config.subTitle}</p>
         </div>
         
-        {/* Gift product selection - Grid */}
+        {/* Complimentary Gifts - Slider */}
         <div className="px-12 py-6 flex-grow" style={{ maxHeight: 'calc(80vh - 180px)' }}>
-          <div className="p-4 overflow-y-auto max-h-[60vh]">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {giftProducts.map((product) => {
-              const isSelected = selectedGifts.includes(product._id);
-              return (
-                <div 
-                  key={product._id}
-                  className={`border rounded-lg overflow-hidden transition-all h-full flex flex-col ${
-                    isSelected 
-                      ? 'border-amber-500 ring-2 ring-amber-300 shadow-md' 
-                      : 'border-gray-200 hover:border-amber-200'
-                  }`}
-                >
-                  <div className="relative pt-[100%] bg-gray-50">
-                    {product.images && product.images.length > 0 ? (
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="absolute inset-0 h-full w-full object-contain p-3"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).onerror = null;
-                          (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="absolute inset-0 flex items-center justify-center"><span class="text-gray-400">No image</span></div>';
-                        }}
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-gray-400">No image</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="p-3 flex-grow flex flex-col">
-                    <h3 className="font-medium text-gray-900 truncate text-sm">{product.name}</h3>
-                    <div className="mt-1 flex items-center justify-between">
-                      <span className="text-green-600 font-medium text-sm">Free</span>
-                      <span className="text-gray-500 line-through text-xs">₹{product.price.toFixed(0)}</span>
+          <div className="p-4">
+            <Slider {...sliderSettings}>
+              {giftProducts.map((product) => {
+                const isSelected = selectedGifts.includes(product._id);
+                return (
+                  <div 
+                    key={product._id}
+                    className={`border rounded-lg overflow-hidden transition-all h-full flex flex-col ${
+                      isSelected 
+                        ? 'border-amber-500 ring-2 ring-amber-300 shadow-md' 
+                        : 'border-gray-200 hover:border-amber-200'
+                    }`}
+                  >
+                    <div className="relative pt-[100%] bg-gray-50">
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="absolute inset-0 h-full w-full object-contain p-3"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).onerror = null;
+                            (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="absolute inset-0 flex items-center justify-center"><span class="text-gray-400">No image</span></div>';
+                          }}
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-gray-400">No image</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-grow"></div>
                     
-                    <button
-                      onClick={() => handleSelectGift(product._id)}
-                      className={`mt-3 w-full py-2 px-3 rounded-md transition-colors ${
-                        isSelected
-                          ? 'bg-amber-500 text-white hover:bg-amber-600'
-                          : selectedGifts.length >= (config?.maxSelectableGifts || 2)
-                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                      }`}
-                      disabled={!isSelected && selectedGifts.length >= (config?.maxSelectableGifts || 2)}
-                    >
-                      {isSelected ? 'Selected' : 'Select Gift'}
-                    </button>
+                    <div className="p-3 flex-grow flex flex-col">
+                      <h3 className="font-medium text-gray-900 truncate text-sm">{product.name}</h3>
+                      <div className="mt-1 flex items-center justify-between">
+                        <span className="text-green-600 font-medium text-sm">Free</span>
+                        <span className="text-gray-500 line-through text-xs">₹{product.price.toFixed(0)}</span>
+                      </div>
+                      <div className="flex-grow"></div>
+                      
+                      <button
+                        onClick={() => handleSelectGift(product._id)}
+                        className={`mt-3 w-full py-2 px-3 rounded-md transition-colors ${
+                          isSelected
+                            ? 'bg-amber-500 text-white hover:bg-amber-600'
+                            : selectedGifts.length >= (config?.maxSelectableGifts || 2)
+                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}
+                        disabled={!isSelected && selectedGifts.length >= (config?.maxSelectableGifts || 2)}
+                      >
+                        {isSelected ? 'Selected' : 'Select Gift'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-            </div>
+                );
+              })}
+            </Slider>
           </div>
         </div>
         

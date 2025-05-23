@@ -219,7 +219,7 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
           <div className="border-t border-gray-200 py-6 bg-white sticky bottom-0 px-6">
             {/* Apply Offers button */}
             <button
-              className="w-full mb-4 border border-primary text-primary hover:bg-primary-light hover:text-white py-2 rounded text-sm font-medium transition-colors"
+              className="w-full mb-4 bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 py-2 rounded text-sm font-medium transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 setOffersPopupOpen(true);
