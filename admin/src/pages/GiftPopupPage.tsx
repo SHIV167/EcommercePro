@@ -90,7 +90,7 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-popup';
       }
       
-      const response = await fetch(`${API_BASE}${endpoint}`);
+      const response = await fetch(`${API_BASE}${endpoint}`, { credentials: 'include' });
       if (!response.ok) {
         throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
       }
@@ -166,7 +166,7 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-products';
       }
       
-      const response = await fetch(`${API_BASE}${endpoint}`);
+      const response = await fetch(`${API_BASE}${endpoint}`, { credentials: 'include' });
       if (!response.ok) {
         throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
       }
@@ -275,7 +275,7 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-popup';
       }
       
-      const response = await put<{data: GiftPopupConfig; status: number; message?: string}>(`${API_BASE}${endpoint}`, updatedConfig);
+      const response = await put<{data: GiftPopupConfig; status: number; message?: string}>(`${API_BASE}${endpoint}`, updatedConfig, { credentials: 'include' });
       console.log('Gift popup save response:', response);
       
       // Check for API error responses

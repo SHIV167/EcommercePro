@@ -12,12 +12,10 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       proxy: {
-        '/admin/api': {
+        '/api': {
           target: backend,
           changeOrigin: true,
           secure: false,
-          // Remove /admin from the path when forwarding to backend
-          rewrite: (path) => path.replace(/^\/admin/, ''),
         },
         '/uploads': {
           target: backend,
