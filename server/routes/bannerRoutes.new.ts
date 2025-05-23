@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import cloudinary, { isCloudinaryConfigured } from '../utils/cloudinary';
+import mongoose from 'mongoose';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,7 +48,12 @@ console.log('[BANNER] Cloudinary is now required for all banner operations');
 // GET all banners
 router.get('/banners', async (req, res) => {
   try {
-    const banners = await Banner.find().sort('position').lean();
+    // Respect `enabled` filter if provided
+    const { enabled } = req.query;
+    let queryBuilder = Banner.find();
+    if (enabled === 'true') queryBuilder = queryBuilder.where('enabled').equals(true);
+    else if (enabled === 'false') queryBuilder = queryBuilder.where('enabled').equals(false);
+    const banners = await queryBuilder.sort('position').lean();
     
     // Log a warning if any banners still have local URLs, but don't replace them
     const localUrlCount = banners.filter(banner => 
@@ -242,10 +248,14 @@ router.put('/banners/:id', authenticateJWT, isAdmin, (req, res, next) => {
       console.log('[BANNER] PUT linkUrl received:', linkUrl);
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       
-      // Find banner
-      const banner = await Banner.findOne({
-        $or: [{ id: req.params.id }, { _id: req.params.id }]
-      });
+      // Find banner by UUID or ObjectId
+      const bannerId = req.params.id;
+      let banner;
+      if (mongoose.Types.ObjectId.isValid(bannerId)) {
+        banner = await Banner.findOne({ $or: [{ id: bannerId }, { _id: bannerId }] });
+      } else {
+        banner = await Banner.findOne({ id: bannerId });
+      }
       
       if (!banner) {
         return res.status(404).json({ error: 'Banner not found' });

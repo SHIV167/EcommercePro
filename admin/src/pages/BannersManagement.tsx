@@ -223,20 +223,15 @@ export default function BannersManagement() {
     mutationFn: ({ id, banner, fileDesktop, fileMobile }: { id: string; banner: Partial<Banner>; fileDesktop?: File; fileMobile?: File }) => {
       console.log('[BANNER] Creating form data:', { id, banner, hasDesktop: !!fileDesktop, hasMobile: !!fileMobile });
       const formData = new FormData();
-      const { title, subtitle, alt, enabled, position } = banner;
-      const linkUrl = (banner.linkUrl as string) || "";
-      formData.append('title', title!);
-      if (subtitle !== undefined) formData.append('subtitle', subtitle!);
-      formData.append('alt', alt!);
-      if (enabled !== undefined) formData.append('enabled', enabled.toString());
-      formData.append('position', (position ?? 0).toString());
-      if (fileDesktop) {
-        formData.append('desktopImage', fileDesktop);
-      }
-      if (fileMobile) {
-        formData.append('mobileImage', fileMobile);
-      }
-      if (linkUrl) formData.append('linkUrl', linkUrl);
+      // Append only provided fields to avoid overwriting unchanged data
+      if (banner.title !== undefined) formData.append('title', banner.title as string);
+      if (banner.subtitle !== undefined) formData.append('subtitle', banner.subtitle as string);
+      if (banner.alt !== undefined) formData.append('alt', banner.alt as string);
+      if (banner.enabled !== undefined) formData.append('enabled', banner.enabled.toString());
+      if (banner.position !== undefined) formData.append('position', banner.position.toString());
+      if (banner.linkUrl !== undefined) formData.append('linkUrl', banner.linkUrl as string);
+      if (fileDesktop) formData.append('desktopImage', fileDesktop);
+      if (fileMobile) formData.append('mobileImage', fileMobile);
       return fetch(`${apiBase}/api/banners/${id}`, {
         method: "PUT",
         credentials: 'include',
@@ -295,7 +290,6 @@ export default function BannersManagement() {
                     <th>Mobile</th>
                     <th>Title</th>
                     <th>Alt</th>
-                    <th>Link</th>
                     <th>Enabled</th>
                     <th>Position</th>
                     <th>Actions</th>
@@ -350,7 +344,6 @@ export default function BannersManagement() {
                       </td>
                       <td>{banner.title}</td>
                       <td>{banner.alt}</td>
-                      <td>{banner.linkUrl ? <a href={banner.linkUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{banner.linkUrl}</a> : '-'}</td>
                       <td>
                         <Switch checked={banner.enabled} onCheckedChange={checked => updateBanner.mutate({ id: banner.id || banner._id!, banner: { enabled: checked } })} />
                       </td>
