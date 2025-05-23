@@ -30,7 +30,7 @@ export default function Popup() {
   const [subscribers, setSubscribers] = useState<{ email: string; subscribedAt: string }[]>([]);
 
   // Get the base API URL from environment variables or use relative path
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
   // --- Fetch settings from API on mount ---
   useEffect(() => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, API_BASE_URL } from '@/lib/queryClient';
 
 // Custom type for date selection
 interface DateSelection {
@@ -24,7 +24,7 @@ export default function Popup() {
   const [subsLoading, setSubsLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/popup-settings')
+    fetch(`${API_BASE_URL}/api/popup-settings`)
       .then(async res => {
         console.log('Popup fetch status:', res.status);
         // Check if the response is ok and has content
@@ -114,7 +114,7 @@ export default function Popup() {
       setFormError('All fields are required.');
       return;
     }
-    const res = await fetch('/api/popup-settings', {
+    const res = await fetch(`${API_BASE_URL}/api/popup-settings`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
