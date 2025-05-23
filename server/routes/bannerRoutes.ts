@@ -6,7 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import cloudinary, { isCloudinaryConfigured } from '../utils/cloudinary';
+import cloudinary, { isCloudinaryConfigured, isCloudinaryEnabled } from '../utils/cloudinary';
+import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,6 +44,69 @@ const isCloudinaryUrl = (url: string): boolean => {
 
 // Log that Cloudinary is required
 console.log('[BANNER] Cloudinary is now required for all banner operations');
+
+// Local storage setup for banners
+const bannerDir = path.join(process.cwd(), 'public', 'uploads', 'banners');
+if (!fs.existsSync(bannerDir)) fs.mkdirSync(bannerDir, { recursive: true });
+const localStorage = multer.diskStorage({
+  destination: bannerDir,
+  filename: (_req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`)
+});
+const uploadLocal = multer({ storage: localStorage });
+
+// Local routes: if Cloudinary disabled
+if (!isCloudinaryEnabled) {
+  // Create banner locally
+  router.post('/api/banners', authenticateJWT, isAdmin,
+    uploadLocal.fields([{ name: 'desktopImage', maxCount: 1 },{ name: 'mobileImage', maxCount: 1 }]),
+    async (req, res) => {
+      try {
+        const { title, subtitle, alt, linkUrl, enabled, position } = req.body;
+        if (!title) return res.status(400).json({ error: 'Title is required' });
+        const files = req.files as Record<string, Express.Multer.File[]>;
+        const desktop = files.desktopImage?.[0];
+        if (!desktop) return res.status(400).json({ error: 'Desktop image is required' });
+        const desktopUrl = `/uploads/banners/${desktop.filename}`;
+        const mobileUrl = files.mobileImage?.[0]
+          ? `/uploads/banners/${files.mobileImage[0].filename}`
+          : '';
+        const banner = new Banner({ id: uuidv4(), title, subtitle: subtitle||'', alt: alt||title,
+          linkUrl, enabled: enabled=='true'||enabled===true, position: parseInt(position as string,10)||0,
+          desktopImageUrl: desktopUrl, mobileImageUrl: mobileUrl });
+        const saved = await banner.save();
+        return res.status(201).json({ success: true, message: 'Banner created locally', data: saved });
+      } catch (e: any) {
+        console.error('[BANNER] Local create error:', e);
+        return res.status(500).json({ error: e.message });
+      }
+    }
+  );
+  // Update banner locally
+  router.put('/api/banners/:id', authenticateJWT, isAdmin,
+    uploadLocal.fields([{ name: 'desktopImage', maxCount: 1 },{ name: 'mobileImage', maxCount: 1 }]),
+    async (req, res) => {
+      try {
+        const { title, subtitle, alt, linkUrl, enabled, position } = req.body;
+        const files = req.files as Record<string, Express.Multer.File[]>;
+        const banner = await Banner.findOne({ $or: [{ id: req.params.id },{ _id: req.params.id }] });
+        if (!banner) return res.status(404).json({ error: 'Banner not found' });
+        if (title!==undefined) banner.title = title;
+        if (subtitle!==undefined) banner.subtitle = subtitle;
+        if (alt!==undefined) banner.alt = alt;
+        if (linkUrl!==undefined) banner.linkUrl = linkUrl;
+        if (enabled!==undefined) banner.enabled = enabled=='true'||enabled===true;
+        if (position!==undefined) banner.position = parseInt(position as string,10);
+        if (files.desktopImage?.[0]) banner.desktopImageUrl = `/uploads/banners/${files.desktopImage[0].filename}`;
+        if (files.mobileImage?.[0]) banner.mobileImageUrl = `/uploads/banners/${files.mobileImage[0].filename}`;
+        const updated = await banner.save();
+        return res.status(200).json({ success: true, message: 'Banner updated locally', data: updated });
+      } catch (e: any) {
+        console.error('[BANNER] Local update error:', e);
+        return res.status(500).json({ error: e.message });
+      }
+    }
+  );
+}
 
 // GET all banners
 router.get('/api/banners', async (req, res) => {
