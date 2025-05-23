@@ -72,6 +72,20 @@ export default function CheckoutPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
+  // Tax settings from server
+  const [taxEnabledConfig, setTaxEnabledConfig] = useState(false);
+  const [taxPercentageConfig, setTaxPercentageConfig] = useState(0);
+
+  useEffect(() => {
+    apiRequest('GET', '/api/config')
+      .then(res => res.json())
+      .then(cfg => {
+        setTaxEnabledConfig(cfg.taxEnabled);
+        setTaxPercentageConfig(cfg.taxPercentage);
+      })
+      .catch(err => console.error('Failed to load config', err));
+  }, []);
+
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
@@ -120,8 +134,10 @@ export default function CheckoutPage() {
 
   const onSubmit = async (values: CheckoutFormValues) => {
     setIsSubmitting(true);
-    // Update to use finalTotal which includes any applied discounts
-    const totalAmount = finalTotal + (finalTotal > 500 ? 0 : 50) + finalTotal * 0.18;
+    // Calculate shipping and tax dynamically
+    const shippingFee = finalTotal > 500 ? 0 : 50;
+    const taxAmount = taxEnabledConfig ? finalTotal * (taxPercentageConfig / 100) : 0;
+    const totalAmount = finalTotal + shippingFee + taxAmount;
     const payload = {
       order: {
         userId: user?.id || '',
@@ -646,14 +662,18 @@ export default function CheckoutPage() {
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <span className="text-neutral-gray">Tax (18%)</span>
-                      <span>{formatCurrency(finalTotal * 0.18)}</span>
+                      <span className="text-neutral-gray">
+                        Tax{taxEnabledConfig ? ` (${taxPercentageConfig}%)` : ''}
+                      </span>
+                      <span>
+                        {formatCurrency(taxEnabledConfig ? finalTotal * (taxPercentageConfig / 100) : 0)}
+                      </span>
                     </div>
                     
                     <div className="border-t border-neutral-sand pt-4 flex justify-between items-center">
                       <span className="font-heading text-primary">Total</span>
                       <span className="font-heading text-xl text-primary">
-                        {formatCurrency(finalTotal + (finalTotal > 500 ? 0 : 50) + finalTotal * 0.18)}
+                        {formatCurrency(finalTotal + (finalTotal > 500 ? 0 : 50) + (taxEnabledConfig ? finalTotal * (taxPercentageConfig / 100) : 0))}
                       </span>
                     </div>
                   </div>

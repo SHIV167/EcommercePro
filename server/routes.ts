@@ -1965,10 +1965,10 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Admin: update settings
   app.put("/api/admin/settings", async (req, res) => {
     try {
-      const { siteName, maintenanceMode, supportEmail, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode, shiprocketPickupLocation, shiprocketChannelId } = req.body;
+      const { siteName, maintenanceMode, supportEmail, taxEnabled, taxPercentage, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode, shiprocketPickupLocation, shiprocketChannelId } = req.body;
       const updated = await SettingModel.findOneAndUpdate(
         {},
-        { siteName, maintenanceMode, supportEmail, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode, shiprocketPickupLocation, shiprocketChannelId },
+        { siteName, maintenanceMode, supportEmail, taxEnabled, taxPercentage, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode, shiprocketPickupLocation, shiprocketChannelId },
         { new: true, upsert: true }
       );
       return res.status(200).json(updated!.toObject());
@@ -1981,7 +1981,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.get('/api/config', async (req, res) => {
     try {
       const settings = await SettingModel.findOne();
-      return res.json({ razorpayKeyId: settings?.razorpayKeyId });
+      return res.json({ razorpayKeyId: settings?.razorpayKeyId, taxEnabled: settings?.taxEnabled, taxPercentage: settings?.taxPercentage });
     } catch (error) {
       return res.status(500).json({ message: 'Server error' });
     }

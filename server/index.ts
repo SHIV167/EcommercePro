@@ -10,6 +10,7 @@ import { connectToDatabase, closeDatabaseConnection } from "./db";
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
+import SettingModel from './models/Setting';
 
 const app = express();
 app.use(express.json());
@@ -194,6 +195,17 @@ app.use((req, res, next) => {
 
   app.use('/api/promotimers', promoTimerRoutes);
   app.use('/api/stores', storeRoutes);
+
+  // Migration: ensure existing settings have taxEnabled and taxPercentage
+  try {
+    await SettingModel.updateMany(
+      { taxEnabled: { $exists: false } },
+      { $set: { taxEnabled: false, taxPercentage: 0 } }
+    );
+    log('[MIGRATION] Added taxEnabled/taxPercentage to existing settings', 'migration');
+  } catch (e) {
+    console.error('[MIGRATION] error updating settings tax fields:', e);
+  }
 
   // Register API routes
   const server = await registerRoutes(app);
