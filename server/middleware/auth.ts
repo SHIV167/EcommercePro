@@ -9,7 +9,12 @@ export interface AuthRequest extends Request {
 // Authentication middleware
 export const authenticateJWT = (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const token = req.cookies.token;
+    // Allow token from cookie or Authorization header
+    let token = req.cookies.token;
+    const authHeader = req.headers.authorization;
+    if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
     if (!token) {
       return res.status(401).json({ message: 'Authentication required' });
     }

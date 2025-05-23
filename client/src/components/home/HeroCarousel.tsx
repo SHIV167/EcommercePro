@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
 import AnimatedCartButton from "@/components/ui/AnimatedCartButton";
 import BannerLoader from "@/components/ui/BannerLoader";
 import { cn } from "@/lib/utils";
@@ -55,52 +54,65 @@ export default function HeroCarousel() {
   return (
     <div className="relative w-full border border-neutral-sand overflow-hidden bg-[#f8f4ea] md:top-0 -top-16">
       <div className="flex w-full transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${current * 100}%)` }}>
-        {banners.map((banner, idx) => (
-          <picture key={idx} className="w-full flex-shrink-0">
-            <source 
-              media="(max-width: 767px)" 
-              srcSet={(() => {
-                const imageUrl = banner.mobileImageUrl;
-                if (!imageUrl) return '/uploads/banners/placeholder.jpg';
-                
-                // Optimize Cloudinary URL with mobile-specific parameters
-                if (imageUrl.includes('cloudinary.com')) {
-                  return `${optimizeCloudinaryUrl(imageUrl, { width: 768, quality: 80, format: 'auto' })} 1x`;
-                }
-                
-                // For local uploads, add descriptor
-                return `${imageUrl} 1x`;
-              })()} 
-              onError={(e) => {
-                const source = e.target as HTMLSourceElement;
-                source.onerror = null;
-                source.srcset = '/uploads/banners/placeholder.jpg 1x';
-              }}
-            />
-            <img
-              src={(() => {
-                // Get desktop image URL
-                const imageUrl = banner.desktopImageUrl;
-                if (!imageUrl) return '/uploads/banners/placeholder.jpg';
-                
-                // Optimize Cloudinary URL with desktop-specific parameters
-                if (imageUrl.includes('cloudinary.com')) {
-                  return optimizeCloudinaryUrl(imageUrl, { width: 1920, quality: 85, format: 'auto' });
-                }
-                
-                return imageUrl;
-              })()}
-              alt={banner.alt}
-              className="w-full h-auto object-cover"
-              style={{ maxHeight: '100%' }}
-              onError={(e) => {
-                const img = e.target as HTMLImageElement;
-                img.onerror = null;
-                img.src = '/uploads/banners/placeholder.jpg';
-              }}
-            />
-          </picture>
-        ))}
+        {banners.map((banner, idx) => {
+          const content = (
+            <picture key={idx} className="w-full flex-shrink-0">
+              <source 
+                media="(max-width: 767px)" 
+                srcSet={(() => {
+                  const imageUrl = banner.mobileImageUrl;
+                  if (!imageUrl) return '/uploads/banners/placeholder.jpg';
+                  
+                  // Optimize Cloudinary URL with mobile-specific parameters
+                  if (imageUrl.includes('cloudinary.com')) {
+                    return `${optimizeCloudinaryUrl(imageUrl, { width: 768, quality: 80, format: 'auto' })} 1x`;
+                  }
+                  
+                  // For local uploads, add descriptor
+                  return `${imageUrl} 1x`;
+                })()} 
+                onError={(e) => {
+                  const source = e.target as HTMLSourceElement;
+                  source.onerror = null;
+                  source.srcset = '/uploads/banners/placeholder.jpg 1x';
+                }}
+              />
+              <img
+                src={(() => {
+                  // Get desktop image URL
+                  const imageUrl = banner.desktopImageUrl;
+                  if (!imageUrl) return '/uploads/banners/placeholder.jpg';
+                  
+                  // Optimize Cloudinary URL with desktop-specific parameters
+                  if (imageUrl.includes('cloudinary.com')) {
+                    return optimizeCloudinaryUrl(imageUrl, { width: 1920, quality: 85, format: 'auto' });
+                  }
+                  
+                  return imageUrl;
+                })()}
+                alt={banner.alt}
+                className="w-full h-auto object-cover"
+                style={{ maxHeight: '100%' }}
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.onerror = null;
+                  img.src = '/uploads/banners/placeholder.jpg';
+                }}
+              />
+            </picture>
+          );
+          return banner.linkUrl ? (
+            <a
+              key={idx}
+              href={banner.linkUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex-shrink-0 block"
+            >
+              {content}
+            </a>
+          ) : content;
+        })}
       </div>
       {/* Slider Controls */}
       <button

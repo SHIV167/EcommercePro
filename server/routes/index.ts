@@ -1,6 +1,6 @@
 import express from 'express';
 import uploadRoutes from './uploadRoutes';
-import bannerRoutes from './bannerRoutes';
+import bannerRoutes from './bannerRoutes.new';
 import { errorHandler } from '../middleware/errorHandler';
 
 const router = express.Router();

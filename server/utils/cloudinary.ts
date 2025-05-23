@@ -12,6 +12,14 @@ export const isCloudinaryConfigured =
     process.env.CLOUDINARY_API_SECRET
   );
 
+console.log('[CLOUDINARY] Configuration status:', {
+  enabled: isCloudinaryEnabled,
+  configured: isCloudinaryConfigured,
+  cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+  hasApiKey: !!process.env.CLOUDINARY_API_KEY,
+  hasSecret: !!process.env.CLOUDINARY_API_SECRET
+});
+
 if (isCloudinaryConfigured) {
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

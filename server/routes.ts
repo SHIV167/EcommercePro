@@ -101,12 +101,12 @@ const bannerObjectSchema = z.object({
   title: z.string(),
   subtitle: z.string().optional(),
   alt: z.string(),
-  linkUrl: z.string().optional(),
   enabled: z.boolean(),
   position: z.number(),
   desktopImageUrl: z.string().url().optional(),
   mobileImageUrl: z.string().url().optional(),
-  imageUrl: z.string().url().optional()
+  imageUrl: z.string().url().optional(),
+  linkUrl: z.string().url().optional()
 });
 const bannerSchema = bannerObjectSchema
   .refine(data => !!(data.desktopImageUrl || data.imageUrl), {
@@ -128,7 +128,7 @@ import testimonialRoutes from './routes/testimonialRoutes.js'; // Import testimo
 import freeProductRoutes from './routes/freeProductRoutes.js'; // Import freeProduct routes
 import reviewRoutes from './routes/reviewRoutes.js'; // Import review routes
 import cartRoutes from './routes/cartRoutes.js'; // Import cart routes
-import bannerRoutes from './routes/bannerRoutes.js'; // Import banner routes
+import bannerRoutes from './routes/bannerRoutes.new'; // Add banner routes
 import uploadRoutes from './routes/uploadRoutes.js';
 
 // Import controllers for coupons
@@ -389,72 +389,6 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Newsletter subscription routes
   app.post('/api/newsletter/subscribe', subscribeNewsletter);
   app.get('/api/newsletter/subscribers', getNewsletterSubscribers);
-
-  // Banner routes
-  app.get('/api/banners', async (req, res) => {
-    try {
-      const banners = await BannerModel.find();
-      return res.status(200).json(banners);
-    } catch (error) {
-      console.error('Get banners error:', error);
-      return res.status(500).json({ message: 'Error fetching banners' });
-    }
-  });
-
-  app.post('/api/banners', upload.fields([{ name: 'desktopImage', maxCount: 1 }, { name: 'mobileImage', maxCount: 1 }]), async (req, res) => {
-    try {
-      const { title, subtitle, alt, linkUrl, enabled, position, desktopImageUrl, mobileImageUrl } = req.body;
-      const id = uuidv4();
-      let desktopUrl = desktopImageUrl;
-      let mobileUrl = mobileImageUrl;
-      const files = req.files as Record<string, Express.Multer.File[]>;
-      if (files?.desktopImage) desktopUrl = `/uploads/banners/${files.desktopImage[0].filename}`;
-      if (files?.mobileImage) mobileUrl = `/uploads/banners/${files.mobileImage[0].filename}`;
-      const banner = new BannerModel({ id, title, subtitle, desktopImageUrl: desktopUrl, mobileImageUrl: mobileUrl, alt, linkUrl, enabled: enabled === 'true' || enabled === true, position: parseInt(position, 10) });
-      await banner.save();
-      return res.status(201).json(banner);
-    } catch (error) {
-      console.error('Create banner error:', error);
-      return res.status(500).json({ message: 'Error creating banner' });
-    }
-  });
-
-  app.put('/api/banners/:id', upload.fields([{ name: 'desktopImage', maxCount: 1 }, { name: 'mobileImage', maxCount: 1 }]), async (req, res) => {
-    try {
-      const { id } = req.params;
-      const banner = await BannerModel.findOne({ id });
-      if (!banner) return res.status(404).json({ message: 'Banner not found' });
-      const { title, subtitle, alt, linkUrl, enabled, position, desktopImageUrl, mobileImageUrl } = req.body;
-      let desktopUrl = desktopImageUrl;
-      let mobileUrl = mobileImageUrl;
-      const files = req.files as Record<string, Express.Multer.File[]>;
-      if (files?.desktopImage) desktopUrl = `/uploads/banners/${files.desktopImage[0].filename}`;
-      if (files?.mobileImage) mobileUrl = `/uploads/banners/${files.mobileImage[0].filename}`;
-      banner.title = title;
-      banner.subtitle = subtitle;
-      banner.alt = alt;
-      banner.linkUrl = linkUrl;
-      banner.enabled = enabled === 'true' || enabled === true;
-      banner.position = parseInt(position, 10);
-      banner.desktopImageUrl = desktopUrl;
-      banner.mobileImageUrl = mobileUrl;
-      await banner.save();
-      return res.status(200).json(banner);
-    } catch (error) {
-      console.error('Update banner error:', error);
-      return res.status(500).json({ message: 'Error updating banner' });
-    }
-  });
-
-  app.delete('/api/banners/:id', async (req, res) => {
-    try {
-      await BannerModel.deleteOne({ id: req.params.id });
-      return res.status(204).end();
-    } catch (error) {
-      console.error('Delete banner error:', error);
-      return res.status(500).json({ message: 'Error deleting banner' });
-    }
-  });
 
   // Collection products route
   app.get('/api/collections/:slug/products', async (req, res) => {

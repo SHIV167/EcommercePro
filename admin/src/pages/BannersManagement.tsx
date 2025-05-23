@@ -23,9 +23,9 @@ type Banner = {
   desktopImageUrl: string;
   mobileImageUrl: string;
   alt: string;
-  linkUrl?: string;
   enabled: boolean;
   position: number;
+  linkUrl?: string;
 };
 
 type BannerFormProps = {
@@ -40,15 +40,11 @@ function BannerForm({ open, onClose, onSave, initial, mainServerUrl }: BannerFor
   const [title, setTitle] = useState(initial?.title || "");
   const [subtitle, setSubtitle] = useState(initial?.subtitle || "");
   const [alt, setAlt] = useState(initial?.alt || "");
-  const [linkUrl, setLinkUrl] = useState(initial?.linkUrl || "");
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [position, setPosition] = useState(initial?.position || 0);
-  const [fileDesktop, setFileDesktop] = useState<File | undefined>();
-  const [fileMobile, setFileMobile] = useState<File | undefined>();
-  const [desktopUrl, setDesktopUrl] = useState(initial?.desktopImageUrl || "");
-  const [mobileUrl, setMobileUrl] = useState(initial?.mobileImageUrl || "");
-  const [desktopOption, setDesktopOption] = useState<'upload' | 'url'>(initial?.desktopImageUrl ? 'url' : 'upload');
-  const [mobileOption, setMobileOption] = useState<'upload' | 'url'>(initial?.mobileImageUrl ? 'url' : 'upload');
+  const [fileDesktop, setFileDesktop] = useState<File | null>(null);
+  const [fileMobile, setFileMobile] = useState<File | null>(null);
+  const [linkUrl, setLinkUrl] = useState<string>(initial?.linkUrl || "");
 
   // Reset on open/close
   React.useEffect(() => {
@@ -56,30 +52,32 @@ function BannerForm({ open, onClose, onSave, initial, mainServerUrl }: BannerFor
       setTitle(initial?.title || "");
       setSubtitle(initial?.subtitle || "");
       setAlt(initial?.alt || "");
-      setLinkUrl(initial?.linkUrl || "");
       setEnabled(initial?.enabled ?? true);
       setPosition(initial?.position || 0);
-      setFileDesktop(undefined);
-      setFileMobile(undefined);
-      setDesktopUrl(initial?.desktopImageUrl || "");
-      setMobileUrl(initial?.mobileImageUrl || "");
-      setDesktopOption(initial?.desktopImageUrl ? 'url' : 'upload');
-      setMobileOption(initial?.mobileImageUrl ? 'url' : 'upload');
+      setFileDesktop(null);
+      setFileMobile(null);
+      setLinkUrl(initial?.linkUrl || "");
     }
   }, [open, initial]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Validate by selected option
-    if (desktopOption==='upload' && !fileDesktop) { alert("Desktop file required"); return; }
-    if (desktopOption==='url' && !desktopUrl)   { alert("Desktop URL required"); return; }
-    if (mobileOption==='upload' && !fileMobile) { alert("Mobile file required"); return; }
-    if (mobileOption==='url' && !mobileUrl)     { alert("Mobile URL required"); return; }
-    const bannerData = { title, subtitle, alt, linkUrl, enabled, position,
-      desktopImageUrl: desktopUrl, mobileImageUrl: mobileUrl };
-    const sendDesktopFile = desktopOption==='upload' ? fileDesktop : undefined;
-    const sendMobileFile = mobileOption==='upload' ? fileMobile : undefined;
-    onSave(bannerData, sendDesktopFile, sendMobileFile);
+    // Validate required files for new banner only
+    if (!initial) {
+      if (!fileDesktop) { alert("Desktop image is required"); return; }
+      if (!fileMobile) { alert("Mobile image is required"); return; }
+    }
+    
+    const bannerData = { 
+      title, 
+      subtitle, 
+      alt, 
+      enabled, 
+      position,
+      linkUrl
+    };
+    
+    onSave(bannerData, fileDesktop ?? undefined, fileMobile ?? undefined);
   }
 
   return (
@@ -103,7 +101,13 @@ function BannerForm({ open, onClose, onSave, initial, mainServerUrl }: BannerFor
           </div>
           <div>
             <Label>Link URL</Label>
-            <Input value={linkUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLinkUrl(e.target.value)} />
+            <Input
+              type="url"
+              value={linkUrl}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLinkUrl(e.target.value)}
+              placeholder="https://"
+              className="w-full"
+            />
           </div>
           <div>
             <Label>Position</Label>
@@ -113,24 +117,15 @@ function BannerForm({ open, onClose, onSave, initial, mainServerUrl }: BannerFor
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 min-w-0">
                 <Label>Desktop Image</Label>
-                <div className="flex gap-4">
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="desktopOption" value="upload" checked={desktopOption==='upload'} onChange={() => setDesktopOption('upload')} />
-                    <span className="ml-2">Upload</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="desktopOption" value="url" checked={desktopOption==='url'} onChange={() => setDesktopOption('url')} />
-                    <span className="ml-2">URL</span>
-                  </label>
-                </div>
-                {desktopOption==='upload' ? (
-                  <input type="file" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFileDesktop(e.target.files?.[0])} accept="image/*" className="w-full" />
-                ) : (
-                  <Input value={desktopUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDesktopUrl(e.target.value)} placeholder="https://example.com/desktop.jpg" className="w-full max-w-full break-words whitespace-normal" />
-                )}
-                {((desktopOption==='upload' && fileDesktop) || (desktopOption==='url' && desktopUrl)) && (
+                <input 
+                  type="file" 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFileDesktop(e.target.files?.[0] || null)} 
+                  accept="image/*" 
+                  className="w-full" 
+                />
+                {fileDesktop && (
                   <img
-                    src={desktopOption==='upload' ? URL.createObjectURL(fileDesktop!) : desktopUrl}
+                    src={URL.createObjectURL(fileDesktop)}
                     alt={alt || "Desktop banner image"}
                     className="h-14 mt-2 rounded"
                     onError={(e: React.SyntheticEvent<HTMLImageElement>) => { const img=e.target as HTMLImageElement; img.onerror=null; img.src=`${mainServerUrl}/uploads/banners/placeholder.png`; }}
@@ -139,24 +134,15 @@ function BannerForm({ open, onClose, onSave, initial, mainServerUrl }: BannerFor
               </div>
               <div className="space-y-2 min-w-0">
                 <Label>Mobile Image</Label>
-                <div className="flex gap-4">
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="mobileOption" value="upload" checked={mobileOption==='upload'} onChange={() => setMobileOption('upload')} />
-                    <span className="ml-2">Upload</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="mobileOption" value="url" checked={mobileOption==='url'} onChange={() => setMobileOption('url')} />
-                    <span className="ml-2">URL</span>
-                  </label>
-                </div>
-                {mobileOption==='upload' ? (
-                  <input type="file" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFileMobile(e.target.files?.[0])} accept="image/*" className="w-full" />
-                ) : (
-                  <Input value={mobileUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMobileUrl(e.target.value)} placeholder="https://example.com/mobile.jpg" className="w-full max-w-full break-words whitespace-normal" />
-                )}
-                {((mobileOption==='upload' && fileMobile) || (mobileOption==='url' && mobileUrl)) && (
+                <input 
+                  type="file" 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFileMobile(e.target.files?.[0] || null)} 
+                  accept="image/*" 
+                  className="w-full" 
+                />
+                {fileMobile && (
                   <img
-                    src={mobileOption==='upload' ? URL.createObjectURL(fileMobile!) : mobileUrl}
+                    src={URL.createObjectURL(fileMobile)}
                     alt={alt || "Mobile banner image"}
                     className="h-14 mt-2 rounded"
                     onError={e => { const img=e.target as HTMLImageElement; img.onerror=null; img.src=import.meta.env.BASE_URL + "placeholder-mobile.png"; }}
@@ -192,7 +178,7 @@ export default function BannersManagement() {
   const { data: bannersData = [], isLoading } = useQuery<Banner[]>({
     queryKey: ['banners'],
     queryFn: async () => {
-      const res = await fetch(`${apiBase}/api/banners`);
+      const res = await fetch(`${apiBase}/api/banners`, { credentials: 'include' });
       if (!res.ok) {
         throw new Error('Failed to fetch banners');
       }
@@ -206,25 +192,23 @@ export default function BannersManagement() {
     mutationFn: (data: { banner: Partial<Banner>; fileDesktop?: File; fileMobile?: File }) => {
       const formData = new FormData();
       const { banner, fileDesktop, fileMobile } = data;
-      const { title, subtitle, alt, linkUrl, enabled, position, desktopImageUrl, mobileImageUrl } = banner;
+      const { title, subtitle, alt, enabled, position } = banner;
+      const linkUrl = (banner.linkUrl as string) || "";
       formData.append('title', title!);
       if (subtitle !== undefined) formData.append('subtitle', subtitle!);
       formData.append('alt', alt!);
-      if (linkUrl !== undefined) formData.append('linkUrl', linkUrl!);
       if (enabled !== undefined) formData.append('enabled', enabled.toString());
       formData.append('position', (position ?? 0).toString());
       if (fileDesktop) {
         formData.append('desktopImage', fileDesktop);
-      } else if (desktopImageUrl !== undefined) {
-        formData.append('desktopImageUrl', desktopImageUrl);
       }
       if (fileMobile) {
         formData.append('mobileImage', fileMobile);
-      } else if (mobileImageUrl !== undefined) {
-        formData.append('mobileImageUrl', mobileImageUrl);
       }
+      if (linkUrl) formData.append('linkUrl', linkUrl);
       return fetch(`${apiBase}/api/banners`, {
         method: "POST",
+        credentials: 'include',
         body: formData,
       }).then(res => res.json());
     },
@@ -237,26 +221,25 @@ export default function BannersManagement() {
 
   const updateBanner = useMutation({
     mutationFn: ({ id, banner, fileDesktop, fileMobile }: { id: string; banner: Partial<Banner>; fileDesktop?: File; fileMobile?: File }) => {
+      console.log('[BANNER] Creating form data:', { id, banner, hasDesktop: !!fileDesktop, hasMobile: !!fileMobile });
       const formData = new FormData();
-      const { title, subtitle, alt, linkUrl, enabled, position, desktopImageUrl, mobileImageUrl } = banner;
+      const { title, subtitle, alt, enabled, position } = banner;
+      const linkUrl = (banner.linkUrl as string) || "";
       formData.append('title', title!);
       if (subtitle !== undefined) formData.append('subtitle', subtitle!);
       formData.append('alt', alt!);
-      if (linkUrl !== undefined) formData.append('linkUrl', linkUrl!);
       if (enabled !== undefined) formData.append('enabled', enabled.toString());
       formData.append('position', (position ?? 0).toString());
       if (fileDesktop) {
         formData.append('desktopImage', fileDesktop);
-      } else if (desktopImageUrl !== undefined) {
-        formData.append('desktopImageUrl', desktopImageUrl);
       }
       if (fileMobile) {
         formData.append('mobileImage', fileMobile);
-      } else if (mobileImageUrl !== undefined) {
-        formData.append('mobileImageUrl', mobileImageUrl);
       }
+      if (linkUrl) formData.append('linkUrl', linkUrl);
       return fetch(`${apiBase}/api/banners/${id}`, {
         method: "PUT",
+        credentials: 'include',
         body: formData,
       }).then(res => res.json());
     },
@@ -270,7 +253,7 @@ export default function BannersManagement() {
   });
 
   const deleteBanner = useMutation({
-    mutationFn: (id: string) => fetch(`${apiBase}/api/banners/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => fetch(`${apiBase}/api/banners/${id}`, { method: "DELETE", credentials: 'include' }),
     onSuccess: () => {
       toast({ title: "Banner deleted" });
       queryClient.invalidateQueries({ queryKey: ['banners'] });
@@ -312,6 +295,7 @@ export default function BannersManagement() {
                     <th>Mobile</th>
                     <th>Title</th>
                     <th>Alt</th>
+                    <th>Link</th>
                     <th>Enabled</th>
                     <th>Position</th>
                     <th>Actions</th>
@@ -366,6 +350,7 @@ export default function BannersManagement() {
                       </td>
                       <td>{banner.title}</td>
                       <td>{banner.alt}</td>
+                      <td>{banner.linkUrl ? <a href={banner.linkUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{banner.linkUrl}</a> : '-'}</td>
                       <td>
                         <Switch checked={banner.enabled} onCheckedChange={checked => updateBanner.mutate({ id: banner.id || banner._id!, banner: { enabled: checked } })} />
                       </td>
@@ -386,11 +371,15 @@ export default function BannersManagement() {
                         />
                       </td>
                       <td>
-                        {/* Disable actions if banner.id is missing */}
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => (banner.id || banner._id) ? (setEditingBanner(banner), setFormOpen(true)) : undefined}
+                          onClick={() => {
+                            if (banner.id || banner._id) {
+                              setEditingBanner(banner);
+                              setFormOpen(true);
+                            }
+                          }}
                           disabled={!(banner.id || banner._id)}
                           title={(banner.id || banner._id) ? "Edit banner" : "Missing banner.id"}
                         >

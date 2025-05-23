@@ -3,7 +3,6 @@ import cloudinary, { isCloudinaryConfigured } from './cloudinary';
 import type { UploadApiOptions } from 'cloudinary';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
 
 // Extend the Express.Multer.File interface to include location
 declare global {
@@ -17,10 +16,6 @@ declare global {
   }
 }
 
-// Get current file path and directory in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(process.cwd(), 'uploads');
 const bannersDir = path.join(uploadsDir, 'banners');
@@ -33,9 +28,19 @@ for (const dir of [uploadsDir, bannersDir, productsDir]) {
   }
 }
 
-// Use memory storage for temporary files before Cloudinary upload
-// This avoids saving files to disk first and having local URLs
-const storage = multer.memoryStorage();
+// Configure multer storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const isForBanners = req.originalUrl.includes('/banners');
+    const uploadPath = isForBanners ? bannersDir : productsDir;
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, uniqueSuffix + ext);
+  }
+});
 
 // File filter for image types
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
@@ -67,23 +72,22 @@ const baseUpload = multer({
 });
 
 // Create wrapped upload functions for Cloudinary
-const createCloudinaryUpload = async (file: Express.Multer.File, req: any): Promise<{ secure_url: string }> => {
+const createCloudinaryUpload = (file: Express.Multer.File, req: any): Promise<{ secure_url: string }> => {
   return new Promise((resolve, reject) => {
     if (!isCloudinaryConfigured) {
-      console.error('[CLOUDINARY] Cloudinary not configured');
-      return reject(new Error('Cloudinary configuration is required for file uploads'));
+      console.log('[CLOUDINARY] Cloudinary not configured, using local storage');
+      return resolve({ secure_url: file.path });
     }
 
     const isForBanners = req.originalUrl.includes('/banners');
     const folder = isForBanners ? 'banners' : 'products';
     
-    console.log('[CLOUDINARY] Processing file for upload:', {
+    console.log('[CLOUDINARY] Uploading file:', {
       filename: file.originalname,
       folder: folder,
+      path: file.path,
       size: file.size,
-      mimetype: file.mimetype,
-      hasBuffer: !!file.buffer,
-      hasPath: !!file.path
+      mimetype: file.mimetype
     });
 
     // Define upload options with proper typing
@@ -97,47 +101,39 @@ const createCloudinaryUpload = async (file: Express.Multer.File, req: any): Prom
       ]
     } as const;
 
-    // Function to handle the upload result
-    const handleUploadResult = (error: any, result: any) => {
-      if (error || !result) {
-        console.error('[CLOUDINARY] Upload error:', error);
-        return reject(error || new Error('No result from Cloudinary'));
+    // Convert buffer to a readable stream
+    const uploadStream = cloudinary.uploader.upload_stream(
+      uploadOptions,
+      (error, result) => {
+        if (error || !result) {
+          console.error('[CLOUDINARY] Upload error:', error);
+          return reject(error || new Error('No result from Cloudinary'));
+        }
+        
+        // Ensure we have a secure URL
+        const secureUrl = result.secure_url || 
+                         `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${result.public_id}`;
+        
+        // Store the Cloudinary URL in the file object
+        file.path = secureUrl;
+        (file as any).location = secureUrl;
+        (file as any).secure_url = secureUrl;
+        
+        console.log('[CLOUDINARY] Upload success:', {
+          publicId: result.public_id,
+          url: secureUrl
+        });
+        
+        resolve({ secure_url: secureUrl });
       }
-      
-      // Ensure we have a secure URL
-      const secureUrl = result.secure_url || 
-                       `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${result.public_id}`;
-      
-      // Store the Cloudinary URL in the file object
-      file.path = secureUrl;
-      (file as any).location = secureUrl;
-      (file as any).secure_url = secureUrl;
-      
-      console.log('[CLOUDINARY] Upload success:', {
-        publicId: result.public_id,
-        url: secureUrl
-      });
-      
-      resolve({ secure_url: secureUrl });
-    };
+    );
 
-    // If we have a buffer, use upload_stream
+    // If we have a buffer, use that, otherwise use the file path
     if (file.buffer) {
-      console.log('[CLOUDINARY] Uploading from buffer');
-      const uploadStream = cloudinary.uploader.upload_stream(
-        uploadOptions,
-        handleUploadResult
-      );
       uploadStream.end(file.buffer);
-    }
-    // If we have a path, use regular upload
-    else if (file.path) {
-      console.log('[CLOUDINARY] Uploading from path:', file.path);
-      cloudinary.uploader.upload(file.path, uploadOptions, handleUploadResult);
-    }
-    // No valid source for upload
-    else {
-      console.error('[CLOUDINARY] No valid source for upload');
+    } else if (file.path) {
+      fs.createReadStream(file.path).pipe(uploadStream);
+    } else {
       reject(new Error('No buffer or file path available for upload'));
     }
   });
@@ -166,18 +162,11 @@ const createWrappedMiddleware = (handler: any) => {
           originalname: req.file.originalname,
           mimetype: req.file.mimetype,
           size: req.file.size,
-          fieldname: req.file.fieldname,
-          hasBuffer: !!req.file.buffer,
-          hasPath: !!req.file.path
+          fieldname: req.file.fieldname
         });
         
         try {
-          const result = await createCloudinaryUpload(req.file, req);
-          // Ensure the file object has the Cloudinary URL
-          req.file.path = result.secure_url;
-          (req.file as any).location = result.secure_url;
-          (req.file as any).secure_url = result.secure_url;
-          
+          await createCloudinaryUpload(req.file, req);
           console.log('[UPLOAD] Single file processed:', {
             path: req.file.path,
             location: (req.file as any).location,
@@ -188,34 +177,20 @@ const createWrappedMiddleware = (handler: any) => {
           throw error;
         }
       } else if (req.files) {
-        console.log('[UPLOAD] Processing multiple files:', {
-          fields: Object.keys(req.files),
-          counts: Object.fromEntries(
-            Object.entries(req.files).map(([field, files]) => 
-              [field, (files as Express.Multer.File[]).length]
-            )
-          )
-        });
+        console.log('[UPLOAD] Processing multiple files:', Object.keys(req.files));
         
         for (const fieldName in req.files) {
-          const files = req.files[fieldName] as Express.Multer.File[];
+          const files = req.files[fieldName];
           for (const [index, file] of files.entries()) {
             console.log(`[UPLOAD] Processing ${fieldName}[${index}]:`, {
               originalname: file.originalname,
               mimetype: file.mimetype,
               size: file.size,
-              fieldname: file.fieldname,
-              hasBuffer: !!file.buffer,
-              hasPath: !!file.path
+              fieldname: file.fieldname
             });
             
             try {
-              const result = await createCloudinaryUpload(file, req);
-              // Ensure the file object has the Cloudinary URL
-              file.path = result.secure_url;
-              (file as any).location = result.secure_url;
-              (file as any).secure_url = result.secure_url;
-              
+              await createCloudinaryUpload(file, req);
               console.log(`[UPLOAD] ${fieldName}[${index}] processed:`, {
                 path: file.path,
                 location: (file as any).location,
