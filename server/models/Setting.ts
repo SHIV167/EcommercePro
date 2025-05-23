@@ -11,6 +11,8 @@ export interface ISetting extends Document {
   shiprocketSourcePincode: string;
   shiprocketPickupLocation: string;
   shiprocketChannelId: number;
+  taxEnabled: boolean;
+  taxPercentage: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +29,8 @@ const SettingSchema = new Schema<ISetting>(
     shiprocketSourcePincode: { type: String, required: true },
     shiprocketPickupLocation: { type: String, required: true },
     shiprocketChannelId: { type: Number, required: true },
+    taxEnabled: { type: Boolean, required: true, default: false },
+    taxPercentage: { type: Number, required: true, default: 0 },
   },
   { timestamps: true }
 );

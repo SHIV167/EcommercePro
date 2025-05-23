@@ -126,7 +126,7 @@ export default function SettingsManagement() {
               <Switch
                 id="maintenanceMode"
                 checked={maintenanceMode}
-                onCheckedChange={() => setMaintenanceMode(!maintenanceMode)}
+                onCheckedChange={(checked: boolean) => setMaintenanceMode(checked)}
               />
               <Label htmlFor="maintenanceMode" className="font-medium">Maintenance Mode</Label>
             </div>
@@ -143,7 +143,7 @@ export default function SettingsManagement() {
               <Switch
                 id="taxEnabled"
                 checked={taxEnabled}
-                onCheckedChange={() => setTaxEnabled(!taxEnabled)}
+                onCheckedChange={(checked: boolean) => setTaxEnabled(checked)}
               />
               <Label htmlFor="taxEnabled" className="font-medium">Enable Tax Calculation</Label>
             </div>
