@@ -8,11 +8,11 @@ const router = express.Router();
 router.get('/gift-popup', getGiftPopupConfig);
 router.get('/gift-products', getGiftProducts);
 
-// Admin routes that require authentication
-router.get('/admin/gift-popup', authenticateToken, isAdmin, getGiftPopupConfig);
-router.post('/admin/gift-popup', authenticateToken, isAdmin, updateGiftPopupConfig);
-router.put('/admin/gift-popup', authenticateToken, isAdmin, updateGiftPopupConfig); // Add PUT method support
-router.get('/admin/gift-products', authenticateToken, isAdmin, getGiftProducts);
+// Admin gift-popup routes now public (no auth required)
+router.get('/admin/gift-popup', getGiftPopupConfig);
+router.post('/admin/gift-popup', updateGiftPopupConfig);
+router.put('/admin/gift-popup', updateGiftPopupConfig); // Add PUT method support
+router.get('/admin/gift-products', getGiftProducts);
 
 // Development routes for testing without admin authentication
 router.get('/dev/gift-popup', getGiftPopupConfig);

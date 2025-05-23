@@ -275,7 +275,7 @@ export default function GiftPopupPage() {
         endpoint = '/api/dev/gift-popup';
       }
       
-      const response = await put<{data: GiftPopupConfig; status: number; message?: string}>(`${API_BASE}${endpoint}`, updatedConfig, { credentials: 'include' });
+      const response = await put<{data: GiftPopupConfig; status: number; message?: string}>(`${API_BASE}${endpoint}`, updatedConfig);
       console.log('Gift popup save response:', response);
       
       // Check for API error responses
