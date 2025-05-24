@@ -38,6 +38,7 @@ import RazorpayCheckout from '../components/RazorpayCheckout';
 import { Label } from "@/components/ui/label";
 import { Switch as UiSwitch } from "@/components/ui/switch";
 import AuthModal from '@/components/common/AuthModal';
+import { usePromoMessage } from '@/hooks/usePromoMessage';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -71,6 +72,7 @@ export default function CheckoutPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const { data: promoMessages = [] } = usePromoMessage(subtotal);
 
   // Tax settings from server
   const [taxEnabledConfig, setTaxEnabledConfig] = useState(false);
@@ -314,14 +316,16 @@ export default function CheckoutPage() {
           )}
           
           {/* Promotional banner */}
-          <div className="bg-amber-50 p-4 mb-8 rounded border border-amber-100">
-            <div className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a4 4 0 118 0v7M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
-              <p className="text-sm">Add products worth Rs. 2000 and Choose any 2 complimentary gifts worth up to Rs. 1990 on orders above Rs 3000.</p>
+          {promoMessages.length > 0 && (
+            <div className="bg-amber-50 p-4 mb-8 rounded border border-amber-100">
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a4 4 0 118 0v7M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+                <p className="text-sm">{promoMessages[0].message}</p>
+              </div>
             </div>
-          </div>
+          )}
           
           {/* Main checkout form and order summary */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">

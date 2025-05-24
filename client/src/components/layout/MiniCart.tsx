@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
 import { Link } from "wouter";
 import { formatCurrency } from "@/lib/utils";
@@ -9,6 +9,7 @@ import OffersPopup from "@/components/offers/OffersPopup";
 import { useCoupon } from "@/hooks/useCoupon";
 import { useAuth } from "@/hooks/useAuth";
 import AuthModal from "../common/AuthModal";
+import { usePromoMessage } from "@/hooks/usePromoMessage";
 
 interface MiniCartProps {
   isOpen: boolean;
@@ -26,7 +27,7 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
     queryKey: ['/api/products/bestsellers?limit=6'],
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (cartItems.length === 0) {
       let interval = setInterval(() => {
         const nextBtn = document.querySelector('.carousel [aria-roledescription="carousel"] button[aria-label="Next slide"]');
@@ -36,13 +37,15 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
     }
   }, [cartItems.length]);
 
+  // Compute subtotal and fetch promo message unconditionally
+  const subtotal = cartItems.reduce((sum, item) =>
+    sum + (item.product && typeof item.product.price === 'number' ? item.product.price * item.quantity : 0)
+  , 0);
+  const { data: promoMessages = [] } = usePromoMessage(subtotal);
+
   if (!isOpen) return null;
 
   const handleApplyCoupon = async (code: string) => {
-    const subtotal = cartItems.reduce((sum, item) =>
-      sum + (item.product && typeof item.product.price === 'number' ? item.product.price * item.quantity : 0)
-    , 0);
-    
     applyCoupon(code, subtotal * 0.1); // Example discount calculation
     setOffersPopupOpen(false);
   };
@@ -95,6 +98,16 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
         </div>
         {/* Cart Content */}
         <div className="flex-1 overflow-y-auto py-4 px-6">
+          {promoMessages.length > 0 && (
+            <div className="bg-amber-50 p-4 mb-8 rounded border border-amber-100">
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a4 4 0 118 0v7M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+                <p className="text-sm">{promoMessages[0].message}</p>
+              </div>
+            </div>
+          )}
           {cartItems.length === 0 ? (
             <>
               <div className="flex flex-col items-center justify-center py-12">
@@ -231,9 +244,7 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
             {/* Subtotal with border */}
             <div className="flex justify-between items-center font-medium mb-4 py-3 border-y border-gray-200">
               <span>Subtotal</span>
-              <span>{formatCurrency(cartItems.reduce((sum, item) =>
-                sum + (item.product && typeof item.product.price === 'number' ? item.product.price * item.quantity : 0)
-              , 0))}</span>
+              <span>{formatCurrency(subtotal)}</span>
             </div>
             
             {/* Checkout button */}

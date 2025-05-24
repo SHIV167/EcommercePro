@@ -1,4 +1,3 @@
-import React from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Redirect, Switch, Route } from "wouter";
@@ -22,8 +21,6 @@ import AdminLogin from "./pages/AdminLogin";
 import Popup from "./pages/Popup";
 import StoreManagePage from "./pages/StoreManage";
 import PromoTimerPage from "./pages/promotimer";
-import PopupManagement from './pages/PopupManagement';
-import PromoTimer from './pages/promotimer';
 import PromoCoupon from './pages/PromoCoupon';
 import GiftCardsManagement from './pages/GiftCardsManagement';
 import QRScannerManagement from './pages/QRScannerManagement';
@@ -32,6 +29,7 @@ import TestimonialsManagement from './pages/TestimonialsManagement';
 import FreeProductsPage from './pages/FreeProductsPage';
 import ReviewManagement from './pages/ReviewManagement';
 import GiftPopupPage from './pages/GiftPopupPage';
+import PromoMessageManagement from './pages/PromoMessageManagement';
 
 function AdminContainer() {
   const { isAuthenticated, isLoading } = useAdminAuth();
@@ -66,6 +64,7 @@ function AdminContainer() {
             <Route path="/admin/giftcards" component={GiftCardsManagement} />
             <Route path="/admin/giftcard-templates" component={GiftCardTemplatesManagement} />
             <Route path="/admin/qrscanner" component={QRScannerManagement} />
+            <Route path="/admin/promomessages" component={PromoMessageManagement} />
             <Route path="/admin/free-products" component={FreeProductsPage} />
             <Route path="/admin/testimonials" component={TestimonialsManagement} />
             <Route path="/admin/gift-popup" component={GiftPopupPage} />

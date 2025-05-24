@@ -5,6 +5,7 @@ import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import promoTimerRoutes from './routes/promoTimerRoutes';
 import storeRoutes from './routes/storeRoutes';
+import promoMessageRoutes from './routes/promomessageRoutes';
 import { setupVite, serveStatic, log } from "./vite";
 import { connectToDatabase, closeDatabaseConnection } from "./db";
 import cors from 'cors';
@@ -195,6 +196,7 @@ app.use((req, res, next) => {
 
   app.use('/api/promotimers', promoTimerRoutes);
   app.use('/api/stores', storeRoutes);
+  app.use('/api/promomessages', promoMessageRoutes);
 
   // Migration: ensure existing settings have taxEnabled and taxPercentage
   try {
