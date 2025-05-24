@@ -4,6 +4,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { Link } from 'wouter';
 import { Helmet } from 'react-helmet';
 import '@/styles/blog-listing.css';
+import LatestPost from '@/components/blog/LatestPost';
+import BlogBannerSlider from '@/components/blog/BlogBannerSlider';
 
 interface Blog {
   _id: string;
@@ -26,36 +28,36 @@ export default function BlogsPage() {
     },
   });
 
-  // Sample blog data
+  // Sample blog data for the screenshot-matching design
   const sampleBlogs: Blog[] = [
     {
       _id: '1',
-      title: 'Professional Skincare Tips: Your glowy beauty routine for the Summer',
-      slug: 'professional-skincare-tips',
+      title: 'Kumkumadi Serum: Your glow boosting serum in a Bottle',
+      slug: 'kumkumadi-serum-glow-boosting',
       author: 'Kama Ayurveda',
       publishedAt: new Date('2025-05-20').toISOString(),
-      summary: 'Discover the best skincare routine for summer to keep your skin glowing and healthy.',
-      imageUrl: '/uploads/blog/skincare-tips.jpg',
+      summary: 'Glowing skin is a universal beauty goal, yet achieving it often feels challenging. Modern skincare routines are filled with countless [...] ',
+      imageUrl: '/uploads/blog/kumkumadi-serum.jpg',
       category: 'Skincare'
     },
     {
       _id: '2',
-      title: 'Ayurvedic Face Essentials: Meet the Kumkumadi Brightening Scrub',
-      slug: 'ayurvedic-face-essentials',
+      title: 'Brighten Eyes, Naturally: Meet the Kumkumadi Eye Serum',
+      slug: 'brighten-eyes-naturally-kumkumadi-eye-serum',
       author: 'Kama Ayurveda',
       publishedAt: new Date('2025-05-18').toISOString(),
-      summary: 'Learn about the benefits of Kumkumadi Brightening Scrub for your skin.',
-      imageUrl: '/uploads/blog/kumkumadi-scrub.jpg',
+      summary: 'The skin around our eyes is the most delicate and thinnest on the face, making it more prone to signs [...] ',
+      imageUrl: '/uploads/blog/kumkumadi-eye-serum.jpg',
       category: 'Ayurveda'
     },
     {
       _id: '3',
-      title: 'How To Use Herbs and Ginger To Create A Natural Glow Elixir',
-      slug: 'herbs-ginger-glow-elixir',
+      title: 'How To Use Henna and Indigo Powder As Natural Hair Dye?',
+      slug: 'how-to-use-henna-indigo-natural-hair-dye',
       author: 'Kama Ayurveda',
       publishedAt: new Date('2025-05-15').toISOString(),
-      summary: 'Make your own natural glow elixir using herbs and ginger at home.',
-      imageUrl: '/uploads/blog/glow-elixir.jpg',
+      summary: 'Henna hair dye is the most common way to color grey hair and has become a part of the hair care routine of many people. However, many people do not know the correct way to use it. To help you [...] ',
+      imageUrl: '/uploads/blog/henna-indigo-natural-hair-dye.jpg',
       category: 'Natural Remedies'
     },
     {
@@ -119,41 +121,35 @@ export default function BlogsPage() {
         <title>Blog | Kama Ayurveda</title>
         <meta name="description" content="Discover our latest blog posts about Ayurveda, skincare, and wellness." />
       </Helmet>
+      
+      {/* Blog Banner Slider at the top of the page */}
+      <BlogBannerSlider />
 
       <div className="blog-listing-header">
-        <h1>BLOG</h1>
+        <h1>Top Blogs</h1>
       </div>
 
       <div className="blog-listing-container">
         <main className="blog-listing-main">
-          <div className="blog-listing-grid">
+          <div className="blog-posts-list">
             {displayBlogs.map((blog) => (
-              <article key={blog._id} className="blog-listing-card">
-                <Link href={`/blogs/${blog.slug}`}>
-                  <div className="blog-listing-image">
-                    <img 
-                      src={blog.imageUrl || '/uploads/blog/placeholder.jpg'} 
-                      alt={blog.title}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/uploads/blog/placeholder.jpg';
-                      }}
-                    />
-                  </div>
-                  <div className="blog-listing-details">
-                    <h2>{blog.title}</h2>
-                    <p>{blog.summary}</p>
-                    <div className="blog-listing-meta">
-                      <span className="blog-listing-category">{blog.category}</span>
-                      <span className="blog-listing-date">
-                        {new Date(blog.publishedAt).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+              <article key={blog._id} className="blog-post-item">
+                <div className="blog-post-content">
+                  <h2>{blog.title}</h2>
+                  <p>{blog.summary.length > 120 ? blog.summary.substring(0, 120) + ' [...]' : blog.summary}</p>
+                  <Link href={`/blogs/${blog.slug}`} className="read-more-link">
+                    Read more
+                  </Link>
+                </div>
+                <div className="blog-post-image">
+                  <img 
+                    src={blog.imageUrl || '/uploads/blog/placeholder.jpg'} 
+                    alt={blog.title}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/uploads/blog/placeholder.jpg';
+                    }}
+                  />
+                </div>
               </article>
             ))}
           </div>
@@ -207,6 +203,11 @@ export default function BlogsPage() {
           </div>
         </aside>
       </div>
+      
+      {/* Latest Post Section */}
+      {displayBlogs.length > 0 && (
+        <LatestPost post={displayBlogs[0]} />
+      )}
     </div>
   );
 }

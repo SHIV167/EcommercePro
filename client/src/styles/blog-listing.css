@@ -1,130 +1,130 @@
 /* Blog Listing Page Styles - Scoped to .blog-listing-page */
 
 .blog-listing-page {
-  background-color: #fff;
-  color: var(--text-color);
+  background-image: url('/uploads/fullbg_Desktop.webp');
+  color: #333;
   line-height: 1.6;
   font-family: var(--font-primary);
+}
+
+/* Container for blog content only - not affecting other page elements */
+.blog-listing-page .blog-listing-container {
+  max-width: 1200px;
+  margin: 20px auto 60px;
+  padding: 0 20px;
 }
 
 /* Header */
 .blog-listing-header {
   width: 100%;
-  text-align: center;
-  padding: 40px 0;
-  margin-bottom: 40px;
-  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+  padding: 10px 0;
+  margin-bottom: 20px;
 }
 
 .blog-listing-header h1 {
-  font-size: 36px;
-  font-weight: 300;
-  letter-spacing: 2px;
-  color: var(--primary-color);
+  font-size: 24px;
+  font-weight: 500;
+  color: #333;
   margin: 0;
-  text-transform: uppercase;
 }
 
-/* Container */
-.blog-listing-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+/* Container - scoped to blog page */
+.blog-listing-page .blog-listing-container {
   display: flex;
-  flex-wrap: wrap;
   gap: 40px;
 }
 
 /* Main Content */
-.blog-listing-main {
+.blog-listing-page .blog-listing-main {
   flex: 1;
   min-width: 0;
 }
 
-.blog-listing-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+.blog-listing-page .blog-posts-list {
+  display: flex;
+  flex-direction: column;
   gap: 30px;
-  margin-bottom: 60px;
-}
-
-/* Blog Card */
-.blog-listing-card {
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #f0f0f0;
-}
-
-.blog-listing-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-}
-
-.blog-listing-image {
+  margin-bottom: 40px;
   width: 100%;
-  height: 220px;
-  overflow: hidden;
-  background: #f9f9f9;
 }
 
-.blog-listing-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-  background: linear-gradient(120deg, #f3f3f3 25%, #eaeaea 45%, #f3f3f3 65%);
-  background-size: 200% 100%;
-}
-
-.blog-listing-card:hover .blog-listing-image img {
-  transform: scale(1.05);
-}
-
-.blog-listing-details {
-  padding: 20px;
-  flex: 1;
+/* Blog Post Item */
+.blog-listing-page .blog-post-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: space-between;
+  border-bottom: 1px solid #eee;
+  padding: 30px;
+  text-decoration: none;
+  color: inherit;
+  gap: 30px;
   background: #fff;
 }
 
-.blog-listing-details h2 {
-  font-size: 18px;
-  font-weight: 500;
-  margin: 0 0 12px 0;
-  color: #2c3e50;
-  line-height: 1.4;
-  transition: color 0.2s ease;
+.blog-post-item:last-child {
+  border-bottom: none;
 }
 
-.blog-listing-card:hover .blog-listing-details h2 {
+.blog-post-item:hover h2 {
   color: #d4a76a;
 }
 
-.blog-listing-details p {
-  font-size: 14px;
-  color: #666;
-  margin: 0 0 16px 0;
+.blog-post-content {
   flex: 1;
-  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
 }
 
-.blog-listing-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  color: #888;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 12px;
+.blog-post-image {
+  width: 160px;
+  height: 160px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.blog-post-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.blog-post-content h2 {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 12px 0;
+  color: #333;
+  line-height: 1.3;
+  transition: color 0.2s ease;
+  font-family: serif;
+}
+
+.blog-post-item:hover .blog-post-content h2 {
+  color: #d4a76a;
+}
+
+.blog-post-content p {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+  flex: 1;
+  font-family: sans-serif;
+}
+
+.read-more-link {
+  color: #666;
+  text-decoration: none;
+  font-size: 14px;
   margin-top: auto;
-  background: #fff;
+  display: inline-block;
+  font-family: sans-serif;
+}
+
+.read-more-link:hover {
+  color: #d4a76a;
+  text-decoration: underline;
 }
 
 .blog-listing-category {
@@ -292,61 +292,68 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .blog-listing-container {
+  .blog-listing-page .blog-listing-container {
     flex-direction: column;
   }
   
-  .blog-listing-sidebar {
+  .blog-listing-page .blog-listing-sidebar {
     width: 100%;
     margin-top: 40px;
-  }
-  
-  .blog-listing-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .blog-listing-header {
-    padding: 30px 0;
-    margin-bottom: 30px;
+  .blog-listing-page .blog-listing-header {
+    padding: 20px 0;
+    margin-bottom: 20px;
   }
   
-  .blog-listing-header h1 {
-    font-size: 28px;
+  .blog-listing-page .blog-listing-header h1 {
+    font-size: 22px;
   }
   
-  .blog-listing-grid {
+  .blog-listing-page .blog-posts-list {
     gap: 20px;
   }
   
-  .blog-listing-widget {
+  .blog-listing-page .blog-listing-widget {
     padding: 20px;
+  }
+
+  .blog-listing-page .blog-post-item {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .blog-listing-page .blog-post-image {
+    width: 100%;
+    height: 200px;
+    order: -1;
   }
 }
 
 @media (max-width: 480px) {
-  .blog-listing-container {
+  .blog-listing-page .blog-listing-container {
     padding: 0 15px;
   }
   
-  .blog-listing-header {
-    padding: 20px 0;
+  .blog-listing-page .blog-listing-header {
+    padding: 15px 0;
   }
   
-  .blog-listing-header h1 {
-    font-size: 24px;
+  .blog-listing-page .blog-listing-header h1 {
+    font-size: 20px;
   }
   
-  .blog-listing-grid {
-    grid-template-columns: 1fr;
+  .blog-listing-page .blog-post-item {
+    padding-bottom: 20px;
   }
   
-  .recent-post {
+  .blog-listing-page .recent-post {
     gap: 12px;
   }
   
-  .recent-post-image {
+  .blog-listing-page .recent-post-image {
     width: 60px;
     height: 60px;
   }

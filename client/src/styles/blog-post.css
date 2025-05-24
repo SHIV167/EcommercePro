@@ -2,8 +2,7 @@
 body.blog-post-page {
   /* Use fullbg_Desktop.png as background */
   background-color: #f8f8f8;
-  background-image: url('/uploads/fullbg_Desktop.png');
-  background-size: cover;
+  background-image: url('/uploads/fullbg_Desktop.webp');
   background-position: center top;
   background-repeat: no-repeat;
   background-attachment: fixed;
@@ -100,7 +99,7 @@ body.blog-post-page::before {
 }
 
 .blog-content {
-  font-size: 1rem;
+  font-size: 1.7rem;
   line-height: 1.7;
   margin-bottom: 2rem;
   word-wrap: break-word;
@@ -120,6 +119,7 @@ body.blog-post-page::before {
 
 .blog-content p {
   margin-bottom: 1.5rem;
+  font-size: 1.4rem;
 }
 
 .blog-content h2 {

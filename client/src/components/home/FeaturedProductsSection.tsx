@@ -54,7 +54,8 @@ const sampleProducts: ProductDisplay[] = [
     structuredBenefits: [],
     minOrderValue: 0,
     isFreeProduct: false,
-    usageFrequency: "Twice daily"
+    usageFrequency: "Twice daily",
+    customHtmlSections: []
   },
   {
     _id: "2",
@@ -82,7 +83,8 @@ const sampleProducts: ProductDisplay[] = [
     structuredBenefits: [],
     minOrderValue: 0,
     isFreeProduct: false,
-    usageFrequency: "Once daily"
+    usageFrequency: "Once daily",
+    customHtmlSections: []
   },
   {
     _id: "3",
@@ -110,7 +112,8 @@ const sampleProducts: ProductDisplay[] = [
     structuredBenefits: [],
     minOrderValue: 0,
     isFreeProduct: false,
-    usageFrequency: "Twice daily"
+    usageFrequency: "Twice daily",
+    customHtmlSections: []
   }
 ];
 
@@ -131,8 +134,12 @@ export default function FeaturedProductsSection() {
     },
   });
 
-  // Map products to ensure they match the expected Product type
+  // Map products to ensure they match the expected Product type and add missing customHtmlSections
   const displayProducts = (products.length > 0 ? products : sampleProducts).map(product => {
+    // Add customHtmlSections if missing
+    if (!product.customHtmlSections) {
+      product = { ...product, customHtmlSections: [] };
+    }
     // Create a base product with all required fields
     const baseProduct = {
       _id: product._id || '',
@@ -177,7 +184,8 @@ export default function FeaturedProductsSection() {
     return {
       ...baseProduct,
       // Add our custom fields
-      reviewCount: (product as any).reviewCount || 0
+      reviewCount: (product as any).reviewCount || 0,
+      customHtmlSections: product.customHtmlSections || []
     };
   });
 
@@ -312,21 +320,88 @@ export default function FeaturedProductsSection() {
             )}
           </div>
           
-          {/* Right side - Banner (1/3 width on desktop) */}
+          {/* Right side - Banner with Hotspots (1/3 width on desktop) */}
           <div className="w-full md:w-1/3 mt-6 md:mt-0">
             <div className="h-full rounded-lg overflow-hidden border border-neutral-sand">
-              <div className="h-full flex items-center justify-center p-6 bg-gradient-to-br from-green-50 to-green-100">
-                <div className="text-center">
-                  <h3 className="text-2xl font-bold text-primary mb-4">AYURVEDIC<br />GOODNESS</h3>
-                  <p className="text-lg text-primary uppercase mb-6">FOR YOUR HEALTH</p>
-                  <img 
-                    src="/uploads/sections/New_Kama_is_Kind_page_1.png" 
-                    alt="Ayurvedic Products Collection" 
-                    className="max-w-full h-auto rounded-md shadow-sm" 
-                  />
-                  <Link href="/collections/ayurvedic-essentials" className="mt-6 inline-block px-6 py-2 bg-primary hover:bg-primary-light text-white rounded-md transition-colors">
-                    Shop Now
-                  </Link>
+              <div className="h-full relative">
+                <img 
+                  src="/uploads/sections/New_Kama_is_Kind_page_1.png" 
+                  alt="Ayurvedic Products Collection" 
+                  className="w-full h-full object-cover" 
+                />
+                
+                {/* Hotspot 1 - Left Center */}
+                <div className="absolute left-[20%] top-1/2 transform -translate-y-1/2 z-10 group cursor-pointer">
+                  {/* Multi-layered Pulse Animation */}
+                  <div className="absolute w-16 h-16 rounded-full bg-gradient-to-r from-amber-300/30 to-primary/20 animate-ping"></div>
+                  <div className="absolute w-14 h-14 rounded-full bg-gradient-to-r from-amber-400/40 to-primary/30 animate-pulse" style={{animationDuration: '2s'}}></div>
+                  <div className="absolute w-12 h-12 rounded-full bg-gradient-to-r from-amber-500/50 to-primary/40 animate-pulse" style={{animationDuration: '1.5s'}}></div>
+                  
+                  {/* Hotspot Button - Improved with gold gradient */}
+                  <a 
+                    href="/collections/kumkumadi" 
+                    className="relative flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-amber-400 to-primary shadow-xl hover:from-amber-500 hover:to-primary-dark transition-all duration-300 border-2 border-amber-100"
+                    aria-label="Shop Kumkumadi Collection"
+                    style={{transform: 'scale(1)', transition: 'transform 0.2s ease-in-out'}}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <span className="text-white drop-shadow-md">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </span>
+                  </a>
+                  
+                  {/* Enhanced Tooltip */}
+                  <div className="opacity-0 group-hover:opacity-100 absolute left-1/2 bottom-full mb-2 -translate-x-1/2 bg-gradient-to-r from-amber-50 to-white shadow-lg rounded-lg p-3 text-sm font-medium text-primary-dark whitespace-nowrap transition-all duration-300 border border-amber-100 transform group-hover:scale-105">
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </span>
+                      Shop Kumkumadi Collection
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-white transform rotate-45 border-r border-b border-amber-100"></div>
+                  </div>
+                </div>
+                
+                {/* Hotspot 2 - Right Center */}
+                <div className="absolute right-[20%] top-1/2 transform -translate-y-1/2 z-10 group cursor-pointer">
+                  {/* Multi-layered Pulse Animation */}
+                  <div className="absolute w-16 h-16 rounded-full bg-gradient-to-r from-primary/20 to-teal-300/30 animate-ping"></div>
+                  <div className="absolute w-14 h-14 rounded-full bg-gradient-to-r from-primary/30 to-teal-400/40 animate-pulse" style={{animationDuration: '2s'}}></div>
+                  <div className="absolute w-12 h-12 rounded-full bg-gradient-to-r from-primary/40 to-teal-500/50 animate-pulse" style={{animationDuration: '1.5s'}}></div>
+                  
+                  {/* Hotspot Button - Improved with teal gradient */}
+                  <a 
+                    href="/collections/amrepa" 
+                    className="relative flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-primary to-teal-500 shadow-xl hover:from-primary-dark hover:to-teal-600 transition-all duration-300 border-2 border-teal-100"
+                    aria-label="Shop Amrepa Collection"
+                    style={{transform: 'scale(1)', transition: 'transform 0.2s ease-in-out'}}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <span className="text-white drop-shadow-md">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 15M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </span>
+                  </a>
+                  
+                  {/* Enhanced Tooltip */}
+                  <div className="opacity-0 group-hover:opacity-100 absolute left-1/2 bottom-full mb-2 -translate-x-1/2 bg-gradient-to-r from-white to-teal-50 shadow-lg rounded-lg p-3 text-sm font-medium text-primary-dark whitespace-nowrap transition-all duration-300 border border-teal-100 transform group-hover:scale-105">
+                    <div className="flex items-center gap-2">
+                      <span className="text-teal-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </span>
+                      Shop Amrepa Collection
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-white transform rotate-45 border-r border-b border-teal-100"></div>
+                  </div>
                 </div>
               </div>
             </div>
