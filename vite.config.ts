@@ -40,6 +40,11 @@ export default defineConfig(async ({ mode }) => {
           target: backend,
           changeOrigin: true,
           secure: false
+        },
+        '/uploads': {
+          target: backend,
+          changeOrigin: true,
+          secure: false
         }
       }
     },
