@@ -10,8 +10,8 @@ export default function QRScannerManagement() {
   const { toast } = useToast();
   const qrRef = useRef<HTMLCanvasElement>(null);
   // Use client URL from env or fallback by stripping '-admin'
-  const clientOrigin = import.meta.env.VITE_CLIENT_URL || (window.location.origin.includes('-admin')
-    ? window.location.origin.replace('-admin', '-0ukc')
+  const clientOrigin = import.meta.env.VITE_API_URL || (window.location.origin.includes('-admin')
+    ? window.location.origin.replace('-admin', '')
     : window.location.origin);
   // Products for QR generation
   const { data: prodData } = useQuery<MongoProduct[]>({
