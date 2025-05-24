@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '../ui/input';
@@ -7,10 +7,14 @@ import { useAuth } from '@/hooks/useAuth';
 interface AuthModalProps {
   open: boolean;
   onClose: () => void;
+  initialMode?: 'login' | 'register';
 }
 
-export default function AuthModal({ open, onClose }: AuthModalProps) {
+export default function AuthModal({ open, onClose, initialMode = 'login' }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  useEffect(() => {
+    if (open) setMode(initialMode);
+  }, [open, initialMode]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login, register } = useAuth();
@@ -21,6 +25,7 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,6 +44,12 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
           title: "Login successful"
         });
       } else {
+        if (form.password !== form.confirmPassword) {
+          setError('Passwords do not match');
+          toast({ title: 'Error', description: 'Passwords do not match', variant: 'destructive' });
+          setLoading(false);
+          return;
+        }
         await register(form.name, form.email, form.password);
         toast({
           description: "Welcome to Kama Ayurveda.",
@@ -87,6 +98,14 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
           )}
           <Input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
           <Input type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} required minLength={6} />
+          {mode === 'login' && (
+            <div className="text-right">
+              <a href="/forgot-password" className="text-sm text-primary hover:underline">Forgot Password?</a>
+            </div>
+          )}
+          {mode === 'register' && (
+            <Input type="password" name="confirmPassword" placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} required minLength={6} />
+          )}
           {error && <div className="text-red-500 text-sm text-center">{error}</div>}
           <Button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white font-bold" disabled={loading}>
             {loading ? (mode === 'login' ? 'Logging in...' : 'Registering...') : (mode === 'login' ? 'Login' : 'Register')}

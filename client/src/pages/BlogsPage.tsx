@@ -3,12 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Link } from 'wouter';
 import { Helmet } from 'react-helmet';
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
-import '@/styles/blog-post.css';
-import '@/styles/blog-slider.css';
-import '@/styles/blog-slider-blogs-page.css';
+import '@/styles/blog-listing.css';
 
 interface Blog {
   _id: string;
@@ -17,7 +12,9 @@ interface Blog {
   author: string;
   publishedAt: string;
   summary: string;
+  content?: string;
   imageUrl?: string;
+  category?: string;
 }
 
 export default function BlogsPage() {
@@ -29,193 +26,187 @@ export default function BlogsPage() {
     },
   });
 
-  // Add the blog-post-page class to the body for consistent styling
-  // and initialize the slider after component mount
-  useEffect(() => {
-    document.body.classList.add('blog-post-page');
-    
-    // Initialize slider after component mount
-    const timer = setTimeout(() => {
-      const sliderElem = document.querySelector('.blog-slider');
-      if (sliderElem && typeof (window as any).jQuery !== 'undefined') {
-        try {
-          (window as any).jQuery('.blog-slider').slick('unslick');
-          (window as any).jQuery('.blog-slider').slick();
-        } catch (e) {
-          console.log('Slick initialization error:', e);
-        }
-      }
-    }, 500);
-    
-    return () => {
-      document.body.classList.remove('blog-post-page');
-      clearTimeout(timer);
-    };
-  }, [blogs]);
+  // Sample blog data
+  const sampleBlogs: Blog[] = [
+    {
+      _id: '1',
+      title: 'Professional Skincare Tips: Your glowy beauty routine for the Summer',
+      slug: 'professional-skincare-tips',
+      author: 'Kama Ayurveda',
+      publishedAt: new Date('2025-05-20').toISOString(),
+      summary: 'Discover the best skincare routine for summer to keep your skin glowing and healthy.',
+      imageUrl: '/uploads/blog/skincare-tips.jpg',
+      category: 'Skincare'
+    },
+    {
+      _id: '2',
+      title: 'Ayurvedic Face Essentials: Meet the Kumkumadi Brightening Scrub',
+      slug: 'ayurvedic-face-essentials',
+      author: 'Kama Ayurveda',
+      publishedAt: new Date('2025-05-18').toISOString(),
+      summary: 'Learn about the benefits of Kumkumadi Brightening Scrub for your skin.',
+      imageUrl: '/uploads/blog/kumkumadi-scrub.jpg',
+      category: 'Ayurveda'
+    },
+    {
+      _id: '3',
+      title: 'How To Use Herbs and Ginger To Create A Natural Glow Elixir',
+      slug: 'herbs-ginger-glow-elixir',
+      author: 'Kama Ayurveda',
+      publishedAt: new Date('2025-05-15').toISOString(),
+      summary: 'Make your own natural glow elixir using herbs and ginger at home.',
+      imageUrl: '/uploads/blog/glow-elixir.jpg',
+      category: 'Natural Remedies'
+    },
+    {
+      _id: '4',
+      title: 'Aloe, Shea, Tea Tree - Top 10 Natural Anti-Acne Ingredients',
+      slug: 'natural-anti-acne-ingredients',
+      author: 'Kama Ayurveda',
+      publishedAt: new Date('2025-05-12').toISOString(),
+      summary: 'Discover the top natural ingredients to fight acne effectively.',
+      imageUrl: '/uploads/blog/anti-acne.jpg',
+      category: 'Skincare'
+    }
+  ];
 
-  if (isLoading) return (
-    <div className="min-h-screen py-10">
-      <div className="blog-container">
-        <div className="animate-pulse">
-          <div className="h-10 bg-gray-200 rounded w-1/3 mx-auto mb-8"></div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="bg-white rounded-md overflow-hidden shadow-sm">
-                <div className="h-52 bg-gray-200"></div>
-                <div className="p-4">
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-1"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+  // Categories data
+  const categories = [
+    { name: 'Skincare', count: 12 },
+    { name: 'Hair Care', count: 8 },
+    { name: 'Wellness', count: 10 },
+    { name: 'Ayurveda', count: 15 },
+    { name: 'Natural Remedies', count: 6 },
+    { name: 'Product Guides', count: 9 },
+  ];
+
+  const displayBlogs = blogs.length > 0 ? blogs : sampleBlogs;
+
+  // Add the blog-listing class to the body for scoped styling
+  useEffect(() => {
+    document.body.classList.add('blog-listing-page');
+    return () => {
+      document.body.classList.remove('blog-listing-page');
+    };
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="blog-listing-container">
+        <div className="blog-listing-header">
+          <h1>BLOG</h1>
+        </div>
+        <div className="blog-listing-content">
+          <div className="blog-listing-main">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="blog-listing-card loading">
+                <div className="blog-listing-image"></div>
+                <div className="blog-listing-details">
+                  <h3 className="loading-text"></h3>
+                  <p className="loading-text"></p>
                 </div>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <>
+    <div className="blog-listing-page">
       <Helmet>
-        <title>Kama Blog | Kama Ayurveda</title>
-        <meta name="description" content="Read our latest blog articles on skincare, wellness, and beauty tips." />
+        <title>Blog | Kama Ayurveda</title>
+        <meta name="description" content="Discover our latest blog posts about Ayurveda, skincare, and wellness." />
       </Helmet>
-      
-      <div className="min-h-screen py-10 blogs-page">
-        <div className="blog-container">
-          {/* Header with Kama Blog and navigation */}
-          <div className="flex items-center justify-between mb-6 border-b pb-4">
-            <h1 className="text-3xl font-serif">Kama Blog</h1>
-            <div className="text-sm text-gray-500 flex items-center">
-              <Link href="/" className="hover:text-primary">HOME</Link>
-              <span className="mx-2">❯</span>
-              <span className="text-primary">BLOG</span>
-            </div>
-          </div>
-          
-          {/* Blog Slider - Using the slider component from homepage */}
-          <Slider
-            key={`blog-slider-${blogs.length}`}
-            dots={true}
-            dotsClass="slick-dots custom-slick-dots"
-            infinite={blogs.length > 3}
-            speed={500}
-            slidesToShow={3}
-            slidesToScroll={1}
-            arrows={true}
-            autoplay={true}
-            autoplaySpeed={5000}
-            pauseOnHover={true}
-            className="blog-slider mb-12"
-            responsive={[
-              {
-                breakpoint: 1024,
-                settings: {
-                  slidesToShow: 2,
-                  slidesToScroll: 1,
-                  arrows: true,
-                  dots: true
-                }
-              },
-              {
-                breakpoint: 640,
-                settings: {
-                  slidesToShow: 1,
-                  slidesToScroll: 1,
-                  arrows: false,
-                  dots: true
-                }
-              }
-            ]}
-          >
-            {blogs.map((blog, index) => (
-              <div key={`${blog._id}-${index}`} className="px-2">
-                <Link href={`/blogs/${blog.slug}`} className="block group">
-                  <div className="relative aspect-[4/3] mb-4 overflow-hidden rounded">
-                    <img
-                      src={blog.imageUrl || '/uploads/blog-default-banner.jpg'}
-                      alt={blog.title}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => (e.currentTarget.src = '/uploads/blog-default-banner.jpg')}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-                      <h2 className="text-white text-xl font-medium">{blog.title}</h2>
-                      <div className="text-white/80 text-sm mt-2">
-                        <span className="text-white hover:underline">Read More</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
-          </Slider>
-          
-          {/* Static Grid for Mobile Fallback - Hidden on larger screens */}
-          <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
-            {blogs.slice(0, 4).map((blog) => (
-              <div key={blog._id} className="relative rounded-md overflow-hidden group cursor-pointer">
-                <Link href={`/blogs/${blog.slug}`}>
-                  <img
-                    src={blog.imageUrl || '/uploads/blog-default-banner.jpg'}
-                    alt={blog.title}
-                    className="w-full h-52 object-cover transition-transform group-hover:scale-105"
-                    onError={(e) => (e.currentTarget.src = '/uploads/blog-default-banner.jpg')}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-                    <h2 className="text-white text-xl font-medium">{blog.title}</h2>
-                    <div className="text-white/80 text-sm mt-2">
-                      <span className="text-white hover:underline">Read More</span>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
-          </div>
-          
-          {/* Additional content section with featured articles */}
-          <div className="mt-12">
-            <h2 className="text-2xl font-serif mb-6">Featured Articles</h2>
-            <div className="grid md:grid-cols-2 gap-8">
-              {blogs.slice(0, 2).map((blog) => (
-                <div key={`featured-${blog._id}`} className="bg-white p-6 rounded-md shadow-sm flex flex-col md:flex-row gap-4 hover:shadow-md transition-shadow">
-                  <div className="w-full md:w-1/3 aspect-square overflow-hidden rounded">
-                    {blog.imageUrl ? (
-                      <img
-                        src={blog.imageUrl}
-                        alt={blog.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <div className="w-full md:w-2/3">
-                    <h3 className="text-xl font-medium mb-2">{blog.title}</h3>
-                    <p className="text-sm text-gray-500 mb-3">{blog.author}</p>
-                    <p className="text-gray-600 line-clamp-3">{blog.summary}</p>
-                    <Link href={`/blogs/${blog.slug}`} className="text-primary hover:underline text-sm font-medium block mt-3">
-                      Read Full Article →
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {blogs.length === 0 && (
-            <div className="text-center py-16 bg-white rounded-md shadow-sm">
-              <p className="text-gray-500 mb-4">No blog posts available at the moment.</p>
-              <p className="text-gray-600">Please check back soon for new content!</p>
-            </div>
-          )}
-        </div>
+
+      <div className="blog-listing-header">
+        <h1>BLOG</h1>
       </div>
-    </>
+
+      <div className="blog-listing-container">
+        <main className="blog-listing-main">
+          <div className="blog-listing-grid">
+            {displayBlogs.map((blog) => (
+              <article key={blog._id} className="blog-listing-card">
+                <Link href={`/blogs/${blog.slug}`}>
+                  <div className="blog-listing-image">
+                    <img 
+                      src={blog.imageUrl || '/uploads/blog/placeholder.jpg'} 
+                      alt={blog.title}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/uploads/blog/placeholder.jpg';
+                      }}
+                    />
+                  </div>
+                  <div className="blog-listing-details">
+                    <h2>{blog.title}</h2>
+                    <p>{blog.summary}</p>
+                    <div className="blog-listing-meta">
+                      <span className="blog-listing-category">{blog.category}</span>
+                      <span className="blog-listing-date">
+                        {new Date(blog.publishedAt).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </article>
+            ))}
+          </div>
+        </main>
+
+        <aside className="blog-listing-sidebar">
+          <div className="blog-listing-widget categories-widget">
+            <h3>Categories</h3>
+            <ul>
+              {categories.map((category, index) => (
+                <li key={index}>
+                  <Link href={`/blogs/category/${category.name.toLowerCase().replace(/\s+/g, '-')}`}>
+                    {category.name}
+                    <span>({category.count})</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="blog-listing-widget recent-posts-widget">
+            <h3>Recent Posts</h3>
+            <ul>
+              {displayBlogs.slice(0, 4).map((blog) => (
+                <li key={`recent-${blog._id}`}>
+                  <Link href={`/blogs/${blog.slug}`}>
+                    <div className="recent-post">
+                      <div className="recent-post-image">
+                        <img 
+                          src={blog.imageUrl || '/uploads/blog/placeholder.jpg'} 
+                          alt={blog.title}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/uploads/blog/placeholder.jpg';
+                          }}
+                        />
+                      </div>
+                      <div className="recent-post-details">
+                        <h4>{blog.title}</h4>
+                        <span className="date">
+                          {new Date(blog.publishedAt).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
   );
 }

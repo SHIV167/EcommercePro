@@ -11,15 +11,18 @@ import { apiRequest } from "@/lib/queryClient";
 import SearchBar from "@/components/home/SearchBar";
 import MegaMenu from "../MegaMenu";
 import { Helmet } from 'react-helmet';
+import AuthModal from '@/components/common/AuthModal';
 
 export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login'|'register'>('login');
   const { totalItems } = useCart();
   const { isAuthenticated } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   
   // Get categories for navigation
   const { data: categories = [] } = useQuery<Category[]>({
@@ -52,6 +55,26 @@ export default function Header() {
     }
     prevTotalItemsRef.current = totalItems;
   }, [totalItems, location]);
+
+  // intercept login/register routes and show modal
+  useEffect(() => {
+    if (location.startsWith('/login')) {
+      const [, qs] = location.split('?');
+      const params = new URLSearchParams(qs);
+      const redirectTo = params.get('redirect') || '/';
+      setAuthMode('login');
+      setIsAuthModalOpen(true);
+      setLocation(redirectTo, { replace: true });
+    }
+    if (location.startsWith('/register')) {
+      const [, qs] = location.split('?');
+      const params = new URLSearchParams(qs);
+      const redirectTo = params.get('redirect') || '/';
+      setAuthMode('register');
+      setIsAuthModalOpen(true);
+      setLocation(redirectTo, { replace: true });
+    }
+  }, [location]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white w-full shadow-sm">
@@ -161,14 +184,16 @@ export default function Header() {
                 <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg py-2 z-[100] border border-gray-100" role="menu">
                   {!isAuthenticated && (
                     <>
-                      <Link href="/login" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900" role="menuitem">
+                      <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900 w-full text-left" role="menuitem"
+                        onClick={() => { setAuthMode('login'); setIsAuthModalOpen(true); setIsUserMenuOpen(false); }}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" /></svg>
                         Sign in
-                      </Link>
-                      <Link href="/register" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900" role="menuitem">
+                      </button>
+                      <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900 w-full text-left" role="menuitem"
+                        onClick={() => { setAuthMode('register'); setIsAuthModalOpen(true); setIsUserMenuOpen(false); }}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         Register
-                      </Link>
+                      </button>
                     </>
                   )}
                   <Link href="/cart" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900" role="menuitem">
@@ -241,14 +266,16 @@ export default function Header() {
                 <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg py-2 z-[100] border border-gray-100" role="menu">
                   {!isAuthenticated && (
                     <>
-                      <Link href="/login" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900" role="menuitem">
+                      <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900 w-full text-left" role="menuitem"
+                        onClick={() => { setAuthMode('login'); setIsAuthModalOpen(true); setIsUserMenuOpen(false); }}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" /></svg>
                         Sign in
-                      </Link>
-                      <Link href="/register" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900" role="menuitem">
+                      </button>
+                      <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900 w-full text-left" role="menuitem"
+                        onClick={() => { setAuthMode('register'); setIsAuthModalOpen(true); setIsUserMenuOpen(false); }}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         Register
-                      </Link>
+                      </button>
                     </>
                   )}
                   <Link href="/cart" className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-gray-900" role="menuitem">
@@ -309,6 +336,11 @@ export default function Header() {
       <div className="fixed top-0 left-0 right-0 z-[1000]">
         <SearchBar show={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       </div>
+      <AuthModal
+        open={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authMode}
+      />
     </header>
   );
 }

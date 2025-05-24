@@ -69,7 +69,7 @@ export default function QRScannerManagement() {
 
   const updateCouponCode = useMutation({
     mutationFn: async ({ scannerId, couponCode }: { scannerId: string; couponCode: string }) => {
-      const res = await apiRequest("PATCH", `/api/scanners/admin/qr-scanner/${scannerId}`, { couponCode });
+      const res = await apiRequest("PATCH", `/api/admin/qr-scanner/${scannerId}`, { couponCode });
       toast({
         title: "Success",
         description: "Coupon code updated successfully",
@@ -150,8 +150,10 @@ export default function QRScannerManagement() {
         delete newEmails[scannerId];
         return newEmails;
       });
+      toast({ title: "Email Sent", description: `QR code sent to ${email}` });
     } catch (error) {
       console.error("Error sharing QR code", error);
+      toast({ title: "Error", description: "Failed to send QR code email", variant: "destructive" });
     }
   };
 
@@ -281,7 +283,11 @@ export default function QRScannerManagement() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <Button
                       variant="destructive"
-                      onClick={() => deleteScanner.mutate(s._id)}
+                      onClick={() => {
+                        if (window.confirm("Are you sure you want to delete this QR scanner entry?")) {
+                          deleteScanner.mutate(s._id);
+                        }
+                      }}
                     >
                       Delete
                     </Button>
