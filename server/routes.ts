@@ -2570,6 +2570,9 @@ export async function registerRoutes(app: Application): Promise<Server> {
     res.status(400).json({ error: 'Invalid endpoint. Use /api/popup-settings for popup settings.' });
   });
 
+  // Database backup endpoint
+  app.post('/api/admin/backup', isAdminMiddleware, backupDatabase);
+
   const httpServer = createServer(app);
   return httpServer;
 }

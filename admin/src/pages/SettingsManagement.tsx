@@ -85,6 +85,20 @@ export default function SettingsManagement() {
   });
 
   const isUpdating = status === 'pending';
+  const { mutate: backupDatabase, isLoading: isBackingUp } = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/admin/backup');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Backup failed');
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({ title: 'Database backup created', description: `Download link: ${data.downloadLink}` });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Database backup failed', description: err.message, variant: 'destructive' });
+    },
+  });
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-full p-8">
@@ -252,6 +266,22 @@ export default function SettingsManagement() {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShiprocketChannelId(Number(e.target.value))}
               />
             </div>
+          </CardContent>
+        </Card>
+        
+        {/* Backup Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">Backup Management</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button
+              onClick={() => backupDatabase()}
+              disabled={isBackingUp}
+              className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded"
+            >
+              {isBackingUp ? 'Backing Up...' : 'Backup Database'}
+            </Button>
           </CardContent>
         </Card>
         
