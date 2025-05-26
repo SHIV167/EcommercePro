@@ -30,6 +30,7 @@ import jwt, { Secret } from "jsonwebtoken";
 import { getPopupSetting, updatePopupSetting } from "./controllers/popupSettingController";
 import { subscribeNewsletter, getNewsletterSubscribers } from "./controllers/newsletterController";
 import { getGiftPopupConfig, updateGiftPopupConfig, getGiftProducts } from "./controllers/giftPopupController";
+import { backupDatabase } from "./controllers/backupController";
 import fs from "fs";
 import path, { dirname } from "path";
 import multer from "multer";
@@ -2570,8 +2571,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
     res.status(400).json({ error: 'Invalid endpoint. Use /api/popup-settings for popup settings.' });
   });
 
-  // Database backup endpoint
-  app.post('/api/admin/backup', isAdminMiddleware, backupDatabase);
+  // Database backup endpoint (authenticated + admin only)
+  app.post('/api/admin/backup', isAuthenticatedMiddleware, isAdminMiddleware, backupDatabase);
 
   const httpServer = createServer(app);
   return httpServer;
