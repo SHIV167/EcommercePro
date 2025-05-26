@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import React from "react";
-import { useLocation, RouteComponentProps } from "wouter";
+import { useLocation, RouteComponentProps, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Product as BaseProduct, Review, Ingredient } from "@shared/schema";
 import { Product, FAQ } from "@/types/product";
@@ -36,7 +36,8 @@ type CustomHtmlSection = {
 };
 
 const ProductPage = ({ params }: RouteComponentProps<{ slug: string }>) => {
-  const { slug } = params;
+  const { slug: rawSlug } = params;
+  const slug = rawSlug.endsWith('.html') ? rawSlug.slice(0, -5) : rawSlug;
   const [location, navigate] = useLocation();
   const [quantity, setQuantity] = useState(1);
   const [pincode, setPincode] = useState("");
@@ -238,9 +239,13 @@ const ProductPage = ({ params }: RouteComponentProps<{ slug: string }>) => {
         <>
           <Helmet>
             <title>{extendedProduct!.name} | Shiv Kumar jha</title>
-            <meta name="description" content={extendedProduct!.shortDescription || extendedProduct!.description.substring(0, 160)} />
+            <meta name="description" content={
+              extendedProduct!.shortDescription || extendedProduct!.description?.substring(0, 160) || ""
+            } />
             <meta property="og:title" content={extendedProduct!.name} />
-            <meta property="og:description" content={extendedProduct!.shortDescription || extendedProduct!.description.substring(0, 160)} />
+            <meta property="og:description" content={
+              extendedProduct!.shortDescription || extendedProduct!.description?.substring(0, 160) || ""
+            } />
             <meta property="og:image" content={extendedProduct!.images?.[0] || extendedProduct!.imageUrl} />
             <meta property="og:url" content={window.location.href} />
             <meta name="twitter:card" content="summary_large_image" />
@@ -370,6 +375,21 @@ const ProductPage = ({ params }: RouteComponentProps<{ slug: string }>) => {
                     )}
                   </p>
                 </div>
+                {/* Variant Selection */}
+                {extendedProduct!.variants?.map((variant) => (
+                  <div key={variant.heading} className="mb-6">
+                    <h3 className="text-lg font-medium mb-2">{variant.heading}</h3>
+                    <div className="flex gap-2 mb-4">
+                      {variant.options.map((option: { label: string; url: string; }) => (
+                        <Link key={option.url} href={option.url}>
+                          <button className={`px-4 py-2 border rounded ${location === option.url ? 'bg-primary text-white' : 'bg-white text-gray-800'}`}>
+                            {option.label}
+                          </button>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
                 {/* Quantity Controls */}
                 <div className="flex items-center space-x-2 mt-4">
                   <span className="font-medium">Quantity:</span>

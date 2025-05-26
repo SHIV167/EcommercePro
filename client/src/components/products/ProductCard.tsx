@@ -102,7 +102,7 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
           </button>
         )}
         {/* Product Image */}
-        <Link href={`/products/${product.slug}`} className="block w-full mb-4">
+        <Link href={`/products/${product.slug}.html`} className="block w-full mb-4">
           <div className="relative w-full aspect-square">
             <img 
               src={(() => {
@@ -189,7 +189,7 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
         </div>
         {/* Product Name */}
         <h3 className="font-heading text-primary hover:text-primary-light mb-1 text-base text-center line-clamp-2 min-h-[3rem]">
-          <Link href={`/products/${product.slug}`}>{product.name}</Link>
+          <Link href={`/products/${product.slug}.html`}>{product.name}</Link>
         </h3>
         {/* Short Description */}
         <div className="min-h-[3rem] mb-3">
