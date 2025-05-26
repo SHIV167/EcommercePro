@@ -19,6 +19,7 @@ import SocialShare from "@/components/products/SocialShare";
 import ProductFAQ from "@/components/product/ProductFAQ";
 import '@/styles/product-faq.css';
 import BlogSection from '@/components/home/BlogSection';
+import BestOffers from '@/components/product/BestOffers';
 import { VALID_PINCODES, DELIVERY_ESTIMATION_DAYS } from '@/lib/settings';
 import '@/styles/custom-html-sections.css';
 
@@ -343,17 +344,25 @@ const ProductPage = ({ params }: RouteComponentProps<{ slug: string }>) => {
                   <span className="ml-2 text-gray-600">({extendedProduct!.reviews?.length || 0} reviews)</span>
                 </div>
                 <div className="mb-6">
-                  <p className="font-heading text-xl text-primary">
-                    { (extendedProduct as any).discountedPrice 
-                      ? `₹${(extendedProduct as any).discountedPrice.toFixed(2)}` 
-                      : `₹${extendedProduct!.price.toFixed(2)}` }
-                    { (extendedProduct as any).discountedPrice && (
-                      <span className="ml-3 text-base text-neutral-gray line-through">
-                        ₹{extendedProduct!.price.toFixed(2)}
-                      </span>
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <p className="font-heading text-2xl text-primary">
+                      { extendedProduct!.discountedPrice 
+                        ? `₹${extendedProduct!.discountedPrice.toFixed(2)}` 
+                        : `₹${extendedProduct!.price.toFixed(2)}` }
+                    </p>
+                    { extendedProduct!.discountedPrice && (
+                      <>
+                        <span className="text-lg text-neutral-gray line-through">
+                          ₹{extendedProduct!.price.toFixed(2)}
+                        </span>
+                        <span className="text-green-600 font-medium">
+                          {Math.round(((extendedProduct!.price - extendedProduct!.discountedPrice) / extendedProduct!.price) * 100)}% off
+                        </span>
+                      </>
                     )}
-                  </p>
-                  <p className="text-sm mt-1">
+                  </div>
+                  <div className="text-sm text-gray-500 mb-2">(Included all taxes)</div>
+                  <p className="text-sm">
                     {extendedProduct!.stock > 0 ? (
                       <span className="text-green-600">In Stock</span>
                     ) : (
@@ -396,6 +405,9 @@ const ProductPage = ({ params }: RouteComponentProps<{ slug: string }>) => {
                   </AnimatedCartButton>
                 </div>
                 <SocialShare url={window.location.href} title={extendedProduct!.name} />
+                <div className="mt-6">
+                  <BestOffers />
+                </div>
               </div>
             </div>
 
@@ -611,13 +623,24 @@ const ProductPage = ({ params }: RouteComponentProps<{ slug: string }>) => {
                           .sort((a, b) => a.stepNumber - b.stepNumber)
                           .map((step, index) => (
                             <div key={index} className="border-b border-gray-200 pb-4 mb-4 last:border-0">
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-baseline gap-2 mb-1">
+                                <div className="text-2xl font-bold">₹{product.price}</div>
+                                {product.discountedPrice && (
+                                  <>
+                                    <div className="text-lg text-gray-500 line-through">₹{product.price}</div>
+                                    <div className="text-green-600 font-medium">
+                                      {Math.round(((product.price - product.discountedPrice) / product.price) * 100)}% off
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              <div className="text-sm text-gray-500 mb-4">(Included all taxes)</div>
+                              <div className="flex items-center">
                                 <span className="font-bold">Step {step.stepNumber}: {step.title}</span>
                               </div>
                               <p className="text-sm text-gray-700 mt-2">{step.description}</p>
                             </div>
-                          ))
-                        }
+                          ))}
                       </div>
                     )}
                   </div>

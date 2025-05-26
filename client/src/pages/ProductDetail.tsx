@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'wouter';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import SocialShare from '@/components/products/SocialShare';
+import BestOffers from '@/components/product/BestOffers';
 
 // Removed ProductDetail.css import; using Tailwind for responsive layout
 
@@ -150,6 +151,7 @@ const ProductDetail: React.FC = () => {
                 description={product.description}
                 image={product.image}
               />
+              <BestOffers />
             </div>
           </div>
         </div>
