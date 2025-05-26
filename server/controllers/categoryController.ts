@@ -27,10 +27,11 @@ export async function getFeaturedCategories(req: Request, res: Response) {
   }
 }
 
-// Get category by ID
-export async function getCategoryById(req: Request, res: Response) {
+// Get category by slug
+export async function getCategoryBySlug(req: Request, res: Response) {
   try {
-    const category = await storage.getCategoryById(req.params.id);
+    const slug = req.params.slug;
+    const category = await storage.getCategoryBySlug(slug);
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }

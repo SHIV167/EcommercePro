@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import { useParams } from 'wouter';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Product, Category as CategoryType } from '@shared/schema';
 import ProductCard from '@/components/products/ProductCard';

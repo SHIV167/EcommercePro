@@ -4,7 +4,7 @@ import upload from '../utils/upload';
 import {
   getCategories,
   getFeaturedCategories,
-  getCategoryById,
+  getCategoryBySlug,
   createCategory,
   updateCategory,
   deleteCategory
@@ -15,7 +15,7 @@ const router = express.Router();
 // Public routes
 router.get('/categories', getCategories);
 router.get('/categories/featured', getFeaturedCategories);
-router.get('/categories/:id', getCategoryById);
+router.get('/categories/:slug', getCategoryBySlug);
 
 // Admin routes (protected)
 router.post('/admin/categories', authenticateJWT, isAdmin, (req, res, next) => {
