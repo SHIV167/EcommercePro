@@ -7,68 +7,105 @@ import 'slick-carousel/slick/slick-theme.css';
 import '@/styles/category-slider.css';
 
 export default function CategorySection() {
-  const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ['/api/categories/featured'],
-  });
-
-  // If no categories are returned, show these placeholders
-  const displayCategories = categories.length > 0 ? categories : [
+  const defaultCategories = [
     {
       _id: "1",
-      name: "Face",
-      slug: "face",
-      imageUrl: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?ixlib=rb-4.0.3",
+      name: "TRAVEL",
+      slug: "travel",
+      imageUrl: "/uploads/sections/herbs_01.png",
       featured: true
     },
     {
       _id: "2",
-      name: "Hair",
-      slug: "hair",
-      imageUrl: "https://images.unsplash.com/photo-1574621100236-d25b64cfd647?ixlib=rb-4.0.3",
+      name: "GIFT CARD",
+      slug: "gift-card",
+      imageUrl: "/uploads/sections/herbs_02.png",
       featured: true
     },
     {
       _id: "3",
-      name: "Body",
-      slug: "body",
-      imageUrl: "https://images.unsplash.com/photo-1627467959547-215304e0e8cc?ixlib=rb-4.0.3",
+      name: "GIFTING",
+      slug: "gifting",
+      imageUrl: "/uploads/sections/herbs_03.png",
       featured: true
     },
     {
       _id: "4",
-      name: "Wellness",
-      slug: "wellness",
-      imageUrl: "https://images.unsplash.com/photo-1591084863828-30ebecaf2c82?ixlib=rb-4.0.3",
+      name: "FACE",
+      slug: "face",
+      imageUrl: "/uploads/sections/herbs_01.png",
+      featured: true
+    },
+    {
+      _id: "5",
+      name: "BODY",
+      slug: "body",
+      imageUrl: "/uploads/sections/herbs_02.png",
+      featured: true
+    },
+    {
+      _id: "6",
+      name: "MAKEUP",
+      slug: "makeup",
+      imageUrl: "/uploads/sections/herbs_03.png",
+      featured: true
+    },
+    {
+      _id: "7",
+      name: "HAIR",
+      slug: "hair",
+      imageUrl: "/uploads/sections/herbs_01.png",
+      featured: true
+    },
+    {
+      _id: "8",
+      name: "MEN",
+      slug: "men",
+      imageUrl: "/uploads/sections/herbs_02.png",
       featured: true
     }
   ] as Category[];
 
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['/api/categories/featured'],
+  });
+
+  const displayCategories = categories.length > 0 ? categories : defaultCategories;
+
   return (
-    <section className="py-12 bg-neutral-cream category-section">
+    <section className="py-12 bg-white">
       <div className="container mx-auto px-4 relative">
-        <h2 className="font-heading text-2xl text-primary text-center mb-10">Shop By Category</h2>
+        <h2 className="font-heading text-2xl text-center mb-10">Shop By Category</h2>
         <Slider
           dots={true}
-          arrows={false}
+          arrows={true}
           infinite={true}
           speed={500}
           autoplay={true}
-          autoplaySpeed={2500}
-          slidesToShow={7}
+          autoplaySpeed={3000}
+          pauseOnHover={true}
+          slidesToShow={8}
           slidesToScroll={1}
-          className="category-slider"
+          className="category-slider -mx-2"
           responsive={[
             {
               breakpoint: 1280,
               settings: {
-                slidesToShow: 5,
-                slidesToScroll: 1
+                slidesToShow: 6,
+                slidesToScroll: 2
               }
             },
             {
               breakpoint: 1024,
               settings: {
                 slidesToShow: 4,
+                slidesToScroll: 2
+              }
+            },
+            {
+              breakpoint: 768,
+              settings: {
+                slidesToShow: 3,
                 slidesToScroll: 1
               }
             },
@@ -82,23 +119,22 @@ export default function CategorySection() {
           ]}
         >
           {displayCategories.map((category) => (
-              <Link href={`/categories/${category.slug}`} className="group block">
-                <div className="flex flex-col items-center">
-                  <div className="mb-4 flex items-center justify-center">
-                    <div className="h-28 w-28 md:h-32 md:w-32 rounded-full border-2 border-gold flex items-center justify-center bg-white shadow-md transition-transform duration-300 group-hover:scale-105">
-                      <img 
-                        src={category.imageUrl} 
-                        alt={category.name}
-                        className="h-20 w-20 md:h-24 md:w-24 object-cover rounded-full"
-                      />
-                    </div>
+            <div key={category._id} className="px-2">
+              <Link href={`/categories/${category.slug}`} className="block group">
+                <div className="relative aspect-square overflow-hidden rounded-lg bg-neutral-100">
+                  <img 
+                    src={category.mobileImageUrl || category.desktopImageUrl || category.imageUrl} 
+                    alt={category.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center transition-opacity group-hover:bg-opacity-30">
+                    <h3 className="text-white text-sm font-medium tracking-wider uppercase text-center px-2 w-full">
+                      {category.name}
+                    </h3>
                   </div>
-                  <h3 className="font-accent text-primary group-hover:text-secondary text-base md:text-lg font-semibold text-center mt-2">
-                    {category.name}
-                  </h3>
                 </div>
               </Link>
-
+            </div>
           ))}
         </Slider>
       </div>

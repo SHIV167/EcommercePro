@@ -130,6 +130,7 @@ import freeProductRoutes from './routes/freeProductRoutes.js'; // Import freePro
 import reviewRoutes from './routes/reviewRoutes.js'; // Import review routes
 import cartRoutes from './routes/cartRoutes.js'; // Import cart routes
 import bannerRoutes from './routes/bannerRoutes.new'; // Add banner routes
+import categoryRoutes from './routes/categoryRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 
 // Import controllers for coupons
@@ -151,6 +152,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', freeProductRoutes);
   app.use('/api', reviewRoutes); // Add review routes
   app.use('/api', cartRoutes); // Add cart routes
+  app.use('/api', categoryRoutes);
   app.use(uploadRoutes);
   // ensure upload directory exists in public/uploads
   const uploadDir = path.join(__dirname, '../public/uploads');
