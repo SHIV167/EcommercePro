@@ -32,6 +32,17 @@ export interface CustomHtmlSection {
   enabled: boolean;
 }
 
+export interface VariantOption {
+  label: string;
+  url: string;
+  isDefault?: boolean;
+}
+
+export interface VariantGroup {
+  heading: string;
+  options: VariantOption[];
+}
+
 export interface IProduct extends Document {
   name: string;
   sku: string;
@@ -60,6 +71,7 @@ export interface IProduct extends Document {
   benefits?: string;
   structuredBenefits?: Benefit[];
   customHtmlSections?: CustomHtmlSection[];
+  variants?: VariantGroup[];
 }
 
 const FAQSchema = new Schema({
@@ -94,6 +106,17 @@ const CustomHtmlSectionSchema = new Schema({
   enabled: { type: Boolean, default: false }
 }, { _id: false });
 
+const VariantOptionSchema = new Schema({
+  label: { type: String, required: true },
+  url: { type: String, required: true },
+  isDefault: { type: Boolean, default: false }
+}, { _id: false });
+
+const VariantGroupSchema = new Schema({
+  heading: { type: String, required: true },
+  options: { type: [VariantOptionSchema], default: [] }
+}, { _id: false });
+
 const ProductSchema: Schema = new Schema({
   name: { type: String, required: true },
   sku: { type: String, required: true, unique: true },
@@ -121,6 +144,7 @@ const ProductSchema: Schema = new Schema({
   howToUseSteps: { type: [HowToUseStepSchema], default: [] },
   benefits: { type: String },
   structuredBenefits: { type: [BenefitSchema], default: [] },
+  variants: { type: [VariantGroupSchema], default: [] },
   customHtmlSections: { type: [CustomHtmlSectionSchema], default: [] },
 });
 

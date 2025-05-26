@@ -73,7 +73,15 @@ const productSchema = z.object({
     title: z.string().optional(),
     description: z.string().optional(),
     imageUrl: z.string().optional()
-  })).default([])  
+  })).default([]),
+  variants: z.array(z.object({
+    heading: z.string().min(1, "Variant group heading is required"),
+    options: z.array(z.object({
+      label: z.string().min(1, "Option label is required"),
+      url: z.string().min(1, "Option URL is required"),
+      isDefault: z.boolean().optional().default(false)
+    })).default([])
+  })).default([])
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -90,7 +98,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>(product?.images || []);
-  
+
   // Define the type for custom HTML sections
   type CustomHtmlSection = {
     id: string;
@@ -101,7 +109,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
   };
 
   // Setup custom HTML sections field array
-  const [customSectionTemplates, setCustomSectionTemplates] = useState<{id: string, title: string, content: string, displayOrder: number, enabled: boolean}[]>([]);
+  const [customSectionTemplates, setCustomSectionTemplates] = useState<{ id: string, title: string, content: string, displayOrder: number, enabled: boolean }[]>([]);
 
   useEffect(() => {
     if (product?.customHtmlSections && Array.isArray(product.customHtmlSections) && product.customHtmlSections.length > 0) {
@@ -164,10 +172,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       return response.json();
     }
   });
-  
+
   // Ensure categories is always an array
   const categories: MongoCategory[] = Array.isArray(categoriesData) ? categoriesData : [];
-  
+
   // Define type for product collections
   interface ProductCollection {
     _id: string;
@@ -224,7 +232,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       generalBenefits: product?.generalBenefits || '',
       structuredBenefits: product?.structuredBenefits || [],
       howToUse: product?.howToUse || '',
-      howToUseSteps: product?.howToUseSteps || []
+      howToUseSteps: product?.howToUseSteps || [],
+      variants: product?.variants || []
     }
   });
 
@@ -249,14 +258,17 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
     control: form.control
   });
 
+  const { fields: variantGroupFields, append: appendVariantGroup, remove: removeVariantGroup } = useFieldArray({
+    name: 'variants',
+    control: form.control
+  });
 
-  
   // Make sure customHtmlSections is properly initialized
   useEffect(() => {
     try {
       // Safety check to ensure form is fully initialized
       if (!form) return;
-      
+
       // Make sure we have a valid array for customHtmlSections
       const currentSections = form.getValues().customHtmlSections || [];
       if (!currentSections.length && customSectionTemplates.length) {
@@ -270,12 +282,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       console.error("Error initializing customHtmlSections:", error);
     }
   }, [form, customSectionTemplates]);
-  
+
   // Log current custom sections for debugging and set form values
   useEffect(() => {
     // Safety check to ensure form is initialized
     if (!form) return;
-    
+
     console.log("Product custom HTML sections:", product?.customHtmlSections);
     // Only set form values if customSectionTemplates has items
     if (customSectionTemplates.length > 0) {
@@ -301,7 +313,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
     try {
       // First ensure customSectionTemplates has proper data structure
       console.log("Original customSectionTemplates:", JSON.stringify(customSectionTemplates));
-      
+
       // Make sure we're using the correct custom HTML sections data
       // Ensure each section has the required fields and proper format
       const formattedCustomSections = customSectionTemplates.map((section: CustomHtmlSection) => ({
@@ -311,10 +323,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
         displayOrder: typeof section.displayOrder === 'number' ? section.displayOrder : 0,
         enabled: typeof section.enabled === 'boolean' ? section.enabled : false
       }));
-      
+
       // Directly assign the formatted sections to values
       values.customHtmlSections = formattedCustomSections;
-      
+
       // Log for debugging
       console.log("Submitting custom HTML sections:", JSON.stringify(values.customHtmlSections));
 
@@ -378,15 +390,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       // NOTE: Not using FormData as it may be causing serialization issues
       const productData = {
         ...values,
-        customHtmlSections: formattedCustomSections // Ensure this property is included correctly
+        customHtmlSections: formattedCustomSections, // Ensure this property is included correctly
+        variants: values.variants
       };
-      
+
       console.log("Sending product data:", JSON.stringify(productData));
-      
+
       // Send request (POST or PUT)
       const method = product ? 'PUT' : 'POST';
       const url = product ? `/api/products/${product._id}` : '/api/products';
-      
+
       // Use JSON format instead of FormData for better consistency
       const response = await apiRequest(method, url, productData);
 
@@ -400,12 +413,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
 
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      
+
       toast({
         title: product ? "Product Updated" : "Product Created",
         description: `The product has been successfully ${product ? "updated" : "created"}.`,
       });
-      
+
       // Clear form
       form.reset();
       // Show success toast with details about the custom HTML sections
@@ -418,7 +431,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
       // Clear temp image data
       setImageFiles([]);
       setImagePreviews([]);
-      
+
       // Call onSuccess callback if provided
       if (onSuccess) {
         onSuccess();
@@ -489,6 +502,46 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
     );
   }
 
+  // Nested component for variant options (hooks at top-level)
+  const VariantOptions: React.FC<{ groupIndex: number }> = ({ groupIndex }) => {
+    const { fields: optionFields, append: appendOption, remove: removeOption } = useFieldArray({
+      control: form.control,
+      name: `variants.${groupIndex}.options`
+    });
+    return (
+      <>
+        {optionFields.map((opt, optIndex) => (
+          <div key={opt.id} className="flex items-center gap-2 mb-2">
+            <FormField control={form.control} name={`variants.${groupIndex}.options.${optIndex}.label`} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Option Label</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name={`variants.${groupIndex}.options.${optIndex}.url`} render={({ field }) => (
+              <FormItem>
+                <FormLabel>Option URL</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name={`variants.${groupIndex}.options.${optIndex}.isDefault`} render={({ field }) => (
+              <FormItem className="flex items-center">
+                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                <FormLabel className="ml-2">Default</FormLabel>
+              </FormItem>
+            )} />
+            <Button variant="ghost" size="sm" onClick={() => removeOption(optIndex)}><Trash2 size={16} /></Button>
+          </div>
+        ))}
+        <Button type="button" variant="outline" size="sm" onClick={() => appendOption({ label: "", url: "", isDefault: false })}>
+          <Plus size={12} /> Add Option
+        </Button>
+      </>
+    );
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={handleSubmitWithImages} className="space-y-6">
@@ -525,7 +578,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* Slug field */}
           <FormField
             control={form.control}
@@ -537,9 +590,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={generateSlug}
                     className="flex-shrink-0"
                   >
@@ -551,7 +604,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* Price field */}
           <FormField
             control={form.control}
@@ -571,7 +624,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* Discounted Price field */}
           <FormField
             control={form.control}
@@ -580,14 +633,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               <FormItem>
                 <FormLabel>Discounted Price</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    value={field.value === null ? "" : field.value} 
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={field.value === null ? "" : field.value}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const value = e.target.value;
                       field.onChange(value === "" ? null : parseFloat(value));
-                    }} 
+                    }}
                   />
                 </FormControl>
                 <FormDescription>Leave empty for no discount</FormDescription>
@@ -595,7 +648,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* Stock field */}
           <FormField
             control={form.control}
@@ -614,7 +667,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* Category field */}
           <FormField
             control={form.control}
@@ -639,8 +692,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                       categories.map((category) => {
                         const categoryId = category.id || category._id;
                         return (
-                          <SelectItem 
-                            key={categoryId?.toString() || `cat-${category.name}`} 
+                          <SelectItem
+                            key={categoryId?.toString() || `cat-${category.name}`}
                             value={categoryId?.toString() || `cat-${category.name}`}
                           >
                             {category.name}
@@ -654,7 +707,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* Images input and preview */}
           <div className="col-span-full mb-4">
             <FormLabel>Product Images</FormLabel>
@@ -701,7 +754,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
             </div>
             <FormDescription>Upload up to 5 images. The first image will be used as the main image.</FormDescription>
           </div>
-          
+
           {/* Video URL field */}
           <FormField
             control={form.control}
@@ -717,7 +770,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* Short Description field */}
           <FormField
             control={form.control}
@@ -726,9 +779,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               <FormItem className="col-span-full">
                 <FormLabel>Short Description</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    rows={2} 
-                    {...field} 
+                  <Textarea
+                    rows={2}
+                    {...field}
                     placeholder="Brief description for product listings"
                   />
                 </FormControl>
@@ -736,7 +789,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* Main Description field */}
           <FormField
             control={form.control}
@@ -745,18 +798,18 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               <FormItem className="col-span-full">
                 <FormLabel>Full Description*</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Detailed product description" 
-                    className="resize-none" 
+                  <Textarea
+                    placeholder="Detailed product description"
+                    className="resize-none"
                     rows={5}
-                    {...field} 
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
+
           {/* Featured checkbox */}
           <FormField
             control={form.control}
@@ -778,7 +831,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* Bestseller checkbox */}
           <FormField
             control={form.control}
@@ -800,7 +853,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* New Product checkbox */}
           <FormField
             control={form.control}
@@ -822,7 +875,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </FormItem>
             )}
           />
-          
+
           {/* Product FAQs Section */}
           <div className="col-span-full mt-6">
             <Card>
@@ -842,15 +895,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                   <div className="space-y-4">
                     {faqFields.map((field, index) => (
                       <div key={field.id} className="p-4 border rounded-md relative">
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className="absolute top-2 right-2 text-destructive hover:text-destructive/90"
                           onClick={() => removeFaq(index)}
                           aria-label="Remove FAQ"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
-                        
+
                         <div className="space-y-3">
                           <div className="space-y-1">
                             <label htmlFor={`faqs.${index}.question`} className="text-sm font-medium">
@@ -868,7 +921,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                               </p>
                             )}
                           </div>
-                          
+
                           <div className="space-y-1">
                             <label htmlFor={`faqs.${index}.answer`} className="text-sm font-medium">
                               Answer
@@ -891,7 +944,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                     ))}
                   </div>
                 )}
-                
                 <Button
                   type="button"
                   variant="outline"
@@ -905,7 +957,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </CardContent>
             </Card>
           </div>
-          
+
           {/* Ingredients Section */}
           <div className="col-span-full mt-6">
             <Card>
@@ -923,9 +975,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                     <FormItem>
                       <FormLabel>General Ingredients List</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          rows={3} 
-                          {...field} 
+                        <Textarea
+                          rows={3}
+                          {...field}
                           placeholder="List all ingredients separated by commas"
                         />
                       </FormControl>
@@ -936,7 +988,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                     </FormItem>
                   )}
                 />
-                
+
                 {ingredientFields.length === 0 ? (
                   <div className="text-center p-4 border border-dashed rounded-md mt-6">
                     <p className="text-muted-foreground mb-2">No structured ingredients added yet</p>
@@ -947,15 +999,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                     <h3 className="text-base font-medium mb-2">Featured Ingredients</h3>
                     {ingredientFields.map((field, index) => (
                       <div key={field.id} className="p-4 border rounded-md relative">
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className="absolute top-2 right-2 text-destructive hover:text-destructive/90"
                           onClick={() => removeIngredient(index)}
                           aria-label="Remove Ingredient"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
-                        
+
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div className="space-y-1">
                             <label htmlFor={`structuredIngredients.${index}.name`} className="text-sm font-medium">
@@ -973,7 +1025,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                               </p>
                             )}
                           </div>
-                          
+
                           <div className="space-y-1">
                             <label htmlFor={`structuredIngredients.${index}.imageUrl`} className="text-sm font-medium">
                               Image URL
@@ -991,7 +1043,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="space-y-1 mt-3">
                           <label htmlFor={`structuredIngredients.${index}.description`} className="text-sm font-medium">
                             Description
@@ -1009,7 +1061,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                             </p>
                           )}
                         </div>
-                        
+
                         <div className="space-y-1 mt-3">
                           <label htmlFor={`structuredIngredients.${index}.benefits`} className="text-sm font-medium">
                             Benefits
@@ -1031,7 +1083,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                     ))}
                   </div>
                 )}
-                
                 <Button
                   type="button"
                   variant="outline"
@@ -1136,7 +1187,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                 </Button>
               </CardContent>
             </Card>
-            
+
             {/* Structured Benefits */}
             <Card className="mt-4">
               <CardHeader>
@@ -1159,7 +1210,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
-                      
+
                       <div className="grid gap-4 mb-4">
                         <FormField
                           control={form.control}
@@ -1177,7 +1228,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name={`structuredBenefits.${index}.description`}
@@ -1194,7 +1245,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name={`structuredBenefits.${index}.imageUrl`}
@@ -1215,7 +1266,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                     </div>
                   ))}
                 </div>
-                
+
                 <Button
                   type="button"
                   variant="outline"
@@ -1229,8 +1280,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
               </CardContent>
             </Card>
 
-
-            
             {/* How to Use Section */}
             <Card className="mt-6">
               <CardHeader>
@@ -1246,9 +1295,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                       <FormItem>
                         <FormLabel>General Usage Instructions</FormLabel>
                         <FormControl>
-                          <Textarea 
+                          <Textarea
                             placeholder="Provide general instructions on how to use the product"
-                            {...field} 
+                            {...field}
                             className="min-h-[100px]"
                           />
                         </FormControl>
@@ -1256,7 +1305,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="howToUseVideo"
@@ -1276,12 +1325,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <FormLabel className="text-base">Step-by-Step Instructions</FormLabel>
                     </div>
-                    
+
                     {howToUseStepFields.length > 0 && (
                       <div className="space-y-4">
                         {howToUseStepFields.map((field, index) => (
@@ -1295,7 +1344,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                            
 
                             <div className="grid gap-4">
                               <div className="grid gap-2">
@@ -1319,7 +1367,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                                   )}
                                 />
                               </div>
-                              
+
                               <div className="grid gap-2">
                                 <FormField
                                   control={form.control as any}
@@ -1339,7 +1387,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                                 />
                               </div>
                             </div>
-                            
+
                             <div className="grid gap-2 mt-4">
                               <FormField
                                 control={form.control as any}
@@ -1362,7 +1410,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                         ))}
                       </div>
                     )}
-                    
                     <Button
                       type="button"
                       variant="outline"
@@ -1378,7 +1425,35 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
             </Card>
           </div>
         </div>
-        
+
+        {/* Product Variants */}
+        <Card className="col-span-full">
+          <CardHeader>
+            <CardTitle>Product Variants</CardTitle>
+            <CardDescription>Add variant groups and options</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {variantGroupFields.map((group, groupIndex) => (
+              <div key={group.id} className="border rounded p-4 mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <FormField control={form.control} name={`variants.${groupIndex}.heading`} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Variant Group Heading*</FormLabel>
+                      <FormControl><Input {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <Button variant="ghost" size="sm" onClick={() => removeVariantGroup(groupIndex)}><Trash2 size={16} /></Button>
+                </div>
+                <VariantOptions groupIndex={groupIndex} />
+              </div>
+            ))}
+            <Button type="button" variant="outline" onClick={() => appendVariantGroup({ heading: "", options: [] })}>
+              <Plus size={12} /> Add Variant Group
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Custom HTML Sections */}
         <Card className="mt-6">
           <CardHeader>
@@ -1391,14 +1466,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                 <div key={section.id} className="border rounded-lg p-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id={`section-enabled-${section.id}`}
                         checked={section.enabled}
                         onCheckedChange={(checked: boolean) => {
                           const updatedSections = [...customSectionTemplates];
                           updatedSections[index].enabled = !!checked;
                           setCustomSectionTemplates(updatedSections);
-                        }} 
+                        }}
                       />
                       <div>
                         <label
@@ -1424,7 +1499,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                  
+
                   <div className="grid gap-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -1457,7 +1532,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div>
                       <Label htmlFor={`section-content-${index}`}>HTML Content</Label>
                       <CodeEditor
@@ -1472,7 +1547,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                   </div>
                 </div>
               ))}
-              
               <Button
                 type="button"
                 variant="outline"
@@ -1484,11 +1558,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
                     displayOrder: customSectionTemplates.length,
                     enabled: false
                   };
-                  
+
                   // Update both the state and the form value
                   const updatedSections = [...customSectionTemplates, newSection];
                   setCustomSectionTemplates(updatedSections);
-                  
+
                   // Also update the form value to keep it in sync
                   form.setValue('customHtmlSections', updatedSections, { shouldDirty: true });
                 }}
@@ -1499,7 +1573,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSuccess }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <div className="flex justify-end space-x-2 pt-2">
           <Button
             type="button"

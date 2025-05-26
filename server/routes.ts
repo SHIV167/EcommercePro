@@ -708,38 +708,89 @@ export async function registerRoutes(app: Application): Promise<Server> {
   // Product routes
   // Update product
   app.put("/api/products/:id", async (req, res) => {
-    try {
-      console.log('Updating product with ID:', req.params.id);
-      console.log('Request body:', req.body);
+    console.log('Updating product with ID:', req.params.id);
+    console.log('Request body:', req.body);
 
-      const productId = req.params.id;
-      const updateData = req.body;
+    const productId = req.params.id;
+    const updateData = req.body;
 
-      // Ensure custom HTML sections are properly formatted
-      if (updateData.customHtmlSections) {
-        updateData.customHtmlSections = updateData.customHtmlSections.map((section: any) => ({
-          id: section.id,
-          title: section.title,
-          content: section.content,
-          displayOrder: section.displayOrder || 0,
-          enabled: section.enabled
-        }));
-      }
-
-      // Update the product
-      const updatedProduct = await storage.updateProduct(productId, updateData);
-      
-      if (!updatedProduct) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
-
-      return res.status(200).json(updatedProduct);
-    } catch (error) {
-      console.error('Error updating product:', error);
-      return res.status(500).json({ 
-        message: error instanceof Error ? error.message : 'Failed to update product'
-      });
+    // Ensure custom HTML sections are properly formatted
+    if (updateData.customHtmlSections) {
+      updateData.customHtmlSections = updateData.customHtmlSections.map((section: any) => ({
+        id: section.id,
+        title: section.title,
+        content: section.content,
+        displayOrder: section.displayOrder || 0,
+        enabled: section.enabled
+      }));
     }
+
+    // Parse structured ingredients if provided
+    let structuredIngredients = [];
+    if (updateData.structuredIngredients) {
+      try {
+        structuredIngredients = JSON.parse(updateData.structuredIngredients);
+        console.log('Parsed structuredIngredients:', structuredIngredients);
+      } catch (e) {
+        console.error('Error parsing structuredIngredients:', e);
+      }
+    }
+    
+    // Parse howToUseSteps if provided
+    let howToUseSteps = [];
+    if (updateData.howToUseSteps) {
+      try {
+        howToUseSteps = JSON.parse(updateData.howToUseSteps);
+        console.log('Parsed howToUseSteps:', howToUseSteps);
+      } catch (e) {
+        console.error('Error parsing howToUseSteps:', e);
+      }
+    }
+    
+    // Parse structuredBenefits if provided
+    let structuredBenefits = [];
+    if (updateData.structuredBenefits) {
+      try {
+        structuredBenefits = JSON.parse(updateData.structuredBenefits);
+        console.log('Parsed structuredBenefits:', structuredBenefits);
+      } catch (e) {
+        console.error('Error parsing structuredBenefits:', e);
+      }
+    }
+    
+    // Parse customHtmlSections if provided
+    let customHtmlSections = [];
+    if (updateData.customHtmlSections) {
+      try {
+        customHtmlSections = JSON.parse(updateData.customHtmlSections);
+        console.log('Parsed customHtmlSections:', customHtmlSections);
+      } catch (e) {
+        console.error('Error parsing customHtmlSections:', e);
+      }
+    }
+    
+    // Parse variants if provided for update
+    let variants = [];
+    if (updateData.variants) {
+      try {
+        variants = typeof updateData.variants === 'string'
+          ? JSON.parse(updateData.variants)
+          : updateData.variants;
+        console.log('Parsed variants for update:', variants);
+      } catch (e) {
+        console.error('Error parsing variants for update:', e);
+      }
+      updateData.variants = variants;
+    }
+
+    // Update the product
+    const updatedProduct = await storage.updateProduct(productId, updateData);
+    
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    return res.status(200).json(updatedProduct);
   });
 
   app.get("/api/products", async (req, res) => {
@@ -757,7 +808,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
       if (search) {
         filteredProducts = allProducts.filter(p =>
           p.name.toLowerCase().includes(search.toLowerCase()) ||
-          (p.description && p.description.toLowerCase().includes(search.toLowerCase()))
+          (p.description?.toLowerCase().includes(search.toLowerCase()))
         );
       }
 
@@ -776,45 +827,6 @@ export async function registerRoutes(app: Application): Promise<Server> {
     } catch (error) {
       console.error("Error fetching products:", error);
       return res.status(500).json({ error: "Failed to fetch products" });
-    }
-  });
-  
-  app.get("/api/products/featured", async (req, res) => {
-    try {
-      const { limit } = req.query;
-      const limitNum = limit ? parseInt(limit as string) : undefined;
-      
-      const products = await storage.getFeaturedProducts(limitNum);
-      
-      return res.status(200).json(products);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.get("/api/products/bestsellers", async (req, res) => {
-    try {
-      const { limit } = req.query;
-      const limitNum = limit ? parseInt(limit as string) : undefined;
-      
-      const products = await storage.getBestsellerProducts(limitNum);
-      
-      return res.status(200).json(products);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.get("/api/products/new", async (req, res) => {
-    try {
-      const { limit } = req.query;
-      const limitNum = limit ? parseInt(limit as string) : undefined;
-      
-      const products = await storage.getNewProducts(limitNum);
-      
-      return res.status(200).json(products);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
     }
   });
   
@@ -941,6 +953,19 @@ export async function registerRoutes(app: Application): Promise<Server> {
         }
       }
 
+      // Parse variants if provided
+      let variants = [];
+      if (productData.variants) {
+        try {
+          variants = typeof productData.variants === 'string'
+            ? JSON.parse(productData.variants)
+            : productData.variants;
+          console.log('Parsed variants:', variants);
+        } catch (e) {
+          console.error('Error parsing variants:', e);
+        }
+      }
+
       const newProduct = await storage.createProduct({
         ...productData,
         price,
@@ -955,7 +980,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
         howToUseVideo: productData.howToUseVideo || '',
         structuredBenefits,
         benefits: productData.benefits || '',
-        customHtmlSections
+        customHtmlSections,
+        variants
       });
       console.log('[PRODUCT CREATE] Success:', newProduct);
       return res.status(201).json(newProduct);
@@ -1018,7 +1044,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
       // Final images array: merge cleaned existing + new
       const images = [...cleanExistingImages, ...newImages];
       
-      // Always set imageUrl to first image (if any)
+      // Always set imageUrl to first image in the array
       const imageUrl = images.length > 0 ? images[0] : undefined;
       
       console.log('[DEBUG] Image paths:', {
@@ -1086,7 +1112,21 @@ export async function registerRoutes(app: Application): Promise<Server> {
           console.error('Error parsing customHtmlSections:', e);
         }
       }
-      
+
+      // Parse variants if provided for update
+      let variants = [];
+      if (productData.variants) {
+        try {
+          variants = typeof productData.variants === 'string'
+            ? JSON.parse(productData.variants)
+            : productData.variants;
+          console.log('Parsed variants for update:', variants);
+        } catch (e) {
+          console.error('Error parsing variants for update:', e);
+        }
+        productData.variants = variants;
+      }
+
       // Log the extracted data before creating the final update object
       console.log('[DEBUG] Extracted data for update:', {
         howToUseSteps,
@@ -1111,7 +1151,8 @@ export async function registerRoutes(app: Application): Promise<Server> {
         howToUseVideo: productData.howToUseVideo || '',
         structuredBenefits,
         benefits: productData.benefits || '',
-        customHtmlSections
+        customHtmlSections,
+        variants
       };
       
       // Log the final update data object before saving to DB
@@ -1128,1454 +1169,21 @@ export async function registerRoutes(app: Application): Promise<Server> {
       return res.status(500).json({ error: "Failed to update product", details: error instanceof Error ? error.message : error });
     }
   });
-  
-  app.delete("/api/products/:id", async (req, res) => {
-    try {
-      // Admin authentication is handled through cookies
-      const productId = req.params.id;
 
-    // Check if product exists
-    const existingProduct = await storage.getProductById(productId);
-    if (!existingProduct) {
-      return res.status(404).json({ error: "Product not found" });
-    }
-
-    await storage.deleteProduct(productId);
-    return res.status(200).json({ message: "Product deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      return res.status(500).json({ error: "Failed to delete product" });
-    }
-  });
-
-  // Admin: delete product
-  app.delete('/api/products/:id', async (req, res) => {
-    try {
-      const id = req.params.id;
-      const deleted = await storage.deleteProduct(id);
-      if (!deleted) return res.status(404).json({ message: 'Product not found' });
-      return res.json({ success: true });
-    } catch (err) {
-      console.error('Failed to delete product:', err);
-      return res.status(500).json({ message: 'Failed to delete product' });
-    }
-  });
-
-  // endpoint: upload multiple images for a product
-  app.post('/api/products/:id/images', uploadLocal.array('images'), async (req, res) => {
-    try {
-      const { id } = req.params;
-      const files = Array.isArray(req.files) ? req.files as Express.Multer.File[] : [];
-      console.log(`[routes] /api/products/${id}/images - received files:`, files.map(f => f.originalname));
-      const urls = files.map(f => `/uploads/${f.filename}`);
-      // update product images array
-      const updated = await ProductModel.findByIdAndUpdate(id, { $push: { images: { $each: urls } } }, { new: true });
-      return res.json({ images: updated?.images || [] });
-    } catch (err) {
-      console.error('Image upload error:', err);
-      return res.status(500).json({ message: 'Upload failed' });
-    }
-  });
-
-  // Category routes
-  app.get("/api/categories", async (req, res) => {
-    try {
-      const categories = await storage.getCategories();
-      return res.status(200).json(categories);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.get("/api/categories/featured", async (req, res) => {
-    try {
-      const { limit } = req.query;
-      const limitNum = limit ? parseInt(limit as string) : undefined;
-      
-      const categories = await storage.getFeaturedCategories(limitNum);
-      
-      return res.status(200).json(categories);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.get("/api/categories/:idOrSlug", async (req, res) => {
-    try {
-      const idOrSlug = req.params.idOrSlug;
-    let category;
-
-    // Try as MongoDB ObjectId first
-    if (/^[0-9a-fA-F]{24}$/.test(idOrSlug)) {
-      category = await storage.getCategoryById(idOrSlug);
-    }
-
-    // If not found, try as slug
-    if (!category) {
-      category = await storage.getCategoryBySlug(idOrSlug);
-    }
-
-    if (!category) {
-      return res.status(404).json({ message: "Category not found" });
-    }
-
-    return res.status(200).json(category);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.post("/api/categories", async (req, res) => {
-    try {
-      const validatedData = categorySchema.parse(req.body);
-      
-      const category = await storage.createCategory(validatedData);
-      
-      return res.status(201).json(category);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.put("/api/categories/:id", async (req, res) => {
-    try {
-      const categoryId = req.params.id;
-      const categoryData = req.body;
-      
-      const updatedCategory = await storage.updateCategory(categoryId, categoryData);
-      
-      if (!updatedCategory) {
-        return res.status(404).json({ message: "Category not found" });
-      }
-      
-      return res.status(200).json(updatedCategory);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.delete("/api/categories/:id", async (req, res) => {
-    try {
-      const categoryId = req.params.id;
-      
-      const success = await storage.deleteCategory(categoryId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Category not found" });
-      }
-      
-      return res.status(204).end();
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
   // Product-Collection routes
-  // Get all product collections
   app.get("/api/product-collections", async (req, res) => {
     try {
       const collections = await storage.getCollections();
-      return res.json(collections);
+      return res.status(200).json(collections);
     } catch (error) {
-      console.error('Error fetching product collections:', error);
-      return res.status(500).json({ message: 'Failed to fetch product collections' });
+      console.error('[COLLECTIONS ERROR]:', error);
+      return res.status(500).json({ error: "Failed to fetch product collections" });
     }
   });
 
-  app.post("/api/product-collections", async (req, res) => {
-    try {
-      const { productId, collectionId } = req.body;
-      
-      if (!productId || !collectionId) {
-        return res.status(400).json({ message: "productId and collectionId are required" });
-      }
-      
-      const productCollection = await storage.addProductToCollection({
-        productId,
-        collectionId
-      });
-      
-      return res.status(201).json(productCollection);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.delete("/api/product-collections", async (req, res) => {
-    try {
-      const { productId, collectionId } = req.body;
-      
-      if (!productId || !collectionId) {
-        return res.status(400).json({ message: "productId and collectionId are required" });
-      }
-      
-      const success = await storage.removeProductFromCollection(
-        productId,
-        collectionId
-      );
-      
-      if (!success) {
-        return res.status(404).json({ message: "Product-Collection mapping not found" });
-      }
-      
-      return res.status(204).end();
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  // Review routes
-  app.get("/api/products/:productId/reviews", async (req, res) => {
-    try {
-      const productId = req.params.productId;
-      
-      const reviews = await storage.getProductReviews(productId);
-      
-      return res.status(200).json(reviews);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.post("/api/reviews", async (req, res) => {
-    try {
-      const validatedData = req.body; // TODO: add validation
-      
-      const review = await storage.createReview(validatedData);
-      
-      return res.status(201).json(review);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  // Testimonial routes
-  app.get("/api/testimonials", async (req, res) => {
-    try {
-      const { limit } = req.query;
-      const limitNum = limit ? parseInt(limit as string) : undefined;
-      
-      const testimonials = await storage.getTestimonials(limitNum);
-      
-      return res.status(200).json(testimonials);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.get("/api/testimonials/featured", async (req, res) => {
-    try {
-      const { limit } = req.query;
-      const limitNum = limit ? parseInt(limit as string) : undefined;
-      
-      const testimonials = await storage.getFeaturedTestimonials(limitNum);
-      
-      return res.status(200).json(testimonials);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.post("/api/testimonials", async (req, res) => {
-    try {
-      const validatedData = req.body; // TODO: add validation
-      
-      const testimonial = await storage.createTestimonial(validatedData);
-      
-      return res.status(201).json(testimonial);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  // Order routes
-  app.post("/api/orders", async (req, res) => {
-    try {
-      const { order: orderData, items } = orderPayloadSchema.parse(req.body);
-      const createdOrder = await storage.createOrder(orderData);
-      const orderId = createdOrder.id;
-      if (!orderId) return res.status(500).json({ message: "Order creation failed: missing ID" });
-      for (const item of items) {
-        await storage.addOrderItem({ orderId, productId: item.productId, quantity: item.quantity, price: item.price });
-      }
-      const createdItems = await storage.getOrderItems(orderId);
-      const user = await storage.getUser(orderData.userId);
-      const toEmail = orderData.billingEmail || user?.email;
-      if (toEmail) {
-        // Build HTML table for order details
-        const rowsHtml = items.map(it => `
-          <tr>
-            <td>${it.productId}</td>
-            <td>${it.quantity}</td>
-            <td>₹${it.price.toFixed(2)}</td>
-            <td>₹${(it.price * it.quantity).toFixed(2)}</td>
-          </tr>
-        `).join("");
-        const html = `
-          <h1>Order Confirmation - ${orderId}</h1>
-          <p>Thank you for your purchase!</p>
-          <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width:100%;">
-            <thead>
-              <tr><th>Product ID</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-            <tfoot>
-              <tr><td colspan="3" align="right">Total Amount</td><td>₹${createdOrder.totalAmount.toFixed(2)}</td></tr>
-            </tfoot>
-          </table>
-          <p>Shipping Address: ${createdOrder.shippingAddress}</p>
-        `;
-        sendMail({
-          to: toEmail,
-          subject: `Order Confirmation - ${orderId}`,
-          html
-        }).catch(err => console.error("Invoice email error:", err));
-      }
-      return res.status(201).json({ order: createdOrder, items: createdItems });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      console.error("Create order error:", error);
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  app.get("/api/orders", async (req, res) => {
-    try {
-      const { userId, page, limit, status, search, date } = req.query;
-      if (userId) {
-        // User orders (no pagination needed)
-        const orders = await storage.getOrders(userId as string);
-        return res.json(orders);
-      }
-      // Admin: filters, pagination, total count
-      const query: Record<string, any> = {};
-      if (status && status !== 'all') query.status = status;
-      if (search) {
-        query.$or = [
-          { shippingAddress: { $regex: search, $options: 'i' } },
-          { userId: { $regex: search, $options: 'i' } },
-          { _id: { $regex: search, $options: 'i' } }
-        ];
-      }
-      if (date && date !== 'all') {
-        let start, end;
-        if ((date as string).includes('_to_')) [start, end] = (date as string).split('_to_');
-        else start = end = date;
-        query.createdAt = {
-          $gte: new Date(start + 'T00:00:00.000Z'),
-          $lte: new Date(end + 'T23:59:59.999Z')
-        };
-      }
-      const pageNum = page ? parseInt(page as string, 10) : 1;
-      const limitNum = limit ? parseInt(limit as string, 10) : 10;
-      const skip = (pageNum - 1) * limitNum;
-      const total = await OrderModel.countDocuments(query);
-      const orders = await OrderModel.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limitNum);
-      const ordersList = orders.map((o) => o.toObject ? o.toObject() : o);
-      return res.status(200).json({ orders: ordersList, total });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  app.get("/api/orders/:id", async (req, res) => {
-    try {
-      const orderId = req.params.id;
-      const order = await storage.getOrderById(orderId);
-      if (!order) return res.status(404).json({ message: "Order not found" });
-      const items = await storage.getOrderItems(orderId);
-      return res.status(200).json({ order, items });
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.get("/api/orders/:id/items", async (req, res) => {
-    try {
-      const orderId = req.params.id;
-      
-      const orderItems = await storage.getOrderItems(orderId);
-      
-      return res.status(200).json(orderItems);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  // --- Remove duplicate update order endpoints and keep only the correct one (PUT /api/orders/:id) ---
-  // Remove the old endpoint for /api/orders/:id/status
-  // The correct endpoint is:
-  app.put('/api/orders/:id', async (req, res) => {
-    const { id } = req.params;
-    const { status, packageLength, packageBreadth, packageHeight, packageWeight } = req.body;
-    if (!status) return res.status(400).json({ message: 'Status is required' });
+  // Make backup endpoint public by removing authentication middleware
+  app.post('/api/admin/backup', backupDatabase);
 
-    // Use admin authentication middleware here in production
-    try {
-      // Update status and dimensions in DB
-      const updateData: any = { status };
-      if (packageLength !== undefined) updateData.packageLength = packageLength;
-      if (packageBreadth !== undefined) updateData.packageBreadth = packageBreadth;
-      if (packageHeight !== undefined) updateData.packageHeight = packageHeight;
-      if (packageWeight !== undefined) updateData.packageWeight = packageWeight;
-      let orderDoc = await OrderModel.findByIdAndUpdate(id, updateData, { new: true });
-      if (!orderDoc) return res.status(404).json({ message: 'Order not found' });
-      const order = orderDoc.toObject();
-      // Shiprocket integration based on status
-      if (status === 'shipped') {
-        const items = await storage.getOrderItems(id);
-        const shipResp = await createShipment(order, items);
-        orderDoc = await OrderModel.findByIdAndUpdate(id, { shiprocketOrderId: shipResp.order_id }, { new: true });
-      } else if (status === 'cancelled' && order.shiprocketOrderId) {
-        await cancelShipment(order.shiprocketOrderId);
-      }
-      return res.status(200).json(orderDoc);
-    } catch (err) {
-      return res.status(500).json({ message: 'Failed to update order' });
-    }
-  });
-
-  // Track Shiprocket order
-  app.get('/api/orders/:id/track', async (req, res) => {
-    const orderId = req.params.id;
-    try {
-      const order = await storage.getOrderById(orderId);
-      if (!order) return res.status(404).json({ message: 'Order not found' });
-      const srId = (order as any).shiprocketOrderId;
-      if (!srId) return res.status(400).json({ message: 'No Shiprocket order associated' });
-      const trackData = await trackShipment(srId);
-      return res.json(trackData);
-    } catch (error) {
-      console.error('TrackOrder error:', error);
-      return res.status(500).json({ message: 'Failed to fetch tracking info' });
-    }
-  });
-
-  // QR Scanner CRUD routes
-  app.get('/api/scanners', async (req, res) => {
-    try {
-      const scanners = await ScannerModel.find().sort({ scannedAt: -1 });
-      return res.json(scanners);
-    } catch (err) {
-      console.error('Get scanners error', err);
-      return res.status(500).json({ message: 'Failed to fetch scanners' });
-    }
-  });
-  app.get('/api/scanners/:id', async (req, res) => {
-    try {
-      const scanner = await ScannerModel.findById(req.params.id);
-      if (!scanner) return res.status(404).json({ message: 'Scanner not found' });
-      return res.json(scanner);
-    } catch (err) {
-      console.error('Get scanner error', err);
-      return res.status(500).json({ message: 'Failed to fetch scanner' });
-    }
-  });
-  app.post('/api/scanners', async (req, res) => {
-    try {
-      const { data, productId, scannedAt } = req.body;
-      const scanDate = scannedAt ? new Date(scannedAt) : new Date();
-      // Check if scanner record exists for this data
-      let scanner = await ScannerModel.findOne({ data });
-      if (scanner) {
-        scanner.scanCount += 1;
-        scanner.scannedAt = scanDate;
-        const updated = await scanner.save();
-        return res.status(200).json(updated);
-      }
-      // Create new scanner entry
-      const newScanner = await ScannerModel.create({ data, productId, scannedAt: scanDate, scanCount: 1 });
-      return res.status(201).json(newScanner);
-    } catch (err) {
-      console.error('Create scanner error', err);
-      return res.status(500).json({ message: 'Failed to create scanner' });
-    }
-  });
-  app.put('/api/scanners/:id', async (req, res) => {
-    try {
-      const { couponCode } = req.body;
-      const scanner = await ScannerModel.findById(req.params.id);
-      if (!scanner) return res.status(404).json({ message: 'Scanner not found' });
-      scanner.couponCode = couponCode || undefined;
-      const updated = await scanner.save();
-      return res.json(updated);
-    } catch (err) {
-      console.error('Update scanner error', err);
-      return res.status(500).json({ message: 'Failed to update scanner' });
-    }
-  });
-  app.delete('/api/scanners/:id', async (req, res) => {
-    try {
-      const result = await ScannerModel.findByIdAndDelete(req.params.id);
-      if (!result) return res.status(404).json({ message: 'Scanner not found' });
-      return res.json({ success: true });
-    } catch (err) {
-      console.error('Delete scanner error', err);
-      return res.status(500).json({ message: 'Failed to delete scanner' });
-    }
-  });
-
-  // Endpoint: share QR via email
-  app.post('/api/scanners/share', async (req, res) => {
-    const { email, url, productName } = req.body;
-    try {
-      await sendMail({
-        to: email,
-        subject: 'Your QR Code',
-        html: `<p>Here is your QR code link for ${productName || 'the product'}:</p>
-               <p><a href="${url}">${url}</a></p>
-               <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(url)}&size=200x200" alt="QR Code"/>`
-      });
-      return res.json({ success: true });
-    } catch (error) {
-      console.error('QR share email error:', error);
-      return res.status(500).json({ message: 'Failed to send QR code via email' });
-    }
-  });
-
-  // Cart routes
-  app.get("/api/cart", async (req, res) => {
-    try {
-      const { userId, sessionId } = req.query;
-      
-      if (!userId && !sessionId) {
-        return res.status(400).json({ message: "Either userId or sessionId is required" });
-      }
-      
-      const userIdStr = userId as string;
-      const sessionIdStr = sessionId as string;
-      
-      let cart = await storage.getCart(userIdStr, sessionIdStr);
-      
-      // Create cart if it doesn't exist
-      if (!cart) {
-        cart = await storage.createCart({
-          userId: userIdStr,
-          sessionId: sessionIdStr
-        });
-      }
-      
-      // Get cart items
-      const cartItems = await storage.getCartItems(cart.id!);
-      
-      // Get product details for each cart item
-      const cartItemsWithProduct = await Promise.all(
-        cartItems.map(async (item) => {
-          const product = await storage.getProductById(item.productId);
-          return {
-            ...item,
-            product
-          };
-        })
-      );
-      
-      return res.status(200).json({
-        ...cart,
-        items: cartItemsWithProduct
-      });
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.post("/api/cart/items", async (req, res) => {
-    try {
-      const { cartId, productId, quantity, isFree } = req.body;
-      
-      if (!cartId || !productId || !quantity) {
-        return res.status(400).json({ message: "cartId, productId, and quantity are required" });
-      }
-      
-      const validatedData = cartItemInsertSchema.parse({
-        cartId,
-        productId,
-        quantity,
-        isFree
-      });
-      
-      const newItem = await storage.addCartItem({
-        productId,
-        quantity,
-        cartId: cartId,
-        isFree: false
-      });
-      return res.status(201).json(newItem);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.put("/api/cart/items/:id", async (req, res) => {
-    try {
-      const cartItemId = req.params.id;
-      const { quantity } = req.body;
-      
-      if (quantity === undefined) {
-        return res.status(400).json({ message: "Quantity is required" });
-      }
-      
-      const updatedCartItem = await storage.updateCartItemQuantity(cartItemId, quantity);
-      
-      if (!updatedCartItem && quantity > 0) {
-        return res.status(404).json({ message: "Cart item not found" });
-      }
-      
-      return res.status(200).json(updatedCartItem || { _id: cartItemId, deleted: true });
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.delete("/api/cart/items/:id", async (req, res) => {
-    try {
-      const cartItemId = req.params.id;
-      
-      const success = await storage.removeCartItem(cartItemId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Cart item not found" });
-      }
-      
-      return res.status(204).end();
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  app.delete("/api/cart/:id", async (req, res) => {
-    try {
-      const cartId = req.params.id;
-      
-      const success = await storage.clearCart(cartId);
-      
-      return res.status(204).end();
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  // Get eligible free products based on cart total
-  app.get("/api/cart/:cartId/eligible-free-products", async (req, res) => {
-    try {
-      const { cartId } = req.params;
-      
-      // Get the cart with items
-      const cart = await storage.getCartById(cartId);
-      if (!cart) {
-        return res.status(404).json({ message: "Cart not found" });
-      }
-      
-      // Get cart items with product details
-      const cartItemsWithProduct = await storage.getCartItemsWithProductDetails(cartId);
-      
-      // Calculate cart total
-      let cartTotal = 0;
-      cartItemsWithProduct.forEach((item: CartItem & { product: Product }) => {
-        if (!item.isFree) { // Only count non-free items for the total
-          cartTotal += (item.product.price * item.quantity);
-        }
-      });
-      
-      // Get all free products
-      const freeProducts = await FreeProductModel.find().lean();
-      
-      // Filter for eligible free products based on cart total
-      const eligibleFreeProducts = freeProducts.filter(freeProduct => {
-        return cartTotal >= freeProduct.minOrderValue;
-      });
-      
-      // Get full product details for eligible free products
-      // Define a type that extends Product with free product properties
-      type ProductWithFreeDetails = Product & {
-        freeProductId: string;
-        minOrderValue: number;
-        isFreeProduct: boolean;
-      };
-      
-      // Type the array correctly
-      const productsWithDetails: ProductWithFreeDetails[] = [];
-      
-      for (const freeProduct of eligibleFreeProducts) {
-        const product = await storage.getProductById(freeProduct.productId);
-        if (product) {
-          // Create the combined object with proper typing
-          const freeProductWithDetails: ProductWithFreeDetails = {
-            ...product,
-            freeProductId: freeProduct._id.toString(), // Convert _id to string
-            minOrderValue: freeProduct.minOrderValue,
-            isFreeProduct: true
-          };
-          
-          // No type assertion needed with proper typing
-          productsWithDetails.push(freeProductWithDetails);
-        }
-      }
-      
-      return res.status(200).json(productsWithDetails);
-    } catch (error) {
-      console.error('Get eligible free products error:', error);
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-  
-  // Add a free product to the cart
-  app.post("/api/cart/:cartId/add-free-product", async (req, res) => {
-    try {
-      const { cartId } = req.params;
-      const { productId, freeProductId } = req.body;
-      
-      if (!productId || !freeProductId) {
-        return res.status(400).json({ message: "productId and freeProductId are required" });
-      }
-      
-      // Verify this is a valid free product
-      const freeProduct = await FreeProductModel.findById(freeProductId);
-      if (!freeProduct) {
-        return res.status(404).json({ message: "Free product not found" });
-      }
-      
-      // Check if product ID matches
-      if (freeProduct.productId !== productId) {
-        return res.status(400).json({ message: "Product ID does not match free product record" });
-      }
-      
-      // Get the cart with items
-      const cart = await storage.getCartById(cartId);
-      if (!cart) {
-        return res.status(404).json({ message: "Cart not found" });
-      }
-      
-      // Get cart items with product details
-      const cartItemsWithProduct = await storage.getCartItemsWithProductDetails(cartId);
-      
-      // Calculate cart total
-      let cartTotal = 0;
-      cartItemsWithProduct.forEach((item: CartItem & { product: Product }) => {
-        if (!item.isFree) { // Only count non-free items for the total
-          cartTotal += (item.product.price * item.quantity);
-        }
-      });
-      
-      // Check if cart meets minimum order value
-      if (cartTotal < freeProduct.minOrderValue) {
-        return res.status(400).json({ 
-          message: `Cart total must be at least ${freeProduct.minOrderValue} to qualify for this free product`,
-          cartTotal,
-          minimumRequired: freeProduct.minOrderValue
-        });
-      }
-      
-      // Check if this free product is already in the cart
-      const existingFreeItem = cartItemsWithProduct.find((item: CartItem & { product: Product }) => 
-        item.isFree && item.productId === productId
-      );
-      
-      if (existingFreeItem) {
-        return res.status(400).json({ message: "This free product is already in your cart" });
-      }
-      
-      // Add the free product to the cart
-      const newItem = await storage.addCartItem({
-        productId,
-        quantity: 1, // Free products always have quantity of 1
-        cartId,
-        isFree: true
-      });
-      
-      return res.status(201).json(newItem);
-    } catch (error) {
-      console.error('Add free product error:', error);
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  // Admin: list all users
-  app.get("/api/admin/users", async (req, res) => {
-    try {
-      const users = await UserModel.find();
-      const sanitized = users.map((u) => {
-        const obj: any = u.toObject();
-        delete obj.password;
-        obj.id = obj._id.toString();
-        return obj;
-      });
-      return res.status(200).json(sanitized);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  // Admin: update user
-  app.put("/api/admin/users/:id", async (req, res) => {
-    try {
-      const userId = req.params.id;
-      const { isAdmin } = req.body;
-      const updated = await UserModel.findByIdAndUpdate(userId, { isAdmin }, { new: true });
-      if (!updated) return res.status(404).json({ message: "User not found" });
-      const obj: any = updated.toObject();
-      delete obj.password;
-      obj.id = obj._id.toString();
-      return res.status(200).json(obj);
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  // Admin: delete user
-  app.delete("/api/admin/users/:id", async (req, res) => {
-    try {
-      const userId = req.params.id;
-      const result = await UserModel.deleteOne({ _id: userId });
-      if (result.deletedCount === 0) return res.status(404).json({ message: "User not found" });
-      return res.status(204).end();
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  // Admin: get settings
-  app.get("/api/admin/settings", async (req, res) => {
-    try {
-      const settings = await SettingModel.findOne();
-      if (!settings) return res.status(404).json({ message: "Settings not found" });
-      return res.status(200).json(settings.toObject());
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  // Admin: update settings
-  app.put("/api/admin/settings", async (req, res) => {
-    try {
-      const { siteName, maintenanceMode, supportEmail, taxEnabled, taxPercentage, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode, shiprocketPickupLocation, shiprocketChannelId } = req.body;
-      const updated = await SettingModel.findOneAndUpdate(
-        {},
-        { siteName, maintenanceMode, supportEmail, taxEnabled, taxPercentage, razorpayKeyId, razorpayKeySecret, shiprocketApiKey, shiprocketApiSecret, shiprocketSourcePincode, shiprocketPickupLocation, shiprocketChannelId },
-        { new: true, upsert: true }
-      );
-      return res.status(200).json(updated!.toObject());
-    } catch (error) {
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  // Public: get Razorpay Key ID for frontend
-  app.get('/api/config', async (req, res) => {
-    try {
-      const settings = await SettingModel.findOne();
-      return res.json({ razorpayKeyId: settings?.razorpayKeyId, taxEnabled: settings?.taxEnabled, taxPercentage: settings?.taxPercentage });
-    } catch (error) {
-      return res.status(500).json({ message: 'Server error' });
-    }
-  });
-
-  // Create Razorpay order
-  app.post('/api/razorpay/order', async (req, res) => {
-    try {
-      const { amount, currency } = req.body;
-      // Validate inputs
-      if (typeof amount !== 'number' || isNaN(amount) || typeof currency !== 'string') {
-        return res.status(400).json({ message: 'Invalid order parameters', params: req.body });
-      }
-      // Load Razorpay keys from DB settings
-      const settings = await SettingModel.findOne();
-      if (!settings?.razorpayKeyId || !settings.razorpayKeySecret) {
-        return res.status(500).json({ message: 'Razorpay not configured' });
-      }
-      // Dynamically import Razorpay in ESM
-      const { default: RazorpayCls } = (await import('razorpay')) as any;
-      const razor = new RazorpayCls({ key_id: settings.razorpayKeyId, key_secret: settings.razorpayKeySecret });
-      const receipt = `order_rcptid_${Date.now()}`;
-      const order = (await razor.orders.create({ amount, currency, receipt, payment_capture: true })) as any;
-      return res.status(200).json({ orderId: order.id, amount: order.amount, currency: order.currency });
-    } catch (error) {
-      console.error('Razorpay order create error:', error);
-      const msg = error instanceof Error ? error.message : JSON.stringify(error);
-      return res.status(500).json({ message: `Failed to create order: ${msg}` });
-    }
-  });
-
-  // Verify Razorpay payment
-  app.post('/api/razorpay/verify', async (req, res) => {
-    try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-      // Load Razorpay secret, prefer DB but fallback to ENV
-      const settings = await SettingModel.findOne();
-      const secret = settings?.razorpayKeySecret || process.env.RAZORPAY_KEY_SECRET;
-      if (!secret) {
-        return res.status(500).json({ message: 'Razorpay secret missing' });
-      }
-      const generatedSignature = crypto.createHmac('sha256', secret)
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .digest('hex');
-      if (generatedSignature === razorpay_signature) {
-        return res.json({ valid: true });
-      }
-      return res.status(400).json({ valid: false });
-    } catch (error) {
-      console.error('Razorpay verify error:', error);
-      return res.status(500).json({ message: 'Verification failed' });
-    }
-  });
-
-  // Shiprocket: serviceability check
-  app.post('/api/shiprocket/serviceability', async (req, res) => {
-    try {
-      const { delivery_pincode, weight, cod } = req.body;
-      const settings = await SettingModel.findOne();
-      if (!settings) return res.status(500).json({ message: 'Settings not found' });
-      const result = await getServiceability({
-        pickup_pincode: settings.shiprocketSourcePincode,
-        delivery_pincode,
-        weight,
-        cod,
-      });
-      return res.json(result);
-    } catch (error) {
-      console.error('Serviceability error:', error);
-      return res.status(500).json({ message: 'Serviceability check failed' });
-    }
-  });
-
-  app.post('/api/shiprocket/serviceability', async (req, res) => {
-    try {
-      const { delivery_pincode, weight, cod } = req.body;
-      const settings = await SettingModel.findOne();
-      if (!settings) return res.status(500).json({ message: 'Settings not found' });
-      const result = await getServiceability({
-        pickup_pincode: settings.shiprocketSourcePincode,
-        delivery_pincode,
-        weight,
-        cod,
-      });
-      return res.json(result);
-    } catch (error) {
-      console.error('Serviceability error:', error);
-      return res.status(500).json({ message: 'Serviceability check failed' });
-    }
-  });
-
-  // Create new order (with items)
-  app.post('/api/orders', async (req, res) => {
-    try {
-      const { order, items } = orderPayloadSchema.parse(req.body);
-      // Set initial status: prepaid orders => processing, COD orders => pending
-      const initialStatus = order.paymentMethod.toLowerCase() === 'cod' ? 'pending' : 'processing';
-      const orderToSave = { ...order, status: initialStatus };
-      const createdOrder = await storage.createOrder(orderToSave);
-      if (!createdOrder.id) {
-        return res.status(500).json({ message: 'Order created without ID' });
-      }
-      const orderId = createdOrder.id!;
-      for (const item of items) {
-        await storage.addOrderItem({ ...item, orderId });
-      }
-      return res.status(201).json({ id: createdOrder.id! });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Invalid order payload', errors: error.errors });
-      }
-      console.error('Order creation error:', error);
-      return res.status(500).json({ message: 'Server error' });
-    }
-  });
-
-  // Contact form submission
-  app.post('/api/contacts', async (req, res) => {
-    try {
-      const { name, email, country, mobile, comments } = req.body;
-      const contact = await ContactModel.create({ name, email, country, mobile, comments });
-      // send notification email
-      sendMail({
-        to: process.env.SUPPORT_EMAIL || email,
-        subject: 'New Contact Us Submission',
-        text: `Name: ${name}\nEmail: ${email}\nCountry: ${country}\nMobile: ${mobile}\nComments: ${comments}`
-      });
-      return res.status(201).json(contact);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: 'Failed to submit contact' });
-    }
-  });
-
-  // Contacts API route
-  app.get('/api/contacts', async (req, res) => {
-    try {
-      const contacts = await ContactModel.find().sort({ createdAt: -1 });
-      return res.status(200).json(contacts);
-    } catch (err) {
-      console.error('Failed to fetch contacts:', err);
-      return res.status(500).json({ message: 'Failed to fetch contacts' });
-    }
-  });
-
-  // Get all contact submissions (admin)
-  app.get('/api/contacts', async (req, res) => {
-    try {
-      const contacts = await ContactModel.find().sort({ createdAt: -1 });
-      return res.json(contacts);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: 'Failed to fetch contacts' });
-    }
-  });
-
-  // Public: get all blogs
-  app.get('/api/blogs', async (req, res) => {
-    try {
-      const blogs = await BlogModel.find().sort({ publishedAt: -1 });
-      return res.json(blogs);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: 'Failed to fetch blogs' });
-    }
-  });
-
-  // Public: get blog by slug
-  app.get('/api/blogs/:slug', async (req, res) => {
-    try {
-      const blog = await BlogModel.findOne({ slug: req.params.slug });
-      if (!blog) return res.status(404).json({ message: 'Not found' });
-      return res.json(blog);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: 'Failed to fetch blog' });
-    }
-  });
-
-  // Admin: create blog
-  app.post('/api/blogs', async (req, res) => {
-    try {
-      const data = req.body;
-      const blog = await BlogModel.create(data);
-      return res.status(201).json(blog);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: 'Failed to create blog' });
-    }
-  });
-
-  // Admin: update blog
-  app.put('/api/blogs/:id', async (req, res) => {
-    try {
-      const blog = await BlogModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
-      if (!blog) return res.status(404).json({ message: 'Not found' });
-      return res.json(blog);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: 'Failed to update blog' });
-    }
-  });
-
-  // Admin: delete blog
-  app.delete('/api/blogs/:id', async (req, res) => {
-    try {
-      await BlogModel.findByIdAndDelete(req.params.id);
-      return res.json({ success: true });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: 'Failed to delete blog' });
-    }
-  });
-
-  // Users API route
-  app.get('/api/users', async (req, res) => {
-    try {
-      const users = await UserModel.find();
-      res.status(200).json(users);
-    } catch (err) {
-      console.error('Failed to fetch users:', err);
-      res.status(500).json({ message: 'Failed to fetch users' });
-    }
-  });
-
-  app.put('/api/users/:id', async (req, res) => {
-    try {
-      const { isAdmin } = req.body;
-      const user = await UserModel.findByIdAndUpdate(
-        req.params.id,
-        { isAdmin },
-        { new: true }
-      );
-      if (!user) return res.status(404).json({ message: 'User not found' });
-      res.status(200).json(user);
-    } catch (err) {
-      console.error('Failed to update user:', err);
-      res.status(500).json({ message: 'Failed to update user' });
-    }
-  });
-
-  app.delete('/api/users/:id', async (req, res) => {
-    try {
-      const user = await UserModel.findByIdAndDelete(req.params.id);
-      if (!user) return res.status(404).json({ message: 'User not found' });
-      res.status(200).json({ message: 'User deleted' });
-    } catch (err) {
-      console.error('Failed to delete user:', err);
-      res.status(500).json({ message: 'Failed to delete user' });
-    }
-  });
-
-  // Admin dashboard endpoints
-  app.get("/api/admin/dashboard/summary", async (req, res) => {
-    try {
-      const totalOrders = await OrderModel.countDocuments();
-      const revenueResult = await OrderModel.aggregate([{ $group: { _id: null, total: { $sum: "$totalAmount" } } }]);
-      const totalRevenue = revenueResult[0]?.total || 0;
-      const totalCustomers = await UserModel.countDocuments();
-      const lowStockProducts = await ProductModel.countDocuments({ stock: { $lte: Number(process.env.LOW_STOCK_THRESHOLD) || 5 } });
-      return res.json({ totalOrders, totalRevenue, totalCustomers, lowStockProducts });
-    } catch (error) {
-      console.error("Dashboard summary error:", error);
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  app.get("/api/admin/dashboard/top-products", async (req, res) => {
-    try {
-      const limit = Number(process.env.TOP_PRODUCTS_LIMIT) || 5;
-      const topProducts = await storage.getBestsellerProducts(limit);
-      return res.json(topProducts);
-    } catch (error) {
-      console.error("Top products error:", error);
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  // Recent orders route
-  app.get("/api/orders", async (req, res) => {
-    try {
-      const limitParam = req.query.limit as string;
-      const limit = limitParam ? parseInt(limitParam) : undefined;
-      const orders = OrderModel.find().sort({ createdAt: -1 });
-      if (limit) orders.limit(limit);
-      const result = await orders.exec();
-      return res.json(result);
-    } catch (error) {
-      console.error("Fetch orders error:", error);
-      return res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  // Invoice download route
-  app.get("/api/orders/:id/invoice", async (req, res) => {
-    const id = req.params.id;
-    const order = await storage.getOrderById(id);
-    if (!order) return res.status(404).json({ message: "Order not found" });
-    const items = await storage.getOrderItems(id);
-    const doc = new PDFDocument({ margin: 30 });
-    res.setHeader("Content-Disposition", `attachment; filename=invoice_${id}.pdf`);
-    res.setHeader("Content-Type", "application/pdf");
-    doc.pipe(res);
-    doc.fontSize(20).text("Invoice", { align: "center" });
-    doc.moveDown();
-    doc.fontSize(12).text(`Order ID: ${order.id}`);
-    doc.text(`Date: ${order.createdAt.toISOString()}`);
-    doc.text(`Status: ${order.status}`);
-    doc.moveDown();
-    doc.fontSize(14).text("Items:");
-    items.forEach(item => {
-      doc.fontSize(12).text(`${item.productId} x ${item.quantity} @ ₹${item.price.toFixed(2)} = ₹${(item.price * item.quantity).toFixed(2)}`);
-    });
-    doc.moveDown();
-    doc.fontSize(12).text(`Total Amount: ₹${order.totalAmount.toFixed(2)}`);
-    doc.end();
-  });
-
-  // Serviceability route
-  app.get("/api/serviceability", async (req, res) => {
-    try {
-      const deliveryPincode = req.query.deliveryPincode as string;
-      if (!deliveryPincode) return res.status(400).json({ message: "deliveryPincode is required" });
-      const setting = await SettingModel.findOne();
-      if (!setting) return res.status(500).json({ message: "Settings not found" });
-      const pickup = setting.shiprocketSourcePincode;
-      const data = await getServiceability({ pickup_pincode: pickup, delivery_pincode: deliveryPincode, weight: 1, cod: 1 });
-      return res.json(data);
-    } catch (error) {
-      console.error("Serviceability check failed:", error);
-      return res.status(500).json({ message: "Serviceability check failed" });
-    }
-  });
-
-  // Import products from CSV
-  app.post('/api/products/import', upload.single('file'), async (req, res) => {
-    try {
-      console.log('[IMPORT] Starting CSV import', { file: req.file });
-      if (!req.file) return res.status(400).json({ message: 'CSV file is required' });
-      
-      const content = fs.readFileSync(path.join(__dirname, '../public/uploads', req.file.filename), 'utf8');
-      console.log('[IMPORT] File read complete', { size: content.length });
-      const lines = content.split(/\r?\n/).filter(line => line.trim());
-      console.log('[IMPORT] Lines parsed', { count: lines.length });
-      
-      if (lines.length < 2) {
-        return res.status(400).json({ message: 'CSV file must contain header and at least one data row' });
-      }
-      
-      const [headerLine, ...dataLines] = lines;
-      const headers = headerLine.split(',');
-      console.log('[IMPORT] Headers', { headers: headers });
-      const requiredFields = ['sku', 'name', 'price', 'stock', 'slug'];
-      
-      // Validate headers
-      const missingFields = requiredFields.filter(field => !headers.includes(field));
-      if (missingFields.length > 0) {
-        console.log('[IMPORT] Validation failed', { missing: missingFields });
-        return res.status(400).json({ 
-          message: `Missing required fields in CSV: ${missingFields.join(', ')}` 
-        });
-      }
-      
-      interface ProductRow {
-        sku: string;
-        status: string;
-      }
-      
-      const results: ProductRow[] = [];
-      const errors: {row: number; sku: string; error: string}[] = [];
-      
-      for (let i = 0; i < dataLines.length; i++) {
-        console.log('[IMPORT] Processing row', { row: i+2, total: dataLines.length });
-        const line = dataLines[i];
-        // Handle CSV values that may contain commas inside quotes
-        const values: string[] = [];
-        let currentValue = '';
-        let inQuotes = false;
-        
-        for (let j = 0; j < line.length; j++) {
-          const char = line[j];
-          
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
-            values.push(currentValue);
-            currentValue = '';
-          } else {
-            currentValue += char;
-          }
-        }
-        
-        // Add the last value
-        values.push(currentValue);
-        
-        try {
-          // Build product data from CSV values
-          const data: Record<string, any> = {};
-          
-          headers.forEach((header, index) => {
-            let value = values[index] || '';
-            // Remove quotes
-            if (value.startsWith('"') && value.endsWith('"')) {
-              value = value.substring(1, value.length - 1);
-            }
-            data[header] = value;
-          });
-          
-          // Apply conversions for all fields
-          const product = {
-            sku: String(data.sku || '').trim(),
-            name: String(data.name || '').trim(),
-            description: String(data.description || '').trim(),
-            shortDescription: data.shortDescription,
-            price: Number(data.price || 0),
-            discountedPrice: data.discountedPrice ? Number(data.discountedPrice) : undefined,
-            imageUrl: String(data.imageUrl || '').trim(),
-            stock: Number(data.stock || 0),
-            slug: String(data.slug || '').trim(),
-            categoryId: String(data.categoryId || '').trim(),
-            featured: data.featured === 'true',
-            bestseller: data.bestseller === 'true',
-            isNew: data.isNew === 'true',
-            images: data.images ? String(data.images).split('|').filter(Boolean) : [],
-            videoUrl: data.videoUrl
-          };
-          console.log('[IMPORT] Converted data', { sku: product.sku, name: product.name });
-          // Validate required fields
-          if (!product.sku) throw new Error('SKU is required');
-          if (!product.name) throw new Error('Name is required');
-          if (!product.slug) throw new Error('Slug is required');
-          if (!product.imageUrl) throw new Error('Image URL is required');
-          if (!product.categoryId) throw new Error('Category ID is required');
-          if (isNaN(product.price)) throw new Error('Price must be a number');
-          
-          // Check if product exists
-          const existing = await storage.getProductBySlug(product.slug);
-          console.log('[IMPORT] Checking existing', { slug: product.slug, exists: !!existing });
-          if (existing && existing._id) {
-            // Update existing product
-            await storage.updateProduct(existing._id.toString(), product);
-            results.push({ sku: product.sku, status: 'updated' });
-          } else {
-            // Create new product
-            await storage.createProduct(product as any);
-            results.push({ sku: product.sku, status: 'created' });
-          }
-        } catch (error: any) {
-          console.error('[IMPORT] Row error', { row: i+2, error: error.message });
-          const sku = values[headers.indexOf('sku')] || 'unknown';
-          errors.push({ row: i + 2, sku, error: error.message });
-        }
-      }
-      
-      // Clean up the temporary file
-      console.log('[IMPORT] Cleanup', { file: req.file.path });
-      const pathsToTry = [
-        req.file.path,
-        path.join(__dirname, '../public/uploads', req.file.filename)
-      ];
-      pathsToTry.forEach(filePath => {
-        try {
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            console.log('[IMPORT] File deleted successfully', { file: filePath });
-          } else {
-            console.log('[IMPORT] File does not exist for deletion', { file: filePath });
-          }
-        } catch (unlinkError: any) {
-          console.error('[IMPORT] Cleanup error for path', { file: filePath, error: unlinkError.message });
-        }
-      });
-      return res.json({ 
-        imported: results, 
-        errors: errors,
-        summary: {
-          total: dataLines.length,
-          success: results.length,
-          failed: errors.length
-        }
-      });
-    } catch (err: any) {
-      console.error('[IMPORT] Fatal error', err);
-      res.status(500).json({ message: `Import failed: ${err.message}` });
-    }
-  });
-
-  // Authentication middleware
-  const isAuthenticatedMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const token = req.cookies.token;
-      if (!token) {
-        return res.status(401).json({ message: 'Not authenticated' });
-      }
-      
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as Secret);
-      (req as any).user = decoded;
-      next();
-    } catch (error) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-  };
-
-  // Admin check middleware
-  const isAdminMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    if (!(req as any).user || !(req as any).user.isAdmin) {
-      return res.status(403).json({ message: 'Forbidden: Admin access required' });
-    }
-    next();
-  };
-
-  // Register routes
-  app.use('/api/admin', authRoutes); 
-  app.use('/api/admin', couponRoutes); 
-  app.use('/api/admin', giftCardTemplateRoutes);
-  app.use('/api/admin', giftCardRoutes);
-  app.use('/api/admin', scannerRoutes); 
-  app.use('/api/admin', testimonialRoutes);
-
-  // ===== Popup route handling =====
-  // Must come BEFORE static file handling to prevent HTML responses
-  
-  // Admin popup routes (protected)
-  app.get('/api/admin/popup', isAdminMiddleware, getPopupSetting);
-  app.put('/api/admin/popup', isAdminMiddleware, updatePopupSetting);
-  
-  // Public popup routes (for the frontend)
-  app.get('/api/popup-settings', (req, res) => {
-    console.log('Public popup settings request');
-    return getPopupSetting(req, res);
-  });
-  
-  // Public PUT route also needs auth - frontend will use this when admin is logged in
-  app.put('/api/popup-settings', isAdminMiddleware, (req, res) => {
-    console.log('Public popup settings update');
-    return updatePopupSetting(req, res);
-  });
-
-  // ===== Gift Popup routes =====
-  // Admin gift popup routes (protected)
-  app.get('/api/admin/gift-popup', isAdminMiddleware, getGiftPopupConfig);
-  app.put('/api/admin/gift-popup', isAdminMiddleware, updateGiftPopupConfig);
-  app.get('/api/admin/gift-products', isAdminMiddleware, getGiftProducts);
-  
-  // Public gift popup routes (for the frontend)
-  app.get('/api/gift-popup', getGiftPopupConfig);
-  app.get('/api/gift-products', getGiftProducts);
-  
-  // Development test routes for admin panel (NOT FOR PRODUCTION)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Registering development test endpoints for gift popup');
-    // Non-authenticated versions for development/testing
-    app.get('/api/dev/gift-popup', getGiftPopupConfig);
-    app.put('/api/dev/gift-popup', updateGiftPopupConfig);
-    app.get('/api/dev/gift-products', (req, res) => {
-      console.log('Dev gift products API called');
-      return ProductModel.find({})
-        .select('_id name price images')
-        .then((products: any[]) => {
-          console.log(`Found ${products.length} products for dev API`);
-          res.json(products);
-        })
-        .catch((error: Error) => {
-          console.error('Error in dev gift products API:', error);
-          res.status(500).json({
-            message: 'Error fetching products',
-            error: error.message
-          });
-        });
-    });
-  }
-
-  app.get('/api/health', (req: Request, res: Response) => {
-    res.status(200).json({ message: 'OK' });
-  });
-
-  // Error handling middleware to ensure JSON responses
-  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error('Unhandled error:', err);
-    res.status(500).json({ message: 'Internal server error', error: err.message });
-  });
-
-  // Catch requests to /admin/popup and return an error to prevent serving HTML
-  app.get('/admin/popup', (req: Request, res: Response) => {
-    console.log('Request to /admin/popup received. This is not the correct endpoint for popup settings.');
-    res.status(400).json({ error: 'Invalid endpoint. Use /api/popup-settings for popup settings.' });
-  });
-
-  // Database backup endpoint (authenticated + admin only)
-  app.post('/api/admin/backup', isAuthenticatedMiddleware, isAdminMiddleware, backupDatabase);
-
-  const httpServer = createServer(app);
-  return httpServer;
+  // Create and return HTTP server
+  return createServer(app);
 }

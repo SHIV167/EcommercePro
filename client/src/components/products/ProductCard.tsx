@@ -205,12 +205,18 @@ export default function ProductCard({ product, showAddToCart = false }: ProductC
           )}
         </div>
         {/* Add to Bag Button */}
-        <AnimatedCartButton
-          className="w-full bg-black hover:bg-neutral-darkGray text-white uppercase tracking-wide font-medium mt-auto"
-          onClick={handleAddToCart}
-        >
-          Add to Bag
-        </AnimatedCartButton>
+        {product.stock === 0 ? (
+          <AnimatedCartButton disabled className="w-full bg-gray-500 text-white uppercase tracking-wide font-medium mt-auto cursor-not-allowed">
+            Out of Stock
+          </AnimatedCartButton>
+        ) : (
+          <AnimatedCartButton
+            className="w-full bg-black hover:bg-neutral-darkGray text-white uppercase tracking-wide font-medium mt-auto"
+            onClick={handleAddToCart}
+          >
+            Add to Bag
+          </AnimatedCartButton>
+        )}
       </div>
       <VideoModal open={showVideo && !!product.videoUrl} onClose={() => setShowVideo(false)}>
         <div className="w-full aspect-video bg-black flex items-center justify-center">

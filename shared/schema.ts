@@ -42,6 +42,19 @@ export const customHtmlSectionSchema = z.object({
 });
 export type CustomHtmlSection = z.infer<typeof customHtmlSectionSchema>;
 
+// Variant schemas
+export const variantOptionSchema = z.object({
+  label: z.string().min(1, "Option label is required"),
+  url: z.string().min(1, "Option URL is required"),
+  isDefault: z.boolean().optional().default(false)
+});
+export type VariantOption = z.infer<typeof variantOptionSchema>;
+export const variantGroupSchema = z.object({
+  heading: z.string().min(1, "Variant heading is required"),
+  options: z.array(variantOptionSchema).default([])
+});
+export type VariantGroup = z.infer<typeof variantGroupSchema>;
+
 // Product Zod schema and TypeScript type
 export const productSchema = z.object({
   _id: z.string().optional(), // MongoDB ObjectId as string
@@ -102,6 +115,7 @@ export const productSchema = z.object({
   benefits: z.string().optional(), // Simple text benefits
   structuredBenefits: z.array(benefitSchema).optional().default([]), // Structured benefits
   customHtmlSections: z.array(customHtmlSectionSchema).optional().default([]), // Custom HTML sections
+  variants: z.array(variantGroupSchema).optional().default([]), // Product variants
   minOrderValue: z.number().optional(), // For free products
   isFreeProduct: z.boolean().optional(), // Flag for free products
   usageFrequency: z.string().optional(), // Recommended usage frequency

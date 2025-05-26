@@ -59,13 +59,19 @@ export default function StickyAddToCart({ product, quantity, setQuantity, onAddT
         }}
         id="mobile-add-to-cart-container"
       >
-        <AnimatedCartButton
-          onClick={onAddToCart}
-          className="flex-1 min-w-0 w-full max-w-full h-11 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm tracking-wide rounded-md shadow-lg"
-          variant="primary"
-        >
-          Add to Cart • ₹{product.price}
-        </AnimatedCartButton>
+        {product.stock === 0 ? (
+          <AnimatedCartButton disabled className="flex-1 min-w-0 w-full max-w-full h-11 bg-gray-500 text-white font-semibold text-sm tracking-wide rounded-md shadow-lg cursor-not-allowed">
+            Out of Stock
+          </AnimatedCartButton>
+        ) : (
+          <AnimatedCartButton
+            onClick={onAddToCart}
+            className="flex-1 min-w-0 w-full max-w-full h-11 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm tracking-wide rounded-md shadow-lg"
+            variant="primary"
+          >
+            Add to Cart • ₹{product.price}
+          </AnimatedCartButton>
+        )}
       </div>
       
       {/* Desktop version - only shown on desktop */}
@@ -94,13 +100,19 @@ export default function StickyAddToCart({ product, quantity, setQuantity, onAddT
             type="button"
           >+</button>
         </div>
-        <AnimatedCartButton
-          className="h-12 ml-4 px-8 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-md"
-          onClick={onAddToCart}
-          variant="primary"
-        >
-          Add to Cart
-        </AnimatedCartButton>
+        {product.stock === 0 ? (
+          <AnimatedCartButton disabled className="h-12 ml-4 px-8 bg-gray-500 text-white font-bold rounded-md cursor-not-allowed">
+            Out of Stock
+          </AnimatedCartButton>
+        ) : (
+          <AnimatedCartButton
+            className="h-12 ml-4 px-8 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-md"
+            onClick={onAddToCart}
+            variant="primary"
+          >
+            Add to Cart
+          </AnimatedCartButton>
+        )}
       </div>
     </>
   );

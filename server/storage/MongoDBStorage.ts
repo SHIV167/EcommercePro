@@ -187,6 +187,18 @@ export class MongoDBStorage implements IStorage {
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
+    // Convert product variants URLs to public URLs if present
+    let variants = product.variants;
+    if (Array.isArray(variants)) {
+      variants = variants.map(group => ({
+        heading: group.heading,
+        options: (Array.isArray(group.options) ? group.options : []).map(opt => ({
+          label: opt.label,
+          url: toPublicUrl(opt.url),
+          isDefault: !!opt.isDefault
+        }))
+      }));
+    }
     // Convert imageUrl and images to public URLs before saving
     let imageUrl = product.imageUrl;
     if (imageUrl) imageUrl = toPublicUrl(imageUrl);
@@ -197,6 +209,7 @@ export class MongoDBStorage implements IStorage {
     const id = new mongoose.Types.ObjectId().toHexString();
     const newProduct = new ProductModel({
       ...product,
+      variants,
       imageUrl,
       images,
       id,
@@ -238,6 +251,18 @@ export class MongoDBStorage implements IStorage {
           content: section.content,
           displayOrder: typeof section.displayOrder === 'number' ? section.displayOrder : 0,
           enabled: typeof section.enabled === 'boolean' ? section.enabled : false
+        }));
+      }
+
+      // Process variants if provided in update
+      if (Array.isArray(product.variants)) {
+        product.variants = product.variants.map(group => ({
+          heading: group.heading,
+          options: (Array.isArray(group.options) ? group.options : []).map(opt => ({
+            label: opt.label,
+            url: toPublicUrl(opt.url),
+            isDefault: !!opt.isDefault
+          }))
         }));
       }
 

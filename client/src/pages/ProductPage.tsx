@@ -348,6 +348,26 @@ const ProductPage = ({ params }: RouteComponentProps<{ slug: string }>) => {
                   <RatingStars rating={extendedProduct!.rating || 0} />
                   <span className="ml-2 text-gray-600">({extendedProduct!.reviews?.length || 0} reviews)</span>
                 </div>
+                {extendedProduct!.variants?.map((variant) => (
+                  <div key={variant.heading} className="mb-6">
+                    <h3 className="text-lg font-medium mb-2">{variant.heading}</h3>
+                    <div className="flex gap-2 mb-4">
+                      {variant.options.map((option: { label: string; url: string; isDefault?: boolean }) => {
+                        const isSelected = location === option.url;
+                        let btnClass = 'bg-white text-gray-800';
+                        if (isSelected) btnClass = 'bg-primary text-white';
+                        else if (option.isDefault) btnClass = 'bg-primary text-white font-bold';
+                        return (
+                          <Link key={option.url} href={option.url}>
+                            <button className={`px-4 py-2 border rounded ${btnClass}`}>
+                              {option.label}
+                            </button>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
                 <div className="mb-6">
                   <div className="flex items-baseline gap-2 mb-1">
                     <p className="font-heading text-2xl text-primary">
@@ -375,21 +395,6 @@ const ProductPage = ({ params }: RouteComponentProps<{ slug: string }>) => {
                     )}
                   </p>
                 </div>
-                {/* Variant Selection */}
-                {extendedProduct!.variants?.map((variant) => (
-                  <div key={variant.heading} className="mb-6">
-                    <h3 className="text-lg font-medium mb-2">{variant.heading}</h3>
-                    <div className="flex gap-2 mb-4">
-                      {variant.options.map((option: { label: string; url: string; }) => (
-                        <Link key={option.url} href={option.url}>
-                          <button className={`px-4 py-2 border rounded ${location === option.url ? 'bg-primary text-white' : 'bg-white text-gray-800'}`}>
-                            {option.label}
-                          </button>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
                 {/* Quantity Controls */}
                 <div className="flex items-center space-x-2 mt-4">
                   <span className="font-medium">Quantity:</span>
@@ -409,20 +414,28 @@ const ProductPage = ({ params }: RouteComponentProps<{ slug: string }>) => {
                 </div>
                 {/* Action Buttons */}
                 <div className="flex space-x-4 mt-4">
-                  <AnimatedCartButton 
-                    className="w-80 py-6 bg-amber-500 hover:bg-amber-600" 
-                    onClick={() => handleAddToCart()}
-                    variant="primary"
-                  >
-                    Add To Cart
-                  </AnimatedCartButton>
-                  <AnimatedCartButton 
-                    className="w-80 py-6 bg-black hover:bg-neutral-900" 
-                    onClick={() => handleBuyNow()}
-                    variant="primary"
-                  >
-                    Buy Now
-                  </AnimatedCartButton>
+                  {extendedProduct!.stock === 0 ? (
+                    <AnimatedCartButton disabled className="w-80 py-6 bg-gray-500 cursor-not-allowed" variant="primary">
+                      Out of Stock
+                    </AnimatedCartButton>
+                  ) : (
+                    <>
+                      <AnimatedCartButton 
+                        className="w-80 py-6 bg-amber-500 hover:bg-amber-600" 
+                        onClick={() => handleAddToCart()}
+                        variant="primary"
+                      >
+                        Add To Cart
+                      </AnimatedCartButton>
+                      <AnimatedCartButton 
+                        className="w-80 py-6 bg-black hover:bg-neutral-900" 
+                        onClick={() => handleBuyNow()}
+                        variant="primary"
+                      >
+                        Buy Now
+                      </AnimatedCartButton>
+                    </>
+                  )}
                 </div>
                 <SocialShare url={window.location.href} title={extendedProduct!.name} />
                 <div className="mt-6">
