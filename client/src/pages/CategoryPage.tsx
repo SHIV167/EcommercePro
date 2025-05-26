@@ -13,6 +13,11 @@ export default function CategoryPage() {
   if (!slug) return null;
 
   const [sortBy, setSortBy] = useState('featured');
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  
+  const toggleFaq = (index: number) => {
+    setOpenFaqIndex(openFaqIndex === index ? null : index);
+  };
 
   const { data: category, isLoading: catLoading } = useQuery<CategoryType>({
     queryKey: [`/api/categories/${slug}`],
@@ -58,12 +63,485 @@ export default function CategoryPage() {
         <meta name="description" content={category.description || ''} />
       </Helmet>
       <HeaderBanner slug={slug} />
-      <div className="bg-neutral-cream py-10">
+      
+      {/* Category Heading */}
+      <div className="bg-white py-10 border-b border-neutral-100">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="font-heading text-3xl md:text-4xl text-primary mb-4">{category.name}</h1>
-          {category.description && <p className="text-neutral-gray max-w-2xl mx-auto">{category.description}</p>}
+          <h1 className="font-heading text-3xl md:text-4xl text-primary mb-3">Skin Care</h1>
+          <p className="text-neutral-gray max-w-2xl mx-auto text-lg">Ayurvedic skincare formulations for radiant skin</p>
         </div>
       </div>
+      
+      {/* Featured Product Section - Based on Screenshot */}
+      {sortedProducts.length > 0 && sortedProducts[0].featured && (
+        <div className="relative overflow-hidden bg-white py-16 border-t border-b border-neutral-100">
+          {/* No background elements needed for white design */}
+          
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row items-center max-w-6xl mx-auto">
+              <div className="md:w-1/2 text-primary mb-8 md:mb-0 md:pr-8">
+                <div className="mb-6">
+                  <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">A Synergistic 2-step Ritual</p>
+                  <h2 className="font-heading text-3xl md:text-4xl mb-2 text-primary">Step 1:</h2>
+                  <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">Varuna Exceptional Repair Serum</h3>
+                </div>
+                
+                <div className="mb-8">
+                  <p className="text-neutral-gray mb-6">A revolutionary Night Filler Serum that improves firmness & elasticity with a Fermented Vyasthapana Firming Complex, a potent blend of 10 fermented anti-ageing herbs. These are blended with nano actives including 7D Hyaluronic Acid, Acetyl Hexapeptide 8, Niacinamide & concentrated Vitamin C to be absorbed deep into the skin, leaving it firm, nourished, and rejuvenated.</p>
+                  
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium mb-3 text-primary">Advanced Formula, Clinically Proven Results</h3>
+                    <ul className="space-y-2">
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">1.</span>
+                        <span className="text-neutral-gray">97% Showed significant improvement in fine lines & wrinkles</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">2.</span>
+                        <span className="text-neutral-gray">94% Noticed better elasticity & firmer skin</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">3.</span>
+                        <span className="text-neutral-gray">100% Experienced smoother skin</span>
+                      </li>
+                    </ul>
+                    <p className="text-xs mt-4 text-neutral-gray">*Based on clinical tests conducted over 15 days</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <p className="mb-2 text-neutral-gray">Select Size</p>
+                    <div className="flex space-x-3">
+                      <button className="bg-black text-white px-4 py-1.5 text-sm rounded">35 ml</button>
+                      <button className="border border-neutral-300 text-neutral-gray px-4 py-1.5 text-sm rounded hover:bg-neutral-50">10 ml</button>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xl font-medium text-primary">Price: ₹ 7,500.00</p>
+                  
+                  <div className="flex space-x-4">
+                    <a href={`/products/${sortedProducts[0].slug}.html`} className="border border-neutral-300 text-neutral-gray px-4 py-2 text-sm hover:bg-neutral-50 transition">
+                      View Details
+                    </a>
+                    <button 
+                      onClick={() => document.querySelector(`[data-product-id="${sortedProducts[0]._id}"]`)?.dispatchEvent(new Event('click'))}
+                      className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition"
+                    >
+                      Add to Bag
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="md:w-1/2 flex justify-center">
+                <div className="w-full flex justify-center items-center">
+                  <img 
+                    src={'/uploads/backgrounds/moodshot_varuna_35ml.jpg'} 
+                    alt={sortedProducts[0].name || 'Varuna Exceptional Repair Serum'}
+                    className="w-auto h-auto max-h-[650px] max-w-full object-contain z-10 relative" 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Second Product Section - Image on Left, Text on Right */}
+      {sortedProducts.length > 0 && (
+        <div className="relative overflow-hidden bg-white py-16 border-b border-neutral-100">
+          {/* No background elements needed for white design */}
+          
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row-reverse items-center max-w-6xl mx-auto">             
+              <div className="md:w-1/2 text-primary mb-8 md:mb-0 md:pl-8">
+                <div className="mb-6">
+                  <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">A Synergistic 2-step Ritual</p>
+                  <h2 className="font-heading text-3xl md:text-4xl mb-2 text-primary">Step 2:</h2>
+                  <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">Kumkumadi Miraculous Beauty Fluid</h3>
+                </div>
+                
+                <div className="mb-8">
+                  <p className="text-neutral-gray mb-6">A revolutionary Ayurvedic elixir that improves skin radiance & uneven tone with a blend of 12 precious herbs including pure Saffron. This antioxidant-rich formula is infused with 24 Karat Gold Dust, Cold Pressed Oils & Vetiver for a youthful, luminous complexion.</p>
+                  
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium mb-3 text-primary">Advanced Formula, Clinically Proven Results</h3>
+                    <ul className="space-y-2">
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">1.</span>
+                        <span className="text-neutral-gray">96% Reported more radiant, glowing skin</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">2.</span>
+                        <span className="text-neutral-gray">92% Saw reduction in dark spots & hyperpigmentation</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">3.</span>
+                        <span className="text-neutral-gray">98% Noticed smoother, more even skin tone</span>
+                      </li>
+                    </ul>
+                    <p className="text-xs mt-4 text-neutral-gray">*Based on clinical tests conducted over 15 days</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <p className="mb-2 text-neutral-gray">Select Size</p>
+                    <div className="flex space-x-3">
+                      <button className="bg-black text-white px-4 py-1.5 text-sm">30 ml</button>
+                      <button className="border border-neutral-300 text-neutral-gray px-4 py-1.5 text-sm hover:bg-neutral-50">12 ml</button>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xl font-medium text-primary">Price: ₹ 4,950.00</p>
+                  
+                  <div className="flex space-x-4">
+                    <a href="/products/kumkumadi-beauty-fluid.html" className="border border-neutral-300 text-neutral-gray px-4 py-2 text-sm hover:bg-neutral-50 transition">
+                      View Details
+                    </a>
+                    <button className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition">
+                      Add to Bag
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="md:w-1/2 flex justify-center">
+                <div className="w-full flex justify-center items-center">
+                  <img 
+                    src='/uploads/backgrounds/moodshot_varuna_35ml.jpg' 
+                    alt='Kumkumadi Miraculous Beauty Fluid'
+                    className="w-auto h-auto max-h-[650px] max-w-full object-contain z-10 relative" 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Third Product Section - Text on Left, Image on Right (like first) */}
+      {sortedProducts.length > 0 && (
+        <div className="relative overflow-hidden bg-white py-16 border-b border-neutral-100">
+          {/* No background elements needed for white design */}
+          
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row items-center max-w-6xl mx-auto">
+              <div className="md:w-1/2 text-primary mb-8 md:mb-0 md:pr-8">
+                <div className="mb-6">
+                  <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">A Synergistic 2-step Ritual</p>
+                  <h2 className="font-heading text-3xl md:text-4xl mb-2 text-primary">Step 3:</h2>
+                  <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">Tejasvi Brightening Emulsion</h3>
+                </div>
+                
+                <div className="mb-8">
+                  <p className="text-neutral-gray mb-6">A luxurious brightening formula that combines ancient Ayurvedic wisdom with modern skincare science. Enriched with Kashmiri Saffron, Manjistha and Sandalwood, this emulsion helps reduce hyperpigmentation while evening skin tone and boosting radiance.</p>
+                  
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium mb-3 text-primary">Advanced Formula, Clinically Proven Results</h3>
+                    <ul className="space-y-2">
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">1.</span>
+                        <span className="text-neutral-gray">95% Noticed brighter, more luminous skin</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">2.</span>
+                        <span className="text-neutral-gray">93% Experienced reduced dark spots</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">3.</span>
+                        <span className="text-neutral-gray">99% Reported smoother, more hydrated skin</span>
+                      </li>
+                    </ul>
+                    <p className="text-xs mt-4 text-neutral-gray">*Based on clinical tests conducted over 15 days</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <p className="mb-2 text-neutral-gray">Select Size</p>
+                    <div className="flex space-x-3">
+                      <button className="bg-black text-white px-4 py-1.5 text-sm">50 ml</button>
+                      <button className="border border-neutral-300 text-neutral-gray px-4 py-1.5 text-sm hover:bg-neutral-50">20 ml</button>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xl font-medium text-primary">Price: ₹ 5,250.00</p>
+                  
+                  <div className="flex space-x-4">
+                    <a href="/products/tejasvi-brightening-emulsion.html" className="border border-neutral-300 text-neutral-gray px-4 py-2 text-sm hover:bg-neutral-50 transition">
+                      View Details
+                    </a>
+                    <button className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition">
+                      Add to Bag
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="md:w-1/2 flex justify-center">
+                <div className="w-full flex justify-center items-center">
+                  <img 
+                    src='/uploads/backgrounds/moodshot_varuna_35ml.jpg' 
+                    alt='Tejasvi Brightening Emulsion'
+                    className="w-auto h-auto max-h-[650px] max-w-full object-contain z-10 relative" 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Fourth Product Section - Image on Left, Text on Right (like second) */}
+      {sortedProducts.length > 0 && (
+        <div className="relative overflow-hidden bg-white py-16 border-b border-neutral-100">
+          {/* No background elements needed for white design */}
+          
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row-reverse items-center max-w-6xl mx-auto">             
+              <div className="md:w-1/2 text-primary mb-8 md:mb-0 md:pl-8">
+                <div className="mb-6">
+                  <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">A Synergistic 2-step Ritual</p>
+                  <h2 className="font-heading text-3xl md:text-4xl mb-2 text-primary">Step 4:</h2>
+                  <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">Ojas Illuminating Night Cream</h3>
+                </div>
+                
+                <div className="mb-8">
+                  <p className="text-neutral-gray mb-6">A restorative night treatment that works while you sleep to rejuvenate and repair skin. Powered by our proprietary Rasayana complex with Ashwagandha, Turmeric and Amla extracts, this luxurious cream delivers intense hydration and nourishment.</p>
+                  
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium mb-3 text-primary">Advanced Formula, Clinically Proven Results</h3>
+                    <ul className="space-y-2">
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">1.</span>
+                        <span className="text-neutral-gray">96% Woke up to more hydrated, plump skin</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">2.</span>
+                        <span className="text-neutral-gray">91% Reported diminished fine lines</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">3.</span>
+                        <span className="text-neutral-gray">97% Experienced enhanced skin elasticity</span>
+                      </li>
+                    </ul>
+                    <p className="text-xs mt-4 text-neutral-gray">*Based on clinical tests conducted over 15 days</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <p className="mb-2 text-neutral-gray">Select Size</p>
+                    <div className="flex space-x-3">
+                      <button className="bg-black text-white px-4 py-1.5 text-sm">50 g</button>
+                      <button className="border border-neutral-300 text-neutral-gray px-4 py-1.5 text-sm hover:bg-neutral-50">15 g</button>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xl font-medium text-primary">Price: ₹ 6,800.00</p>
+                  
+                  <div className="flex space-x-4">
+                    <a href="/products/ojas-night-cream.html" className="border border-neutral-300 text-neutral-gray px-4 py-2 text-sm hover:bg-neutral-50 transition">
+                      View Details
+                    </a>
+                    <button className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition">
+                      Add to Bag
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="md:w-1/2 flex justify-center">
+                <div className="w-full flex justify-center items-center">
+                  <img 
+                    src='/uploads/backgrounds/moodshot_varuna_35ml.jpg' 
+                    alt='Ojas Illuminating Night Cream'
+                    className="w-auto h-auto max-h-[650px] max-w-full object-contain z-10 relative" 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* FAQs Section */}
+      <div className="bg-white py-16">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <h2 className="font-heading text-3xl text-primary mb-12 text-center">FAQs</h2>
+          
+          <div className="space-y-2">
+            {/* FAQ Item 1 */}
+            <div className="border border-neutral-200 rounded overflow-hidden">
+              <button 
+                onClick={() => toggleFaq(0)} 
+                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+              >
+                <span className="text-primary">What are the key ingredients of the Samsara Miraculous Glow Booster Serum?</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 0 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              {openFaqIndex === 0 && (
+                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                  <p>The key ingredients of the Samsara Miraculous Glow Booster Serum include pure Kashmiri Saffron extract, Rose Distillate, Vetiver, and a blend of 12 precious herbs formulated according to ancient Ayurvedic principles. The serum also contains Vitamin C, Hyaluronic Acid, and natural antioxidants to enhance skin radiance and address uneven skin tone.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* FAQ Item 2 */}
+            <div className="border border-neutral-200 rounded overflow-hidden">
+              <button 
+                onClick={() => toggleFaq(1)} 
+                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+              >
+                <span className="text-primary">Are the ingredients in the Varuna Exceptional Repair Serum safe for sensitive skin?</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 1 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              {openFaqIndex === 1 && (
+                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                  <p>Yes, the Varuna Exceptional Repair Serum is formulated to be gentle and suitable for sensitive skin. All our ingredients are carefully selected and tested to minimize irritation. The natural Ayurvedic formulation avoids harsh chemicals, and the Fermented Vyasthapana Complex is particularly known for its skin-soothing properties. However, as with any skincare product, we recommend patch testing if you have extremely sensitive skin.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* FAQ Item 3 */}
+            <div className="border border-neutral-200 rounded overflow-hidden">
+              <button 
+                onClick={() => toggleFaq(2)} 
+                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+              >
+                <span className="text-primary">Are these serums free of harmful chemicals like parabens and sulfates?</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 2 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              {openFaqIndex === 2 && (
+                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                  <p>Absolutely. All our serums are 100% free from parabens, sulfates, silicones, mineral oils, synthetic fragrances, and other potentially harmful chemicals. We are committed to clean beauty formulations that harness the power of natural ingredients and traditional Ayurvedic wisdom without compromising on efficacy or safety.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* FAQ Item 4 */}
+            <div className="border border-neutral-200 rounded overflow-hidden">
+              <button 
+                onClick={() => toggleFaq(3)} 
+                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+              >
+                <span className="text-primary">What ingredients in the Varuna Exceptional Repair Serum help with anti ageing?</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 3 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              {openFaqIndex === 3 && (
+                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                  <p>The Varuna Exceptional Repair Serum contains several powerful anti-aging ingredients, including the Fermented Vyasthapana Firming Complex derived from 10 fermented anti-aging herbs. Key active ingredients include 7D Hyaluronic Acid for deep hydration, Acetyl Hexapeptide 8 to reduce wrinkle depth, Niacinamide for improved skin barrier function, and concentrated Vitamin C for collagen support and antioxidant protection. Together, these target fine lines, loss of firmness, and other visible signs of aging.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* FAQ Item 5 */}
+            <div className="border border-neutral-200 rounded overflow-hidden">
+              <button 
+                onClick={() => toggleFaq(4)} 
+                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+              >
+                <span className="text-primary">How often should I use the Samsara Miraculous Glow Booster Serum?</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 4 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              {openFaqIndex === 4 && (
+                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                  <p>For optimal results, we recommend using the Samsara Miraculous Glow Booster Serum twice daily—once in the morning and once in the evening. Apply 2-3 drops to cleansed skin, gently patting it in before following with your moisturizer. Consistent daily use will yield the best brightening and radiance-boosting effects.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* FAQ Item 6 */}
+            <div className="border border-neutral-200 rounded overflow-hidden">
+              <button 
+                onClick={() => toggleFaq(5)} 
+                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+              >
+                <span className="text-primary">Can I use the Varuna Exceptional Repair Serum during the day?</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 5 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              {openFaqIndex === 5 && (
+                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                  <p>While the Varuna Exceptional Repair Serum is primarily formulated as a night treatment to work with your skin's natural repair cycle during sleep, it can be used during the day as well. If using during daytime, always follow with a broad-spectrum SPF 30+ sunscreen, as some active ingredients may increase sun sensitivity. For most skin types, we recommend using it in the evening for optimal results.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* FAQ Item 7 */}
+            <div className="border border-neutral-200 rounded overflow-hidden">
+              <button 
+                onClick={() => toggleFaq(6)} 
+                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+              >
+                <span className="text-primary">How should I incorporate the Samsara Miraculous Glow Booster into my skincare routine?</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 6 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              {openFaqIndex === 6 && (
+                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                  <p>To incorporate the Samsara Miraculous Glow Booster into your routine, apply after cleansing and toning but before moisturizing. In the morning, layer it under your sunscreen. In the evening, it can be used before or after the Varuna Exceptional Repair Serum, depending on your preference. For enhanced results, use after an exfoliating treatment 1-2 times weekly to improve product absorption.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* FAQ Item 8 */}
+            <div className="border border-neutral-200 rounded overflow-hidden">
+              <button 
+                onClick={() => toggleFaq(7)} 
+                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+              >
+                <span className="text-primary">How long will it take to see results with these serums?</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 7 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              {openFaqIndex === 7 && (
+                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                  <p>Many users report seeing immediate improvements in skin hydration and luminosity after the first application. More significant results typically become visible within 2-3 weeks of consistent use. In clinical tests, the majority of participants showed measurable improvements in skin texture, firmness, and radiance after 15 days. For optimal anti-aging and skin-transforming effects, we recommend using the serums consistently for at least 8-12 weeks.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* FAQ Item 9 */}
+            <div className="border border-neutral-200 rounded overflow-hidden">
+              <button 
+                onClick={() => toggleFaq(8)} 
+                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+              >
+                <span className="text-primary">Can I use both Samsara and Varuna serums together?</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 8 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              {openFaqIndex === 8 && (
+                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                  <p>Yes, the Samsara and Varuna serums are designed to complement each other as part of a comprehensive skincare ritual. For optimal results, apply the Samsara Miraculous Glow Booster first, as it targets radiance and uneven tone, followed by the Varuna Exceptional Repair Serum to address firmness and fine lines. This layering approach ensures you receive the full benefits of both formulations. Allow 30-60 seconds between applications for best absorption.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Spacer */}
+      <div className="py-4"></div>
+      
+      {/* Product Grid */}
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
           <p className="text-neutral-gray mb-4 md:mb-0">{sortedProducts.length} products</p>
