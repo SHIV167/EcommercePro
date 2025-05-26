@@ -6,6 +6,12 @@ export interface MongoProduct extends Omit<Product, 'id'> {
   id?: number;
   // Link to collection
   collectionId?: string | number;
+  weightGrams?: number | null;
+  dimensionsCm?: {
+    length?: number | null;
+    width?: number | null;
+    height?: number | null;
+  } | null;
 }
 
 export interface MongoCategory extends Omit<Category, 'id'> {

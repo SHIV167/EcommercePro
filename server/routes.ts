@@ -5,7 +5,6 @@ const storage = new MongoDBStorage();
 import UserModel from "./models/User";
 import SettingModel from "./models/Setting";
 import ContactModel from "./models/Contact";
-import BlogModel from "./models/Blog";
 import OrderModel from "./models/Order"; // Import OrderModel
 import ProductModel from "./models/Product"; // Import ProductModel
 import BannerModel from "./models/Banner"; // Import BannerModel
@@ -27,10 +26,13 @@ import crypto from "crypto";
 import { getServiceability, createShipment, cancelShipment, trackShipment } from "./utils/shiprocket";
 import bcrypt from "bcrypt";
 import jwt, { Secret } from "jsonwebtoken";
-import { getPopupSetting, updatePopupSetting } from "./controllers/popupSettingController";
+import { getSettings, updateSettings } from './controllers/settingController';
 import { subscribeNewsletter, getNewsletterSubscribers } from "./controllers/newsletterController";
 import { getGiftPopupConfig, updateGiftPopupConfig, getGiftProducts } from "./controllers/giftPopupController";
+import { getPopupSetting, updatePopupSetting } from './controllers/popupSettingController';
 import { backupDatabase } from "./controllers/backupController";
+import { getAllUsers, updateUser, deleteUser } from './controllers/userController';
+import { getOrders, updateOrder } from './controllers/orderController';
 import fs from "fs";
 import path, { dirname } from "path";
 import multer from "multer";
@@ -132,6 +134,7 @@ import cartRoutes from './routes/cartRoutes.js'; // Import cart routes
 import bannerRoutes from './routes/bannerRoutes.new'; // Add banner routes
 import categoryRoutes from './routes/categoryRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import blogRoutes from './routes/blogRoutes.js';
 
 // Import controllers for coupons
 
@@ -142,6 +145,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use(express.urlencoded({ extended: true }));
   // Mount admin API routers
   app.use('/api', authRoutes);
+  app.use('/api', blogRoutes);
   app.use('/api', couponRoutes);
   app.use('/api', giftCardRoutes);
   app.use('/api', bannerRoutes); // Add banner routes
@@ -152,7 +156,19 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', freeProductRoutes);
   app.use('/api', reviewRoutes); // Add review routes
   app.use('/api', cartRoutes); // Add cart routes
+  // Order routes
+  app.get('/api/orders', getOrders);
+  app.put('/api/orders/:id', updateOrder);
   app.use('/api', categoryRoutes);
+  // User management routes
+  app.get('/api/users', getAllUsers);
+  app.put('/api/users/:id', updateUser);
+  app.delete('/api/users/:id', deleteUser);
+  // Settings endpoints
+  app.get('/api/admin/settings', getSettings);
+  app.put('/api/admin/settings', updateSettings);
+  // Database backup endpoint
+  app.post('/api/admin/backup', backupDatabase);
   app.use(uploadRoutes);
   // ensure upload directory exists in public/uploads
   const uploadDir = path.join(__dirname, '../public/uploads');
@@ -221,15 +237,6 @@ export async function registerRoutes(app: Application): Promise<Server> {
       });
     }
   });
-
-  // Seed sample blogs if none exist
-  const blogCount = await BlogModel.estimatedDocumentCount();
-  if (blogCount === 0) {
-    await BlogModel.create([
-      { title: 'Welcome to Our Blog', slug: 'welcome', author: 'Admin', summary: 'Start reading our latest news.', content: 'This is the first post content.', imageUrl: '', publishedAt: new Date() },
-      { title: 'Getting Started', slug: 'getting-started', author: 'Admin', summary: 'How to get started.', content: 'Getting started content.', imageUrl: '', publishedAt: new Date() }
-    ]);
-  }
 
   // Seed sample testimonials if none exist
   const testimonialCount = await TestimonialModel.estimatedDocumentCount();
@@ -386,8 +393,9 @@ export async function registerRoutes(app: Application): Promise<Server> {
     }
   });
 
-  // Popup settings routes
-  // Popup routes moved to the end of the file to avoid duplication
+  // Popup settings endpoints
+  app.get('/api/popup-settings', getPopupSetting);
+  app.put('/api/popup-settings', updatePopupSetting);
 
   // Newsletter subscription routes
   app.post('/api/newsletter/subscribe', subscribeNewsletter);
@@ -1180,9 +1188,6 @@ export async function registerRoutes(app: Application): Promise<Server> {
       return res.status(500).json({ error: "Failed to fetch product collections" });
     }
   });
-
-  // Make backup endpoint public by removing authentication middleware
-  app.post('/api/admin/backup', backupDatabase);
 
   // Create and return HTTP server
   return createServer(app);

@@ -49,7 +49,7 @@ export default function SettingsManagement() {
     }
   }, [settings]);
 
-  const { mutate: updateSettings, status } = useMutation({
+  const { mutate: updateSettings, isPending } = useMutation({
     mutationFn: async () => {
       const payload = { 
         // General Settings
@@ -84,8 +84,8 @@ export default function SettingsManagement() {
     }
   });
 
-  const isUpdating = status === 'pending';
-  const { mutate: backupDatabase, isLoading: isBackingUp } = useMutation({
+  const isUpdating = isPending;
+  const { mutate: backupDatabase, isPending: isBackingUp } = useMutation({
     mutationFn: async () => {
       const res = await apiRequest('POST', '/api/admin/backup');
       const data = await res.json();

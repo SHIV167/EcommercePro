@@ -1,6 +1,9 @@
-import type { Request, Response } from 'express';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
+import { fileURLToPath } from 'url';
 import path from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import { Request, Response } from 'express';
 import fs from 'fs';
 import SettingModel from '../models/Setting';
 import { sendMail } from '../utils/mailer';
