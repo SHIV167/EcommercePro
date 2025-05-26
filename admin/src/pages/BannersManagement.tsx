@@ -248,7 +248,12 @@ export default function BannersManagement() {
   });
 
   const deleteBanner = useMutation({
-    mutationFn: (id: string) => fetch(`${apiBase}/api/banners/${id}`, { method: "DELETE", credentials: 'include' }),
+    mutationFn: async (id: string) => {
+      const res = await fetch(`${apiBase}/api/banners/${id}`, { method: "DELETE", credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || 'Failed to delete banner');
+      return data;
+    },
     onSuccess: () => {
       toast({ title: "Banner deleted" });
       queryClient.invalidateQueries({ queryKey: ['banners'] });

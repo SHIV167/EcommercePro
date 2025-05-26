@@ -332,9 +332,12 @@ router.put('/banners/:id', authenticateJWT, isAdmin, (req, res, next) => {
 // Delete banner
 router.delete('/banners/:id', authenticateJWT, isAdmin, async (req, res) => {
   try {
-    const banner = await Banner.findOneAndDelete({
-      $or: [{ id: req.params.id }, { _id: req.params.id }]
-    });
+    // Determine filter to avoid casting invalid ObjectId
+    const bannerId = req.params.id;
+    const filter = mongoose.Types.ObjectId.isValid(bannerId)
+      ? { $or: [{ id: bannerId }, { _id: bannerId }] }
+      : { id: bannerId };
+    const banner = await Banner.findOneAndDelete(filter);
 
     if (!banner) {
       return res.status(404).json({ error: 'Banner not found' });

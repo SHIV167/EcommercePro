@@ -8,6 +8,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import cloudinary, { isCloudinaryConfigured, isCloudinaryEnabled } from '../utils/cloudinary';
 import multer from 'multer';
+import mongoose from 'mongoose';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -411,9 +412,11 @@ router.put('/api/banners/:id', authenticateJWT, isAdmin, (req, res, next) => {
       });
       
       // Find banner
-      const banner = await Banner.findOne({
-        $or: [{ id: req.params.id }, { _id: req.params.id }]
-      });
+      const bannerId = req.params.id;
+      const filter = mongoose.Types.ObjectId.isValid(bannerId)
+        ? { $or: [{ id: bannerId }, { _id: bannerId }] }
+        : { id: bannerId };
+      const banner = await Banner.findOne(filter);
       
       if (!banner) {
         return res.status(404).json({ error: 'Banner not found' });
@@ -533,9 +536,11 @@ router.put('/api/banners/:id', authenticateJWT, isAdmin, (req, res, next) => {
 // Delete banner
 router.delete('/api/banners/:id', authenticateJWT, isAdmin, async (req, res) => {
   try {
-    const banner = await Banner.findOneAndDelete({
-      $or: [{ id: req.params.id }, { _id: req.params.id }]
-    });
+    const bannerId = req.params.id;
+    const filter = mongoose.Types.ObjectId.isValid(bannerId)
+      ? { $or: [{ id: bannerId }, { _id: bannerId }] }
+      : { id: bannerId };
+    const banner = await Banner.findOneAndDelete(filter);
 
     if (!banner) {
       return res.status(404).json({ error: 'Banner not found' });

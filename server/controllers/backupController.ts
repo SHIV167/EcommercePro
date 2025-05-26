@@ -1,4 +1,5 @@
-import { spawn, exec } from 'child_process';
+import { spawn } from 'child_process';
+import { exec } from 'child_process';
 import { fileURLToPath } from 'url';
 import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
