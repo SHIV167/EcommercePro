@@ -280,222 +280,182 @@ export default function CategoryPage() {
               </div>
             );
           })
-      ) : sortedProducts.length > 0 ? (
-        // Fallback if no featured products are configured - show the first product
-        <div className="relative overflow-hidden bg-white py-16 border-t border-b border-neutral-100">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row items-center max-w-6xl mx-auto">
-              <div className="md:w-1/2 text-primary mb-8 md:mb-0 md:pr-8">
-                <div className="mb-6">
-                  <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">Featured Product</p>
-                  <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">{sortedProducts[0].name}</h3>
-                </div>
-                
-                <div className="mb-8">
-                  <p className="text-neutral-gray mb-6">{sortedProducts[0].description || sortedProducts[0].shortDescription}</p>
-                </div>
-                
-                <div className="space-y-4">
-                  <p className="text-xl font-medium text-primary">Price: ₹ {sortedProducts[0].price.toLocaleString('en-IN')}</p>
-                  
-                  <div className="flex space-x-4">
-                    <a href={`/products/${sortedProducts[0].slug}.html`} className="border border-neutral-300 text-neutral-gray px-4 py-2 text-sm hover:bg-neutral-50 transition">
-                      View Details
-                    </a>
-                    <button 
-                      onClick={() => document.querySelector(`[data-product-id="${sortedProducts[0]._id}"]`)?.dispatchEvent(new Event('click'))}
-                      className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition"
-                    >
-                      Add to Bag
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="md:w-1/2 flex justify-center">
-                <div className="w-full flex justify-center items-center">
-                  <img 
-                    src={sortedProducts[0].imageUrl || '/uploads/backgrounds/moodshot_varuna_35ml.jpg'} 
-                    alt={sortedProducts[0].name}
-                    className="w-auto h-auto max-h-[650px] max-w-full object-contain z-10 relative" 
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       ) : null}
       
-      {/* FAQs Section */}
-      <div className="bg-white py-16">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="font-heading text-3xl text-primary mb-12 text-center">FAQs</h2>
-          
-          <div className="space-y-2">
-            {/* FAQ Item 1 */}
-            <div className="border border-neutral-200 rounded overflow-hidden">
-              <button 
-                onClick={() => toggleFaq(0)} 
-                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
-              >
-                <span className="text-primary">What are the key ingredients of the Samsara Miraculous Glow Booster Serum?</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 0 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-              {openFaqIndex === 0 && (
-                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
-                  <p>The key ingredients of the Samsara Miraculous Glow Booster Serum include pure Kashmiri Saffron extract, Rose Distillate, Vetiver, and a blend of 12 precious herbs formulated according to ancient Ayurvedic principles. The serum also contains Vitamin C, Hyaluronic Acid, and natural antioxidants to enhance skin radiance and address uneven skin tone.</p>
+      {category?.featuredProducts?.length > 0 && (
+        <>
+          {/* FAQs Section */}
+          <div className="bg-white py-16">
+            <div className="container mx-auto px-4 max-w-4xl">
+              <h2 className="font-heading text-3xl text-primary mb-12 text-center">FAQs</h2>
+              
+              <div className="space-y-2">
+                {/* FAQ Item 1 */}
+                <div className="border border-neutral-200 rounded overflow-hidden">
+                  <button 
+                    onClick={() => toggleFaq(0)} 
+                    className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+                  >
+                    <span className="text-primary">What are the key ingredients of the Samsara Miraculous Glow Booster Serum?</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 0 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  {openFaqIndex === 0 && (
+                    <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                      <p>The key ingredients of the Samsara Miraculous Glow Booster Serum include pure Kashmiri Saffron extract, Rose Distillate, Vetiver, and a blend of 12 precious herbs formulated according to ancient Ayurvedic principles. The serum also contains Vitamin C, Hyaluronic Acid, and natural antioxidants to enhance skin radiance and address uneven skin tone.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* FAQ Item 2 */}
-            <div className="border border-neutral-200 rounded overflow-hidden">
-              <button 
-                onClick={() => toggleFaq(1)} 
-                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
-              >
-                <span className="text-primary">Are the ingredients in the Varuna Exceptional Repair Serum safe for sensitive skin?</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 1 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-              {openFaqIndex === 1 && (
-                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
-                  <p>Yes, the Varuna Exceptional Repair Serum is formulated to be gentle and suitable for sensitive skin. All our ingredients are carefully selected and tested to minimize irritation. The natural Ayurvedic formulation avoids harsh chemicals, and the Fermented Vyasthapana Complex is particularly known for its skin-soothing properties. However, as with any skincare product, we recommend patch testing if you have extremely sensitive skin.</p>
+                
+                {/* FAQ Item 2 */}
+                <div className="border border-neutral-200 rounded overflow-hidden">
+                  <button 
+                    onClick={() => toggleFaq(1)} 
+                    className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+                  >
+                    <span className="text-primary">Are the ingredients in the Varuna Exceptional Repair Serum safe for sensitive skin?</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 1 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  {openFaqIndex === 1 && (
+                    <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                      <p>Yes, the Varuna Exceptional Repair Serum is formulated to be gentle and suitable for sensitive skin. All our ingredients are carefully selected and tested to minimize irritation. The natural Ayurvedic formulation avoids harsh chemicals, and the Fermented Vyasthapana Complex is particularly known for its skin-soothing properties. However, as with any skincare product, we recommend patch testing if you have extremely sensitive skin.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* FAQ Item 3 */}
-            <div className="border border-neutral-200 rounded overflow-hidden">
-              <button 
-                onClick={() => toggleFaq(2)} 
-                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
-              >
-                <span className="text-primary">Are these serums free of harmful chemicals like parabens and sulfates?</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 2 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-              {openFaqIndex === 2 && (
-                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
-                  <p>Absolutely. All our serums are 100% free from parabens, sulfates, silicones, mineral oils, synthetic fragrances, and other potentially harmful chemicals. We are committed to clean beauty formulations that harness the power of natural ingredients and traditional Ayurvedic wisdom without compromising on efficacy or safety.</p>
+                
+                {/* FAQ Item 3 */}
+                <div className="border border-neutral-200 rounded overflow-hidden">
+                  <button 
+                    onClick={() => toggleFaq(2)} 
+                    className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+                  >
+                    <span className="text-primary">Are these serums free of harmful chemicals like parabens and sulfates?</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 2 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  {openFaqIndex === 2 && (
+                    <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                      <p>Absolutely. All our serums are 100% free from parabens, sulfates, silicones, mineral oils, synthetic fragrances, and other potentially harmful chemicals. We are committed to clean beauty formulations that harness the power of natural ingredients and traditional Ayurvedic wisdom without compromising on efficacy or safety.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* FAQ Item 4 */}
-            <div className="border border-neutral-200 rounded overflow-hidden">
-              <button 
-                onClick={() => toggleFaq(3)} 
-                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
-              >
-                <span className="text-primary">What ingredients in the Varuna Exceptional Repair Serum help with anti ageing?</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 3 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-              {openFaqIndex === 3 && (
-                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
-                  <p>The Varuna Exceptional Repair Serum contains several powerful anti-aging ingredients, including the Fermented Vyasthapana Firming Complex derived from 10 fermented anti-aging herbs. Key active ingredients include 7D Hyaluronic Acid for deep hydration, Acetyl Hexapeptide 8 to reduce wrinkle depth, Niacinamide for improved skin barrier function, and concentrated Vitamin C for collagen support and antioxidant protection. Together, these target fine lines, loss of firmness, and other visible signs of aging.</p>
+                
+                {/* FAQ Item 4 */}
+                <div className="border border-neutral-200 rounded overflow-hidden">
+                  <button 
+                    onClick={() => toggleFaq(3)} 
+                    className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+                  >
+                    <span className="text-primary">What ingredients in the Varuna Exceptional Repair Serum help with anti ageing?</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 3 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  {openFaqIndex === 3 && (
+                    <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                      <p>The Varuna Exceptional Repair Serum contains several powerful anti-aging ingredients, including the Fermented Vyasthapana Firming Complex derived from 10 fermented anti-aging herbs. Key active ingredients include 7D Hyaluronic Acid for deep hydration, Acetyl Hexapeptide 8 to reduce wrinkle depth, Niacinamide for improved skin barrier function, and concentrated Vitamin C for collagen support and antioxidant protection. Together, these target fine lines, loss of firmness, and other visible signs of aging.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* FAQ Item 5 */}
-            <div className="border border-neutral-200 rounded overflow-hidden">
-              <button 
-                onClick={() => toggleFaq(4)} 
-                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
-              >
-                <span className="text-primary">How often should I use the Samsara Miraculous Glow Booster Serum?</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 4 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-              {openFaqIndex === 4 && (
-                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
-                  <p>For optimal results, we recommend using the Samsara Miraculous Glow Booster Serum twice daily—once in the morning and once in the evening. Apply 2-3 drops to cleansed skin, gently patting it in before following with your moisturizer. Consistent daily use will yield the best brightening and radiance-boosting effects.</p>
+                
+                {/* FAQ Item 5 */}
+                <div className="border border-neutral-200 rounded overflow-hidden">
+                  <button 
+                    onClick={() => toggleFaq(4)} 
+                    className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+                  >
+                    <span className="text-primary">How often should I use the Samsara Miraculous Glow Booster Serum?</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 4 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  {openFaqIndex === 4 && (
+                    <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                      <p>For optimal results, we recommend using the Samsara Miraculous Glow Booster Serum twice daily—once in the morning and once in the evening. Apply 2-3 drops to cleansed skin, gently patting it in before following with your moisturizer. Consistent daily use will yield the best brightening and radiance-boosting effects.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* FAQ Item 6 */}
-            <div className="border border-neutral-200 rounded overflow-hidden">
-              <button 
-                onClick={() => toggleFaq(5)} 
-                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
-              >
-                <span className="text-primary">Can I use the Varuna Exceptional Repair Serum during the day?</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 5 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-              {openFaqIndex === 5 && (
-                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
-                  <p>While the Varuna Exceptional Repair Serum is primarily formulated as a night treatment to work with your skin's natural repair cycle during sleep, it can be used during the day as well. If using during daytime, always follow with a broad-spectrum SPF 30+ sunscreen, as some active ingredients may increase sun sensitivity. For most skin types, we recommend using it in the evening for optimal results.</p>
+                
+                {/* FAQ Item 6 */}
+                <div className="border border-neutral-200 rounded overflow-hidden">
+                  <button 
+                    onClick={() => toggleFaq(5)} 
+                    className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+                  >
+                    <span className="text-primary">Can I use the Varuna Exceptional Repair Serum during the day?</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 5 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  {openFaqIndex === 5 && (
+                    <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                      <p>While the Varuna Exceptional Repair Serum is primarily formulated as a night treatment to work with your skin's natural repair cycle during sleep, it can be used during the day as well. If using during daytime, always follow with a broad-spectrum SPF 30+ sunscreen, as some active ingredients may increase sun sensitivity. For most skin types, we recommend using it in the evening for optimal results.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* FAQ Item 7 */}
-            <div className="border border-neutral-200 rounded overflow-hidden">
-              <button 
-                onClick={() => toggleFaq(6)} 
-                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
-              >
-                <span className="text-primary">How should I incorporate the Samsara Miraculous Glow Booster into my skincare routine?</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 6 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-              {openFaqIndex === 6 && (
-                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
-                  <p>To incorporate the Samsara Miraculous Glow Booster into your routine, apply after cleansing and toning but before moisturizing. In the morning, layer it under your sunscreen. In the evening, it can be used before or after the Varuna Exceptional Repair Serum, depending on your preference. For enhanced results, use after an exfoliating treatment 1-2 times weekly to improve product absorption.</p>
+                
+                {/* FAQ Item 7 */}
+                <div className="border border-neutral-200 rounded overflow-hidden">
+                  <button 
+                    onClick={() => toggleFaq(6)} 
+                    className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+                  >
+                    <span className="text-primary">How should I incorporate the Samsara Miraculous Glow Booster into my skincare routine?</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 6 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  {openFaqIndex === 6 && (
+                    <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                      <p>To incorporate the Samsara Miraculous Glow Booster into your routine, apply after cleansing and toning but before moisturizing. In the morning, layer it under your sunscreen. In the evening, it can be used before or after the Varuna Exceptional Repair Serum, depending on your preference. For enhanced results, use after an exfoliating treatment 1-2 times weekly to improve product absorption.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* FAQ Item 8 */}
-            <div className="border border-neutral-200 rounded overflow-hidden">
-              <button 
-                onClick={() => toggleFaq(7)} 
-                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
-              >
-                <span className="text-primary">How long will it take to see results with these serums?</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 7 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-              {openFaqIndex === 7 && (
-                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
-                  <p>Many users report seeing immediate improvements in skin hydration and luminosity after the first application. More significant results typically become visible within 2-3 weeks of consistent use. In clinical tests, the majority of participants showed measurable improvements in skin texture, firmness, and radiance after 15 days. For optimal anti-aging and skin-transforming effects, we recommend using the serums consistently for at least 8-12 weeks.</p>
+                
+                {/* FAQ Item 8 */}
+                <div className="border border-neutral-200 rounded overflow-hidden">
+                  <button 
+                    onClick={() => toggleFaq(7)} 
+                    className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+                  >
+                    <span className="text-primary">How long will it take to see results with these serums?</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 7 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  {openFaqIndex === 7 && (
+                    <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                      <p>Many users report seeing immediate improvements in skin hydration and luminosity after the first application. More significant results typically become visible within 2-3 weeks of consistent use. In clinical tests, the majority of participants showed measurable improvements in skin texture, firmness, and radiance after 15 days. For optimal anti-aging and skin-transforming effects, we recommend using the serums consistently for at least 8-12 weeks.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* FAQ Item 9 */}
-            <div className="border border-neutral-200 rounded overflow-hidden">
-              <button 
-                onClick={() => toggleFaq(8)} 
-                className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
-              >
-                <span className="text-primary">Can I use both Samsara and Varuna serums together?</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 8 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-              {openFaqIndex === 8 && (
-                <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
-                  <p>Yes, the Samsara and Varuna serums are designed to complement each other as part of a comprehensive skincare ritual. For optimal results, apply the Samsara Miraculous Glow Booster first, as it targets radiance and uneven tone, followed by the Varuna Exceptional Repair Serum to address firmness and fine lines. This layering approach ensures you receive the full benefits of both formulations. Allow 30-60 seconds between applications for best absorption.</p>
+                
+                {/* FAQ Item 9 */}
+                <div className="border border-neutral-200 rounded overflow-hidden">
+                  <button 
+                    onClick={() => toggleFaq(8)} 
+                    className="w-full text-left px-6 py-4 flex justify-between items-center hover:bg-neutral-50"
+                  >
+                    <span className="text-primary">Can I use both Samsara and Varuna serums together?</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-primary transition-transform ${openFaqIndex === 8 ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  {openFaqIndex === 8 && (
+                    <div className="px-6 py-4 bg-neutral-50 text-neutral-gray">
+                      <p>Yes, the Samsara and Varuna serums are designed to complement each other as part of a comprehensive skincare ritual. For optimal results, apply the Samsara Miraculous Glow Booster first, as it targets radiance and uneven tone, followed by the Varuna Exceptional Repair Serum to address firmness and fine lines. This layering approach ensures you receive the full benefits of both formulations. Allow 30-60 seconds between applications for best absorption.</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
       
       {/* Spacer */}
       <div className="py-4"></div>
