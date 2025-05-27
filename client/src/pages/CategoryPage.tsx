@@ -71,14 +71,17 @@ export default function CategoryPage() {
     }));
   };
 
-  // Featured products add-to-cart handler with toast
-  const handleAddToCartFeatured = async (product?: Product) => {
-    if (!product) return;
+  // Featured products add-to-cart handler: fetch product by ID then add
+  const handleAddToCartFeatured = async (productId: string) => {
     try {
-      await addItem(product);
-      toast({ title: 'Added to cart', description: `${product.name} has been added to your cart.` });
+      const res = await fetch(`/api/products/${productId}`);
+      if (!res.ok) throw new Error(`Failed to fetch product ${productId}`);
+      const prod: Product = await res.json();
+      await addItem(prod);
+      toast({ title: 'Added to cart', description: `${prod.name} has been added to your cart.` });
     } catch (error) {
-      toast({ title: 'Error', description: `Failed to add ${product.name} to cart. Please try again.`, variant: 'destructive' });
+      console.error('Add featured product error:', error);
+      toast({ title: 'Error', description: `Failed to add product to cart. Please try again.`, variant: 'destructive' });
     }
   };
 
@@ -265,7 +268,7 @@ export default function CategoryPage() {
                             View Details
                           </a>
                           <button
-                            onClick={() => handleAddToCartFeatured(product)}
+                            onClick={() => handleAddToCartFeatured(featuredProduct.productId)}
                             className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition"
                           >
                             Add to Bag
