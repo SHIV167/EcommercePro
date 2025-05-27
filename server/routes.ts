@@ -135,6 +135,7 @@ import bannerRoutes from './routes/bannerRoutes.new'; // Add banner routes
 import categoryRoutes from './routes/categoryRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
+import featuredProductRoutes from './routes/featuredProductRoutes'; // Import optimized featured product routes
 
 // Import controllers for coupons
 
@@ -156,6 +157,7 @@ export async function registerRoutes(app: Application): Promise<Server> {
   app.use('/api', freeProductRoutes);
   app.use('/api', reviewRoutes); // Add review routes
   app.use('/api', cartRoutes); // Add cart routes
+  app.use('/api', featuredProductRoutes); // Add optimized featured product routes
   // Order routes
   app.get('/api/orders', getOrders);
   app.put('/api/orders/:id', updateOrder);

@@ -8,20 +8,104 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Helmet } from 'react-helmet';
 import HeaderBanner from '@/components/layout/HeaderBanner';
 
+// Type definitions for featured products from the server
+type FeaturedProductVariant = {
+  size: string;
+  price: number;
+  isDefault: boolean; // Make sure isDefault is required and not optional
+  imageUrl?: string;
+};
+
+interface Stat {
+  percent: number;
+  text: string;
+}
+
+interface FeaturedProduct {
+  productId: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  imageUrl?: string;
+  position: number;
+  layout: 'image-right' | 'image-left';
+  variants: FeaturedProductVariant[];
+  benefits: string[];
+  stats: Stat[];
+}
+
+// Define the extended category type without extending CategoryType to avoid conflicts
+interface ExtendedCategory {
+  _id: string;
+  name: string;
+  description?: string;
+  slug: string;
+  imageUrl?: string;
+  featured?: boolean;
+  desktopImageUrl?: string;
+  mobileImageUrl?: string;
+  featuredProducts: FeaturedProduct[];
+}
+
 export default function CategoryPage() {
   const { slug } = useParams();
   if (!slug) return null;
 
   const [sortBy, setSortBy] = useState('featured');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
   };
+  
+  // Handle variant selection
+  const handleVariantSelect = (productId: string, size: string) => {
+    setSelectedVariants(prev => ({
+      ...prev,
+      [productId]: size
+    }));
+  };
 
-  const { data: category, isLoading: catLoading } = useQuery<CategoryType>({
+  const { data: category, isLoading: catLoading } = useQuery<ExtendedCategory>({
     queryKey: [`/api/categories/${slug}`],
+    queryFn: async () => {
+      console.log('Fetching category with slug:', slug);
+      try {
+        // Simple direct fetch
+        const res = await fetch(`/api/categories/${slug}`);
+        console.log('Category response status:', res.status);
+        
+        if (!res.ok) {
+          console.error('Error fetching category:', res.status, res.statusText);
+          throw new Error(`Failed to fetch category: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        console.log('Category data loaded:', data);
+        
+        // Ensure featuredProducts is properly initialized
+        if (!data.featuredProducts) {
+          console.log('Adding empty featuredProducts array');
+          data.featuredProducts = [];
+        }
+        
+        // Debug the featuredProducts data
+        console.log('Featured products in category:', data.featuredProducts);
+        if (data.featuredProducts.length > 0) {
+          console.log('First featured product:', data.featuredProducts[0]);
+        }
+        
+        return data;
+      } catch (error) {
+        console.error('Error fetching category data:', error);
+        throw error;
+      }
+    },
     enabled: !!slug,
+    staleTime: 0, // Disable caching to ensure fresh data
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    retry: 3 // Retry failed requests up to 3 times
   });
 
   const productsQuery = useQuery<Product[]>({
@@ -67,58 +151,152 @@ export default function CategoryPage() {
       {/* Category Heading */}
       <div className="bg-white py-10 border-b border-neutral-100">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="font-heading text-3xl md:text-4xl text-primary mb-3">Skin Care</h1>
-          <p className="text-neutral-gray max-w-2xl mx-auto text-lg">Ayurvedic skincare formulations for radiant skin</p>
+          <h1 className="font-heading text-3xl md:text-4xl text-primary mb-3">{category.name}</h1>
+          <p className="text-neutral-gray max-w-2xl mx-auto text-lg">{category.description || 'Ayurvedic skincare formulations for radiant skin'}</p>
         </div>
       </div>
       
-      {/* Featured Product Section - Based on Screenshot */}
-      {sortedProducts.length > 0 && sortedProducts[0].featured && (
+      {/* Dynamic Featured Product Sections */}
+      {console.log('Featured products data:', category?.featuredProducts)}
+      
+      {/* Dynamic Featured Product Sections */}
+      <div className="mb-10">
+        <h2 className="text-2xl font-heading text-center mb-8">Featured Products</h2>
+        {/* Debug information */}
+        <div style={{ display: 'none' }}>
+          Featured Products Data: {JSON.stringify(category?.featuredProducts)}
+        </div>
+      </div>
+      
+      {console.log('Rendering featured products, count:', category?.featuredProducts?.length || 0)}
+      
+      {(Array.isArray(category?.featuredProducts) && category.featuredProducts.length > 0) ? (
+        // Sort featured products by position
+        [...category.featuredProducts]
+          .filter(fp => fp && typeof fp === 'object')
+          .sort((a, b) => (a.position || 0) - (b.position || 0))
+          .map((featuredProduct, index) => {
+            console.log('Rendering featured product:', featuredProduct);
+            
+            // Safety checks
+            if (!featuredProduct || !featuredProduct.productId) {
+              console.error('Invalid featured product:', featuredProduct);
+              return null;
+            }
+            
+            // Ensure variants array exists
+            const variants = Array.isArray(featuredProduct.variants) ? featuredProduct.variants : [];
+            
+            // Find the default variant or use the first one
+            const defaultVariant = variants.find(v => v && v.isDefault) || variants[0] || { size: 'default', price: 0 };
+            const currentVariant = selectedVariants[featuredProduct.productId] || defaultVariant?.size;
+            const selectedVariantDetails = variants.find(v => v && v.size === currentVariant) || defaultVariant;
+            
+            // Find the corresponding product from product list if needed
+            const product = sortedProducts.find(p => p._id === featuredProduct.productId || p.slug === featuredProduct.productId);
+            
+            return (
+              <div key={featuredProduct.productId} className="relative overflow-hidden bg-white py-16 border-b border-neutral-100">
+                <div className="container mx-auto px-4">
+                  <div className={`flex flex-col ${featuredProduct.layout === 'image-left' ? 'md:flex-row-reverse' : 'md:flex-row'} items-center max-w-6xl mx-auto`}>
+                    {/* Text Content */}
+                    <div className={`md:w-1/2 text-primary mb-8 md:mb-0 ${featuredProduct.layout === 'image-left' ? 'md:pl-8' : 'md:pr-8'}`}>
+                      <div className="mb-6">
+                        <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">{featuredProduct.subtitle || 'A Synergistic 2-step Ritual'}</p>
+                        <h2 className="font-heading text-3xl md:text-4xl mb-2 text-primary">Step {index + 1}:</h2>
+                        <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">{featuredProduct.title}</h3>
+                      </div>
+                      
+                      <div className="mb-8">
+                        <p className="text-neutral-gray mb-6">{featuredProduct.description}</p>
+                        
+                        <div className="mt-8">
+                          <h3 className="text-lg font-medium mb-3 text-primary">Advanced Formula, Clinically Proven Results</h3>
+                          <ul className="space-y-2">
+                            {featuredProduct.stats.map((stat, i) => (
+                              <li key={i} className="flex items-start">
+                                <span className="text-primary mr-2">{i + 1}.</span>
+                                <span className="text-neutral-gray">{stat.percent}% {stat.text}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          <p className="text-xs mt-4 text-neutral-gray">*Based on clinical tests conducted over 15 days</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <p className="mb-2 text-neutral-gray">Select Size</p>
+                          <div className="flex space-x-3">
+                            {featuredProduct.variants.map((variant) => (
+                              <button 
+                                key={variant.size}
+                                onClick={() => handleVariantSelect(featuredProduct.productId, variant.size)}
+                                className={`${variant.size === currentVariant ? 'bg-black text-white' : 'border border-neutral-300 text-neutral-gray hover:bg-neutral-50'} px-4 py-1.5 text-sm ${variant.size === currentVariant ? '' : 'hover:bg-neutral-50'}`}
+                              >
+                                {variant.size}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <p className="text-xl font-medium text-primary">Price: ₹ {selectedVariantDetails?.price.toLocaleString('en-IN')}</p>
+                        
+                        <div className="flex space-x-4">
+                          <a 
+                            href={`/products/${product?.slug || featuredProduct.productId}.html`} 
+                            className="border border-neutral-300 text-neutral-gray px-4 py-2 text-sm hover:bg-neutral-50 transition"
+                          >
+                            View Details
+                          </a>
+                          <button 
+                            onClick={() => {
+                              // Find actual product and add to cart with selected variant
+                              if (product) {
+                                // Find add to cart button for this product and simulate click
+                                document.querySelector(`[data-product-id="${product._id}"]`)?.dispatchEvent(new Event('click'))
+                              }
+                            }}
+                            className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition"
+                          >
+                            Add to Bag
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Product Image */}
+                    <div className="md:w-1/2 flex justify-center">
+                      <div className="w-full flex justify-center items-center">
+                        <img 
+                          src={selectedVariantDetails.imageUrl || featuredProduct.imageUrl || '/uploads/backgrounds/moodshot_varuna_35ml.jpg'} 
+                          alt={featuredProduct.title}
+                          className="w-auto h-auto max-h-[650px] max-w-full object-contain z-10 relative" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+      ) : sortedProducts.length > 0 ? (
+        // Fallback if no featured products are configured - show the first product
         <div className="relative overflow-hidden bg-white py-16 border-t border-b border-neutral-100">
-          {/* No background elements needed for white design */}
-          
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row items-center max-w-6xl mx-auto">
               <div className="md:w-1/2 text-primary mb-8 md:mb-0 md:pr-8">
                 <div className="mb-6">
-                  <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">A Synergistic 2-step Ritual</p>
-                  <h2 className="font-heading text-3xl md:text-4xl mb-2 text-primary">Step 1:</h2>
-                  <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">Varuna Exceptional Repair Serum</h3>
+                  <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">Featured Product</p>
+                  <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">{sortedProducts[0].name}</h3>
                 </div>
                 
                 <div className="mb-8">
-                  <p className="text-neutral-gray mb-6">A revolutionary Night Filler Serum that improves firmness & elasticity with a Fermented Vyasthapana Firming Complex, a potent blend of 10 fermented anti-ageing herbs. These are blended with nano actives including 7D Hyaluronic Acid, Acetyl Hexapeptide 8, Niacinamide & concentrated Vitamin C to be absorbed deep into the skin, leaving it firm, nourished, and rejuvenated.</p>
-                  
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium mb-3 text-primary">Advanced Formula, Clinically Proven Results</h3>
-                    <ul className="space-y-2">
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">1.</span>
-                        <span className="text-neutral-gray">97% Showed significant improvement in fine lines & wrinkles</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">2.</span>
-                        <span className="text-neutral-gray">94% Noticed better elasticity & firmer skin</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">3.</span>
-                        <span className="text-neutral-gray">100% Experienced smoother skin</span>
-                      </li>
-                    </ul>
-                    <p className="text-xs mt-4 text-neutral-gray">*Based on clinical tests conducted over 15 days</p>
-                  </div>
+                  <p className="text-neutral-gray mb-6">{sortedProducts[0].description || sortedProducts[0].shortDescription}</p>
                 </div>
                 
                 <div className="space-y-4">
-                  <div>
-                    <p className="mb-2 text-neutral-gray">Select Size</p>
-                    <div className="flex space-x-3">
-                      <button className="bg-black text-white px-4 py-1.5 text-sm rounded">35 ml</button>
-                      <button className="border border-neutral-300 text-neutral-gray px-4 py-1.5 text-sm rounded hover:bg-neutral-50">10 ml</button>
-                    </div>
-                  </div>
-                  
-                  <p className="text-xl font-medium text-primary">Price: ₹ 7,500.00</p>
+                  <p className="text-xl font-medium text-primary">Price: ₹ {sortedProducts[0].price.toLocaleString('en-IN')}</p>
                   
                   <div className="flex space-x-4">
                     <a href={`/products/${sortedProducts[0].slug}.html`} className="border border-neutral-300 text-neutral-gray px-4 py-2 text-sm hover:bg-neutral-50 transition">
@@ -137,8 +315,8 @@ export default function CategoryPage() {
               <div className="md:w-1/2 flex justify-center">
                 <div className="w-full flex justify-center items-center">
                   <img 
-                    src={'/uploads/backgrounds/moodshot_varuna_35ml.jpg'} 
-                    alt={sortedProducts[0].name || 'Varuna Exceptional Repair Serum'}
+                    src={sortedProducts[0].imageUrl || '/uploads/backgrounds/moodshot_varuna_35ml.jpg'} 
+                    alt={sortedProducts[0].name}
                     className="w-auto h-auto max-h-[650px] max-w-full object-contain z-10 relative" 
                   />
                 </div>
@@ -146,226 +324,7 @@ export default function CategoryPage() {
             </div>
           </div>
         </div>
-      )}
-      
-      {/* Second Product Section - Image on Left, Text on Right */}
-      {sortedProducts.length > 0 && (
-        <div className="relative overflow-hidden bg-white py-16 border-b border-neutral-100">
-          {/* No background elements needed for white design */}
-          
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row-reverse items-center max-w-6xl mx-auto">             
-              <div className="md:w-1/2 text-primary mb-8 md:mb-0 md:pl-8">
-                <div className="mb-6">
-                  <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">A Synergistic 2-step Ritual</p>
-                  <h2 className="font-heading text-3xl md:text-4xl mb-2 text-primary">Step 2:</h2>
-                  <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">Kumkumadi Miraculous Beauty Fluid</h3>
-                </div>
-                
-                <div className="mb-8">
-                  <p className="text-neutral-gray mb-6">A revolutionary Ayurvedic elixir that improves skin radiance & uneven tone with a blend of 12 precious herbs including pure Saffron. This antioxidant-rich formula is infused with 24 Karat Gold Dust, Cold Pressed Oils & Vetiver for a youthful, luminous complexion.</p>
-                  
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium mb-3 text-primary">Advanced Formula, Clinically Proven Results</h3>
-                    <ul className="space-y-2">
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">1.</span>
-                        <span className="text-neutral-gray">96% Reported more radiant, glowing skin</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">2.</span>
-                        <span className="text-neutral-gray">92% Saw reduction in dark spots & hyperpigmentation</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">3.</span>
-                        <span className="text-neutral-gray">98% Noticed smoother, more even skin tone</span>
-                      </li>
-                    </ul>
-                    <p className="text-xs mt-4 text-neutral-gray">*Based on clinical tests conducted over 15 days</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <p className="mb-2 text-neutral-gray">Select Size</p>
-                    <div className="flex space-x-3">
-                      <button className="bg-black text-white px-4 py-1.5 text-sm">30 ml</button>
-                      <button className="border border-neutral-300 text-neutral-gray px-4 py-1.5 text-sm hover:bg-neutral-50">12 ml</button>
-                    </div>
-                  </div>
-                  
-                  <p className="text-xl font-medium text-primary">Price: ₹ 4,950.00</p>
-                  
-                  <div className="flex space-x-4">
-                    <a href="/products/kumkumadi-beauty-fluid.html" className="border border-neutral-300 text-neutral-gray px-4 py-2 text-sm hover:bg-neutral-50 transition">
-                      View Details
-                    </a>
-                    <button className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition">
-                      Add to Bag
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="md:w-1/2 flex justify-center">
-                <div className="w-full flex justify-center items-center">
-                  <img 
-                    src='/uploads/backgrounds/moodshot_varuna_35ml.jpg' 
-                    alt='Kumkumadi Miraculous Beauty Fluid'
-                    className="w-auto h-auto max-h-[650px] max-w-full object-contain z-10 relative" 
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Third Product Section - Text on Left, Image on Right (like first) */}
-      {sortedProducts.length > 0 && (
-        <div className="relative overflow-hidden bg-white py-16 border-b border-neutral-100">
-          {/* No background elements needed for white design */}
-          
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row items-center max-w-6xl mx-auto">
-              <div className="md:w-1/2 text-primary mb-8 md:mb-0 md:pr-8">
-                <div className="mb-6">
-                  <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">A Synergistic 2-step Ritual</p>
-                  <h2 className="font-heading text-3xl md:text-4xl mb-2 text-primary">Step 3:</h2>
-                  <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">Tejasvi Brightening Emulsion</h3>
-                </div>
-                
-                <div className="mb-8">
-                  <p className="text-neutral-gray mb-6">A luxurious brightening formula that combines ancient Ayurvedic wisdom with modern skincare science. Enriched with Kashmiri Saffron, Manjistha and Sandalwood, this emulsion helps reduce hyperpigmentation while evening skin tone and boosting radiance.</p>
-                  
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium mb-3 text-primary">Advanced Formula, Clinically Proven Results</h3>
-                    <ul className="space-y-2">
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">1.</span>
-                        <span className="text-neutral-gray">95% Noticed brighter, more luminous skin</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">2.</span>
-                        <span className="text-neutral-gray">93% Experienced reduced dark spots</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">3.</span>
-                        <span className="text-neutral-gray">99% Reported smoother, more hydrated skin</span>
-                      </li>
-                    </ul>
-                    <p className="text-xs mt-4 text-neutral-gray">*Based on clinical tests conducted over 15 days</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <p className="mb-2 text-neutral-gray">Select Size</p>
-                    <div className="flex space-x-3">
-                      <button className="bg-black text-white px-4 py-1.5 text-sm">50 ml</button>
-                      <button className="border border-neutral-300 text-neutral-gray px-4 py-1.5 text-sm hover:bg-neutral-50">20 ml</button>
-                    </div>
-                  </div>
-                  
-                  <p className="text-xl font-medium text-primary">Price: ₹ 5,250.00</p>
-                  
-                  <div className="flex space-x-4">
-                    <a href="/products/tejasvi-brightening-emulsion.html" className="border border-neutral-300 text-neutral-gray px-4 py-2 text-sm hover:bg-neutral-50 transition">
-                      View Details
-                    </a>
-                    <button className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition">
-                      Add to Bag
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="md:w-1/2 flex justify-center">
-                <div className="w-full flex justify-center items-center">
-                  <img 
-                    src='/uploads/backgrounds/moodshot_varuna_35ml.jpg' 
-                    alt='Tejasvi Brightening Emulsion'
-                    className="w-auto h-auto max-h-[650px] max-w-full object-contain z-10 relative" 
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Fourth Product Section - Image on Left, Text on Right (like second) */}
-      {sortedProducts.length > 0 && (
-        <div className="relative overflow-hidden bg-white py-16 border-b border-neutral-100">
-          {/* No background elements needed for white design */}
-          
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row-reverse items-center max-w-6xl mx-auto">             
-              <div className="md:w-1/2 text-primary mb-8 md:mb-0 md:pl-8">
-                <div className="mb-6">
-                  <p className="text-neutral-gray uppercase tracking-wider text-sm mb-2">A Synergistic 2-step Ritual</p>
-                  <h2 className="font-heading text-3xl md:text-4xl mb-2 text-primary">Step 4:</h2>
-                  <h3 className="font-heading text-2xl md:text-3xl mb-4 text-primary">Ojas Illuminating Night Cream</h3>
-                </div>
-                
-                <div className="mb-8">
-                  <p className="text-neutral-gray mb-6">A restorative night treatment that works while you sleep to rejuvenate and repair skin. Powered by our proprietary Rasayana complex with Ashwagandha, Turmeric and Amla extracts, this luxurious cream delivers intense hydration and nourishment.</p>
-                  
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium mb-3 text-primary">Advanced Formula, Clinically Proven Results</h3>
-                    <ul className="space-y-2">
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">1.</span>
-                        <span className="text-neutral-gray">96% Woke up to more hydrated, plump skin</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">2.</span>
-                        <span className="text-neutral-gray">91% Reported diminished fine lines</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-2">3.</span>
-                        <span className="text-neutral-gray">97% Experienced enhanced skin elasticity</span>
-                      </li>
-                    </ul>
-                    <p className="text-xs mt-4 text-neutral-gray">*Based on clinical tests conducted over 15 days</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <p className="mb-2 text-neutral-gray">Select Size</p>
-                    <div className="flex space-x-3">
-                      <button className="bg-black text-white px-4 py-1.5 text-sm">50 g</button>
-                      <button className="border border-neutral-300 text-neutral-gray px-4 py-1.5 text-sm hover:bg-neutral-50">15 g</button>
-                    </div>
-                  </div>
-                  
-                  <p className="text-xl font-medium text-primary">Price: ₹ 6,800.00</p>
-                  
-                  <div className="flex space-x-4">
-                    <a href="/products/ojas-night-cream.html" className="border border-neutral-300 text-neutral-gray px-4 py-2 text-sm hover:bg-neutral-50 transition">
-                      View Details
-                    </a>
-                    <button className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition">
-                      Add to Bag
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="md:w-1/2 flex justify-center">
-                <div className="w-full flex justify-center items-center">
-                  <img 
-                    src='/uploads/backgrounds/moodshot_varuna_35ml.jpg' 
-                    alt='Ojas Illuminating Night Cream'
-                    className="w-auto h-auto max-h-[650px] max-w-full object-contain z-10 relative" 
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      ) : null}
       
       {/* FAQs Section */}
       <div className="bg-white py-16">

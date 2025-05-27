@@ -5,6 +5,7 @@ import {
   getCategories,
   getFeaturedCategories,
   getCategoryBySlug,
+  getCategoryById,
   createCategory,
   updateCategory,
   deleteCategory
@@ -16,6 +17,9 @@ const router = express.Router();
 router.get('/categories', getCategories);
 router.get('/categories/featured', getFeaturedCategories);
 router.get('/categories/:slug', getCategoryBySlug);
+
+// Direct endpoint for admin dashboard
+router.get('/categories/id/:id', getCategoryById);
 
 // Admin routes (protected)
 router.post('/admin/categories', authenticateJWT, isAdmin, (req, res, next) => {

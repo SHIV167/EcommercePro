@@ -228,6 +228,37 @@ export type Banner = {
 };
 export type InsertBanner = Omit<Banner, 'id' | '_id'>;
 
+// FeaturedProductVariant schema
+export const featuredProductVariantSchema = z.object({
+  size: z.string(),
+  price: z.number(),
+  isDefault: z.boolean()
+});
+export type FeaturedProductVariant = z.infer<typeof featuredProductVariantSchema>;
+
+// FeaturedProductStat schema
+export const featuredProductStatSchema = z.object({
+  percent: z.number(),
+  text: z.string()
+});
+export type FeaturedProductStat = z.infer<typeof featuredProductStatSchema>;
+
+// FeaturedProduct schema
+export const featuredProductSchema = z.object({
+  productId: z.string(),
+  title: z.string(),
+  subtitle: z.string().optional(),
+  description: z.string().optional(),
+  imageUrl: z.string().optional(),
+  position: z.number(),
+  layout: z.enum(['image-right', 'image-left']),
+  variants: z.array(featuredProductVariantSchema),
+  benefits: z.array(z.string()),
+  stats: z.array(featuredProductStatSchema),
+  _id: z.string().optional()
+});
+export type FeaturedProduct = z.infer<typeof featuredProductSchema>;
+
 // Category Zod schema and TypeScript type
 export const categorySchema = z.object({
   _id: z.string().optional(),
@@ -238,6 +269,7 @@ export const categorySchema = z.object({
   desktopImageUrl: z.string().url().optional(),
   mobileImageUrl: z.string().url().optional(),
   featured: z.boolean().optional(),
+  featuredProducts: z.array(featuredProductSchema).optional()
 });
 export type Category = z.infer<typeof categorySchema>;
 

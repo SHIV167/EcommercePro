@@ -308,8 +308,37 @@ export class MongoDBStorage implements IStorage {
   }
 
   async getCategoryBySlug(slug: string): Promise<Category | undefined> {
-    const category = await CategoryModel.findOne({ slug });
-    return category ? convertToObject<Category>(category) : undefined;
+    try {
+      console.log('Fetching category by slug:', slug);
+      const category = await CategoryModel.findOne({ slug }).lean();
+      
+      if (!category) {
+        console.log('Category not found for slug:', slug);
+        return undefined;
+      }
+      
+      // Ensure featuredProducts is defined
+      if (!category.featuredProducts) {
+        category.featuredProducts = [];
+      }
+      
+      console.log('Found category with ID:', category._id);
+      console.log('Featured products count:', category.featuredProducts?.length || 0);
+      
+      // Convert the MongoDB document to a plain object
+      const result = convertToObject<Category>(category);
+      
+      // Log the conversion result to debug any issues
+      console.log('Converted category has featuredProducts:', 
+        Array.isArray(result.featuredProducts), 
+        result.featuredProducts?.length || 0
+      );
+      
+      return result;
+    } catch (error) {
+      console.error('Error in getCategoryBySlug:', error);
+      return undefined;
+    }
   }
 
   async getFeaturedCategories(limit?: number): Promise<Category[]> {
@@ -334,13 +363,35 @@ export class MongoDBStorage implements IStorage {
   }
 
   async updateCategory(id: string, categoryData: Partial<InsertCategory>): Promise<Category | undefined> {
-    const updatedCategory = await CategoryModel.findByIdAndUpdate(
-      id,
-      { $set: categoryData },
-      { new: true }
-    );
+    console.log('MongoDBStorage: Updating category with ID:', id);
+    console.log('MongoDBStorage: Update data:', JSON.stringify(categoryData, null, 2));
     
-    return updatedCategory ? convertToObject<Category>(updatedCategory) : undefined;
+    // Check if featuredProducts is being updated
+    if (categoryData.featuredProducts) {
+      console.log('MongoDBStorage: Featured products data received:', categoryData.featuredProducts);
+    }
+    
+    try {
+      const updatedCategory = await CategoryModel.findByIdAndUpdate(
+        id,
+        { $set: categoryData },
+        { new: true, runValidators: true }
+      );
+      
+      if (!updatedCategory) {
+        console.log('MongoDBStorage: Category not found for update');
+        return undefined;
+      }
+      
+      console.log('MongoDBStorage: Category updated successfully');
+      console.log('MongoDBStorage: Updated category has featured products:', 
+        updatedCategory.featuredProducts ? updatedCategory.featuredProducts.length : 0);
+      
+      return convertToObject<Category>(updatedCategory);
+    } catch (error) {
+      console.error('MongoDBStorage: Error updating category:', error);
+      throw error;
+    }
   }
 
   async deleteCategory(id: string): Promise<boolean> {
