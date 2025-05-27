@@ -151,3 +151,24 @@ export async function clearCart(req: Request, res: Response) {
     res.status(500).json({ message: 'Error clearing cart' });
   }
 }
+
+// New: Get or create cart by sessionId or userId
+export async function getCart(req: Request, res: Response) {
+  try {
+    const { sessionId, userId } = req.query;
+    let cart = await storage.getCart(userId as string, sessionId as string);
+    if (!cart) {
+      if (!sessionId && !userId) {
+        return res.status(400).json({ message: 'sessionId or userId required' });
+      }
+      const createData: any = {};
+      if (sessionId) createData.sessionId = sessionId as string;
+      if (userId) createData.userId = userId as string;
+      cart = await storage.createCart(createData);
+    }
+    res.json(cart);
+  } catch (error) {
+    console.error('Get cart error:', error);
+    res.status(500).json({ message: 'Error getting cart', error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+}

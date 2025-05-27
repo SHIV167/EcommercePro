@@ -4,12 +4,14 @@ import {
   getCartItems,
   updateCartItemQuantity,
   removeCartItem,
-  clearCart
+  clearCart,
+  getCart
 } from '../controllers/cartController';
 
 const router = express.Router();
 
 // Cart routes
+router.get('/cart', getCart);
 router.post('/cart/items', addCartItem);
 router.get('/cart/:cartId/items', getCartItems);
 router.put('/cart/items/:id', updateCartItemQuantity);
