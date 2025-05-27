@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Helmet } from 'react-helmet';
 import HeaderBanner from '@/components/layout/HeaderBanner';
+import { useCart } from '@/hooks/useCart';
+import { useToast } from '@/hooks/use-toast';
 
 // Type definitions for featured products from the server
 type FeaturedProductVariant = {
@@ -54,6 +56,8 @@ export default function CategoryPage() {
   const [sortBy, setSortBy] = useState('featured');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+  const { addItem } = useCart();
+  const { toast } = useToast();
   
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
@@ -65,6 +69,17 @@ export default function CategoryPage() {
       ...prev,
       [productId]: size
     }));
+  };
+
+  // Featured products add-to-cart handler with toast
+  const handleAddToCartFeatured = async (product?: Product) => {
+    if (!product) return;
+    try {
+      await addItem(product);
+      toast({ title: 'Added to cart', description: `${product.name} has been added to your cart.` });
+    } catch (error) {
+      toast({ title: 'Error', description: `Failed to add ${product.name} to cart. Please try again.`, variant: 'destructive' });
+    }
   };
 
   const { data: category, isLoading: catLoading } = useQuery<ExtendedCategory>({
@@ -161,7 +176,7 @@ export default function CategoryPage() {
       
       {/* Dynamic Featured Product Sections */}
       <div className="mb-10">
-        <h2 className="text-2xl font-heading text-center mb-8">Featured Products</h2>
+        {/* <h2 className="text-2xl font-heading text-center mb-8">Featured Products</h2> */}
         {/* Debug information */}
         <div style={{ display: 'none' }}>
           Featured Products Data: {JSON.stringify(category?.featuredProducts)}
@@ -249,14 +264,8 @@ export default function CategoryPage() {
                           >
                             View Details
                           </a>
-                          <button 
-                            onClick={() => {
-                              // Find actual product and add to cart with selected variant
-                              if (product) {
-                                // Find add to cart button for this product and simulate click
-                                document.querySelector(`[data-product-id="${product._id}"]`)?.dispatchEvent(new Event('click'))
-                              }
-                            }}
+                          <button
+                            onClick={() => handleAddToCartFeatured(product)}
                             className="bg-black text-white px-4 py-2 text-sm hover:bg-neutral-800 transition"
                           >
                             Add to Bag
@@ -462,6 +471,7 @@ export default function CategoryPage() {
       
       {/* Product Grid */}
       <div className="container mx-auto px-4 py-12">
+        {!category?.featuredProducts?.length && (
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
           <p className="text-neutral-gray mb-4 md:mb-0">{sortedProducts.length} products</p>
           <Select value={sortBy} onValueChange={setSortBy}>
@@ -476,6 +486,7 @@ export default function CategoryPage() {
             </SelectContent>
           </Select>
         </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {sortedProducts.map(product => (
             <ProductCard key={product._id!} product={product} showAddToCart />
