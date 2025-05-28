@@ -98,13 +98,7 @@ const FeaturedProductsManager: React.FC<{ categoryId: string }> = ({ categoryId 
         console.log('Fetching category with ID using dedicated endpoint:', categoryId);
         
         // Use the new dedicated endpoint with cache busting
-        const res = await fetch(`/api/categories/id/${categoryId}?t=${Date.now()}`, {
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          }
-        });
+        const res = await apiRequest('GET', `/api/categories/id/${categoryId}?t=${Date.now()}`);
         
         console.log('Category API response status:', res.status);
         
