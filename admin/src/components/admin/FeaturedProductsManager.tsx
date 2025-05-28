@@ -99,6 +99,7 @@ const FeaturedProductsManager: React.FC<{ categoryId: string }> = ({ categoryId 
         
         // Use the new dedicated endpoint with cache busting
         const res = await fetch(`/api/categories/id/${categoryId}?t=${Date.now()}`, {
+          credentials: 'include',
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache'
@@ -239,7 +240,7 @@ const FeaturedProductsManager: React.FC<{ categoryId: string }> = ({ categoryId 
   const updateCategoryMutation = useMutation({
     mutationFn: async (updatedCategory: CategoryWithFeaturedProducts) => {
       console.log('Sending category update:', updatedCategory);
-      const response = await apiRequest('PUT', `/api/admin/categories/${categoryId}`, updatedCategory);
+      const response = await apiRequest('PUT', `/api/admin/categories/${categoryId}`, { featuredProducts: updatedCategory.featuredProducts });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`API error: ${response.status} - ${errorText}`);
