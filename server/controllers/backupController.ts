@@ -1,4 +1,3 @@
-import { spawn } from 'child_process';
 import { exec } from 'child_process';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -28,15 +27,12 @@ export async function backupDatabase(req: Request, res: Response) {
     const backupFilename = `db-backup-${timestamp}.gz`;
     const backupPath = path.join(backupDir, backupFilename);
 
-    // Execute mongodump
-    const dump = spawn('mongodump', [`--uri=${mongoUri}`, `--archive=${backupPath}`, '--gzip']);
-    dump.on('error', (err) => {
-      console.error('mongodump error:', err);
-    });
-    dump.on('close', async (code) => {
-      if (code !== 0) {
-        console.error(`mongodump exited with code ${code}`);
-        return res.status(500).json({ message: 'Database backup failed' });
+    // Execute mongodump command using exec
+    const cmd = `mongodump --uri="${mongoUri}" --archive="${backupPath}" --gzip`;
+    exec(cmd, async (error, stdout, stderr) => {
+      if (error) {
+        console.error('mongodump exec error:', error, stderr);
+        return res.status(500).json({ message: 'Database backup failed', details: error.message });
       }
 
       // Construct download link
