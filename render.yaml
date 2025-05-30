@@ -3,12 +3,9 @@
 services:
   # Web Service for Node backend
   - type: web
-    runtime: node
     name: EcommercePro-Server
     plan: starter
-    rootDir: .
-    buildCommand: npm install && npm run build
-    startCommand: npm run start
+    dockerfilePath: Dockerfile
     envVars:
       - key: MONGODB_URI
         sync: false
